@@ -13,9 +13,6 @@
  */
 package com.google.dart.tools.debug.ui.internal.server;
 
-import com.google.dart.engine.source.Source;
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.analysis.model.ProjectManager;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
@@ -24,7 +21,6 @@ import com.google.dart.tools.debug.ui.internal.util.LaunchUtils;
 
 import org.apache.commons.lang3.ObjectUtils;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -59,9 +55,10 @@ public class DartServerLaunchShortcut implements ILaunchShortcut, ILaunchShortcu
       return false;
     }
 
-    if (getPrimaryLaunchTarget(resource) != null) {
-      return true;
-    }
+//&&&    
+//    if (getPrimaryLaunchTarget(resource) != null) {
+//      return true;
+//    }
 
     return false;
   }
@@ -74,7 +71,7 @@ public class DartServerLaunchShortcut implements ILaunchShortcut, ILaunchShortcu
       ILaunchConfiguration[] configs = DebugPlugin.getDefault().getLaunchManager().getLaunchConfigurations(
           getConfigurationType());
 
-      resource = getPrimaryLaunchTarget(resource);
+      resource = null; //&&&getPrimaryLaunchTarget(resource);
 
       if (resource != null) {
         for (int i = 0; i < configs.length; i++) {
@@ -167,7 +164,7 @@ public class DartServerLaunchShortcut implements ILaunchShortcut, ILaunchShortcu
     }
 
     // Launch an existing configuration if one exists
-    resource = getPrimaryLaunchTarget(resource);
+    resource = null; //&&&getPrimaryLaunchTarget(resource);
     if (resource == null) {
       return;
     }
@@ -205,6 +202,34 @@ public class DartServerLaunchShortcut implements ILaunchShortcut, ILaunchShortcu
     LaunchUtils.launch(config, mode);
   }
 
+//&&&  
+//
+//  private IResource getPrimaryLaunchTarget(IResource resource) {
+//
+//    ProjectManager manager = DartCore.getProjectManager();
+//    if (resource instanceof IProject) {
+//      Source[] sources = manager.getLibrarySources((IProject) resource);
+//      return getServerLibraryResource(sources);
+//    }
+//
+//    if (DartCore.isDartLikeFileName(resource.getName())) {
+//      IFile file = (IFile) resource;
+//      Source[] sources = manager.getLibrarySources(file);
+//      return getServerLibraryResource(sources);
+//    }
+//    return null;
+//  }
+//
+//  private IResource getServerLibraryResource(Source[] sources) {
+//    ProjectManager manager = DartCore.getProjectManager();
+//    for (Source source : sources) {
+//      if (manager.isServerLibrary(source) && manager.getHtmlFileForLibrary(source) == null) {
+//        return manager.getResource(source);
+//      }
+//    }
+//    return null;
+//  }
+
   protected boolean testSimilar(IResource resource, ILaunchConfiguration config) {
 
     DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(config);
@@ -214,32 +239,6 @@ public class DartServerLaunchShortcut implements ILaunchShortcut, ILaunchShortcu
       return true;
     }
     return false;
-  }
-
-  private IResource getPrimaryLaunchTarget(IResource resource) {
-
-    ProjectManager manager = DartCore.getProjectManager();
-    if (resource instanceof IProject) {
-      Source[] sources = manager.getLibrarySources((IProject) resource);
-      return getServerLibraryResource(sources);
-    }
-
-    if (DartCore.isDartLikeFileName(resource.getName())) {
-      IFile file = (IFile) resource;
-      Source[] sources = manager.getLibrarySources(file);
-      return getServerLibraryResource(sources);
-    }
-    return null;
-  }
-
-  private IResource getServerLibraryResource(Source[] sources) {
-    ProjectManager manager = DartCore.getProjectManager();
-    for (Source source : sources) {
-      if (manager.isServerLibrary(source) && manager.getHtmlFileForLibrary(source) == null) {
-        return manager.getResource(source);
-      }
-    }
-    return null;
   }
 
 }

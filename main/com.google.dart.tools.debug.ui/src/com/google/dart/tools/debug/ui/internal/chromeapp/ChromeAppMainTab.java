@@ -14,7 +14,6 @@
 
 package com.google.dart.tools.debug.ui.internal.chromeapp;
 
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.dartium.DartiumLaunchMessages;
@@ -236,12 +235,13 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
   }
 
   protected String performSdkCheck() {
-    if (!DartSdkManager.getManager().hasSdk()) {
-      return "Dartium is not installed ("
-          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
-    } else {
-      return null;
-    }
+//&&&    
+//    if (!DartSdkManager.getManager().hasSdk()) {
+//      return "Dartium is not installed ("
+//          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
+//    } else {
+    return null;
+//    }
   }
 
 }

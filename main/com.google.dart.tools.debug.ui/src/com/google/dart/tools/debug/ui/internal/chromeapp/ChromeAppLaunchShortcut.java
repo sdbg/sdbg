@@ -16,8 +16,6 @@ package com.google.dart.tools.debug.ui.internal.chromeapp;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
-import com.google.dart.tools.core.model.DartModelException;
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
@@ -56,11 +54,12 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
 
   @Override
   public boolean canLaunch(IResource resource) {
-    if (!DartSdkManager.getManager().hasSdk()
-        || !DartSdkManager.getManager().getSdk().isDartiumInstalled()) {
-      return false;
-    }
-
+//&&&    
+//    if (!DartSdkManager.getManager().hasSdk()
+//        || !DartSdkManager.getManager().getSdk().isDartiumInstalled()) {
+//      return false;
+//    }
+//
     // If it's contained by a folder which itself contains a manifest.json file, we can launch it.
     if (resource instanceof IContainer) {
       return containsManifestJsonFile((IContainer) resource);
@@ -78,7 +77,8 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
   }
 
   @Override
-  protected IResource getLaunchableResource(Object originalResource) throws DartModelException {
+  protected IResource getLaunchableResource(Object originalResource)
+      throws /*&&&DartModelException*/CoreException {
     if (!(originalResource instanceof IResource)) {
       return null;
     }
@@ -145,7 +145,8 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
       IResource launchAbleResource = getLaunchableResource(resource);
 
       return configResource.equals(launchAbleResource);
-    } catch (DartModelException ex) {
+//&&&    } catch (DartModelException ex) {
+    } catch (CoreException ex) {
       return false;
     }
   }

@@ -13,14 +13,13 @@
  */
 package com.google.dart.tools.debug.core.dartium;
 
-import com.google.dart.tools.core.model.DartElement;
+import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IValue;
+
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.util.DebuggerUtils;
 import com.google.dart.tools.debug.core.util.IDartDebugVariable;
 import com.google.dart.tools.debug.core.webkit.WebkitPropertyDescriptor;
-
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.model.IValue;
 
 /**
  * The IVariable implementation of the Dartium Debug Element.
@@ -60,12 +59,13 @@ public class DartiumDebugVariable extends DartiumDebugElement implements IDartDe
     this.isSpecialObject = isSpecialObject;
   }
 
-  public DartElement coerceToDartElement() {
-    // TODO(devoncarew): implement this
-
-    return null;
-  }
-
+//&&&  
+//  public DartElement coerceToDartElement() {
+//    // TODO(devoncarew): implement this
+//
+//    return null;
+//  }
+//
   /**
    * @return a user-consumable string for the variable name
    */
@@ -122,6 +122,14 @@ public class DartiumDebugVariable extends DartiumDebugElement implements IDartDe
     return isLibraryObject;
   }
 
+  private boolean isListMember() {
+    if (parent != null && parent.isListValue()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public boolean isListValue() {
     try {
       return ((DartiumDebugValue) getValue()).isListValue();
@@ -151,6 +159,18 @@ public class DartiumDebugVariable extends DartiumDebugElement implements IDartDe
   @Override
   public boolean isThrownException() {
     return isSpecialObject && descriptor.getName().equals("exception");
+  }
+
+  protected void setIsLibraryObject(boolean value) {
+    this.isLibraryObject = value;
+  }
+
+  protected void setIsStatic(boolean value) {
+    isStatic = value;
+  }
+
+  protected void setParent(DartiumDebugVariable parent) {
+    this.parent = parent;
   }
 
   @Override
@@ -191,26 +211,6 @@ public class DartiumDebugVariable extends DartiumDebugElement implements IDartDe
     // TODO(devoncarew): do verification for numbers
 
     return true;
-  }
-
-  protected void setIsLibraryObject(boolean value) {
-    this.isLibraryObject = value;
-  }
-
-  protected void setIsStatic(boolean value) {
-    isStatic = value;
-  }
-
-  protected void setParent(DartiumDebugVariable parent) {
-    this.parent = parent;
-  }
-
-  private boolean isListMember() {
-    if (parent != null && parent.isListValue()) {
-      return true;
-    } else {
-      return false;
-    }
   }
 
 }

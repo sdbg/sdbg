@@ -18,7 +18,6 @@ import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin.BreakOnExceptions;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.core.DebugUIHelper;
-import com.google.dart.tools.debug.core.breakpoints.DartBreakpoint;
 import com.google.dart.tools.debug.core.util.IResourceResolver;
 import com.google.dart.tools.debug.core.webkit.WebkitBreakpoint;
 import com.google.dart.tools.debug.core.webkit.WebkitCallFrame;
@@ -37,24 +36,123 @@ import com.google.dart.tools.debug.core.webkit.WebkitScript;
 
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.IDebugTarget;
+import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IMemoryBlock;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IThread;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
  * The IDebugTarget implementation for the Dartium debug elements.
  */
 public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTarget {
+  //&&&!!!
+  private class WebkitScriptStorage extends PlatformObject implements IStorage {
+    private WebkitScript script;
+    private String source;
+
+    public WebkitScriptStorage(WebkitScript script, String source) {
+      this.script = script;
+      this.source = source;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      WebkitScriptStorage other = (WebkitScriptStorage) obj;
+      if (!getOuterType().equals(other.getOuterType())) {
+        return false;
+      }
+      if (script == null) {
+        if (other.script != null) {
+          return false;
+        }
+      } else if (!script.equals(other.script)) {
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public InputStream getContents() throws CoreException {
+      try {
+        return new ByteArrayInputStream(source != null ? source.getBytes("UTF-8") : new byte[0]);
+      } catch (UnsupportedEncodingException e) {
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            DartDebugCorePlugin.PLUGIN_ID,
+            e.toString(),
+            e));
+      }
+    }
+
+    @Override
+    public IPath getFullPath() {
+      try {
+        return Path.fromPortableString(URIUtil.fromString(script.getUrl()).getPath());
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public String getName() {
+      return script.getScriptId();
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + getOuterType().hashCode();
+      result = prime * result + ((script == null) ? 0 : script.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return true;
+    }
+
+    @Override
+    public String toString() {
+      return script.toString();
+    }
+
+    private DartiumDebugTarget getOuterType() {
+      return DartiumDebugTarget.this;
+    }
+  }
+
   private static DartiumDebugTarget activeTarget;
 
   public static DartiumDebugTarget getActiveTarget() {
@@ -78,6 +176,7 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
   private HtmlScriptManager htmlScriptManager;
   private DartCodeManager dartCodeManager;
   private boolean canSetScriptSource;
+
   private SourceMapManager sourceMapManager;
 
   /**
@@ -136,12 +235,7 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
     DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(launch.getLaunchConfiguration());
 
     currentProject = wrapper.getProject();
-
-    if (wrapper.getProject() != null) {
-      sourceMapManager = new SourceMapManager(wrapper.getProject());
-    } else {
-      sourceMapManager = new SourceMapManager(ResourcesPlugin.getWorkspace().getRoot());
-    }
+    sourceMapManager = new SourceMapManager(resourceResolver);
   }
 
   @Override
@@ -357,6 +451,7 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
       @Override
       public void debuggerGlobalObjectCleared() {
         breakpointManager.handleGlobalObjectCleared();
+        //sourceMapManager.handleGlobalObjectCleared();
       }
 
       @Override
@@ -375,8 +470,33 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
       }
 
       @Override
-      public void debuggerScriptParsed(WebkitScript script) {
+      public void debuggerScriptParsed(final WebkitScript script) {
         checkForDebuggerExtension(script);
+
+        System.out.println("Script " + script + " loaded");
+
+        if (script.hasScriptSource() || script.getSourceMapURL() != null) {
+          IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
+          sourceMapManager.handleScriptParsed(storage, script.getSourceMapURL());
+          breakpointManager.updateBreakpointsConcerningScript(storage);
+//        } else {
+//          try {
+//            connection.getDebugger().getScriptSource(
+//                script.getScriptId(),
+//                new WebkitCallback<String>() {
+//                  @Override
+//                  public void handleResult(WebkitResult<String> result) {
+//                    if (!result.isError()) {
+//                      IStorage storage = new WebkitScriptStorage(script, result.getResult());
+//                      sourceMapManager.handleScriptParsed(storage, script.getSourceMapURL());
+//                      breakpointManager.updateBreakpointsConcerningScript(storage);
+//                    }
+//                  }
+//                });
+//          } catch (IOException e) {
+//            throw new RuntimeException(e);
+//          }
+        }
       }
     });
     connection.getDebugger().enable();
@@ -394,7 +514,9 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
     process.fireCreationEvent();
 
     // Set our existing breakpoints and start listening for new breakpoints.
+    System.out.println("About to resolve breakpoints");
     breakpointManager.connect();
+    System.out.println("Breakpoints resolved");
 
     connection.getDebugger().setBreakpointsActive(enableBreakpoints);
 
@@ -444,14 +566,14 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
 
   @Override
   public boolean supportsBreakpoint(IBreakpoint breakpoint) {
-    if (!(breakpoint instanceof DartBreakpoint)) {
+    if (!(breakpoint instanceof ILineBreakpoint)) {
       return false;
     }
 
     if (currentProject == null) {
       return true;
     } else {
-      return currentProject.equals(((DartBreakpoint) breakpoint).getFile().getProject());
+      return currentProject.equals(breakpoint.getMarker().getResource().getProject());
     }
   }
 
@@ -505,6 +627,31 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
 
   protected IResourceResolver getResourceResolver() {
     return resourceResolver;
+  }
+
+  //&&&!!!
+  protected IStorage getScriptStorage(WebkitScript script) {
+    if (script != null) {
+      String url = script.getUrl();
+
+      if (script.isSystemScript() || script.isDataUrl() || script.isChromeExtensionUrl()) {
+        return new WebkitScriptStorage(script, null);
+      }
+
+      if (url.startsWith("package:")) {
+        return new WebkitScriptStorage(script, null);
+      }
+
+      IResource resource = getResourceResolver().resolveUrl(url);
+
+      if (resource != null && resource instanceof IStorage) {
+        return (IStorage) resource;
+      }
+
+      return new WebkitScriptStorage(script, null);
+    }
+
+    return null;
   }
 
   protected SourceMapManager getSourceMapManager() {
@@ -595,5 +742,4 @@ public class DartiumDebugTarget extends DartiumDebugElement implements IDebugTar
 
     return pauseType;
   }
-
 }

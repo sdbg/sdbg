@@ -13,17 +13,12 @@
  */
 package com.google.dart.tools.debug.ui.internal.util;
 
-import com.google.dart.engine.source.Source;
 import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.analysis.model.ProjectManager;
-import com.google.dart.tools.core.model.DartModelException;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
 import com.google.dart.tools.debug.ui.internal.DebugErrorHandler;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
@@ -91,7 +86,8 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
       if (resource != null) {
         return getLaunchableResource(resource);
       }
-    } catch (DartModelException e) {
+//&&&    } catch (DartModelException e) {
+    } catch (CoreException e) {
       DebugErrorHandler.errorDialog(
           null,
           "Error Launching " + launchTypeLabel,
@@ -129,7 +125,8 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
       }
       return resource;
 
-    } catch (DartModelException e) {
+//&&&    } catch (DartModelException e) {
+    } catch (CoreException e) {
       DebugErrorHandler.errorDialog(
           null,
           "Error Launching " + launchTypeLabel,
@@ -144,6 +141,19 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
     // let the framework resolve configurations based on resource mapping
     return null;
   }
+
+//&&&  
+//
+//  private IResource getHtmlFileForLibrarySource(Source[] sources) {
+//    ProjectManager manager = DartCore.getProjectManager();
+//    for (Source source : sources) {
+//      IResource launchResource = manager.getHtmlFileForLibrary(source);
+//      if (launchResource != null) {
+//        return launchResource;
+//      }
+//    }
+//    return null;
+//  }
 
   @Override
   public final ILaunchConfiguration[] getLaunchConfigurations(ISelection selection) {
@@ -164,7 +174,8 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
 
           return;
         }
-      } catch (DartModelException e) {
+//&&&      } catch (DartModelException e) {
+      } catch (CoreException e) {
         DebugErrorHandler.errorDialog(
             null,
             "Error Launching " + launchTypeLabel,
@@ -248,7 +259,8 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
    * @param originalResource the original resource or <code>null</code>
    * @return the Dart resource to be launched or <code>null</code>
    */
-  protected IResource getLaunchableResource(Object originalResource) throws DartModelException {
+  protected IResource getLaunchableResource(Object originalResource)
+      throws /*&&&DartModelException*/CoreException {
     if (originalResource == null) {
       return null;
     }
@@ -301,17 +313,6 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
     return false;
   }
 
-  private IResource getHtmlFileForLibrarySource(Source[] sources) {
-    ProjectManager manager = DartCore.getProjectManager();
-    for (Source source : sources) {
-      IResource launchResource = manager.getHtmlFileForLibrary(source);
-      if (launchResource != null) {
-        return launchResource;
-      }
-    }
-    return null;
-  }
-
   private IResource getPrimaryLaunchTarget(IResource resource) {
 
     // html file - is launchable 
@@ -319,19 +320,20 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
       return resource;
     }
 
-    ProjectManager manager = DartCore.getProjectManager();
-
-    if (resource instanceof IProject) {
-      Source[] sources = manager.getLibrarySources((IProject) resource);
-      return getHtmlFileForLibrarySource(sources);
-    }
-
-    // dart file - get library and check if it has html file associated
-    if (DartCore.isDartLikeFileName(resource.getName())) {
-      IFile file = (IFile) resource;
-      Source[] sources = manager.getLibrarySources(file);
-      return getHtmlFileForLibrarySource(sources);
-    }
+//&&&    
+//    ProjectManager manager = DartCore.getProjectManager();
+//
+//    if (resource instanceof IProject) {
+//      Source[] sources = manager.getLibrarySources((IProject) resource);
+//      return getHtmlFileForLibrarySource(sources);
+//    }
+//
+//    // dart file - get library and check if it has html file associated
+//    if (DartCore.isDartLikeFileName(resource.getName())) {
+//      IFile file = (IFile) resource;
+//      Source[] sources = manager.getLibrarySources(file);
+//      return getHtmlFileForLibrarySource(sources);
+//    }
     // TODO(keertip): figure out association for other files like css etc.
     return null;
   }

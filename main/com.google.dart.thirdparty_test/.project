@@ -25,16 +25,4 @@
 		<nature>org.eclipse.pde.PluginNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>lib/fest</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/fest</locationURI>
-		</link>
-		<link>
-			<name>lib/mockito</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/mockito</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>

@@ -17,7 +17,6 @@ import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.dartium.DartiumDebugValue.ValueCallback;
 import com.google.dart.tools.debug.core.expr.IExpressionEvaluator;
 import com.google.dart.tools.debug.core.expr.WatchExpressionResult;
-import com.google.dart.tools.debug.core.source.WorkspaceSourceContainer;
 import com.google.dart.tools.debug.core.util.DebuggerUtils;
 import com.google.dart.tools.debug.core.util.IDartStackFrame;
 import com.google.dart.tools.debug.core.util.IExceptionStackFrame;
@@ -30,8 +29,7 @@ import com.google.dart.tools.debug.core.webkit.WebkitResult;
 import com.google.dart.tools.debug.core.webkit.WebkitScope;
 import com.google.dart.tools.debug.core.webkit.WebkitScript;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
@@ -44,7 +42,6 @@ import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.core.model.IWatchExpressionListener;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -57,13 +54,14 @@ import java.util.concurrent.TimeUnit;
 public class DartiumDebugStackFrame extends DartiumDebugElement implements IStackFrame,
     IDartStackFrame, IExceptionStackFrame, IVariableResolver, IExpressionEvaluator {
   private IThread thread;
+
   private WebkitCallFrame webkitFrame;
 
   private boolean isExceptionStackFrame;
 
   private VariableCollector variableCollector = VariableCollector.empty();
-
   private IValue classValue;
+
   private IValue globalScopeValue;
 
   public DartiumDebugStackFrame(IDebugTarget target, IThread thread, WebkitCallFrame webkitFrame) {
@@ -246,7 +244,7 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
       if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
         SourceMapManager.SourceLocation location = getMappedLocation();
 
-        return WebkitLocation.webkitToElipseLine(location.line);
+        return WebkitLocation.webkitToElipseLine(location.getLine());
       } else {
         return WebkitLocation.webkitToElipseLine(webkitFrame.getLocation().getLineNumber());
       }
@@ -266,11 +264,12 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
 
   @Override
   public String getName() throws DebugException {
-    if (DebuggerUtils.areSiblingNamesUnique(this)) {
-      return getShortName();
-    } else {
-      return getLongName();
-    }
+//&&&!!!    
+//    if (DebuggerUtils.areSiblingNamesUnique(this)) {
+//      return getShortName();
+//    } else {
+    return getLongName();
+//    }
   }
 
   @Override
@@ -280,6 +279,14 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
 
   @Override
   public String getShortName() {
+    if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
+      SourceMapManager.SourceLocation location = getMappedLocation();
+
+      if (location.getName() != null) {
+        return location.getName() + "()";
+      }
+    }
+
     return DebuggerUtils.demangleVmName(webkitFrame.getFunctionName()) + "()";
   }
 
@@ -289,7 +296,12 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
       if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
         return getMappedLocationPath();
       } else {
-        return getActualLocationPath();
+        IStorage storage = getActualLocationStorage();
+        if (storage != null) {
+          return storage.getFullPath().toPortableString();
+        } else {
+          return null;
+        }
       }
     } catch (Throwable t) {
       DartDebugCorePlugin.logError(t);
@@ -395,38 +407,12 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
     return getShortName();
   }
 
-  protected String getActualLocationPath() {
+  protected IStorage getActualLocationStorage() {
     String scriptId = webkitFrame.getLocation().getScriptId();
 
     WebkitScript script = getConnection().getDebugger().getScript(scriptId);
 
-    if (script != null) {
-      String url = script.getUrl();
-
-      if (script.isSystemScript() || script.isDataUrl() || script.isChromeExtensionUrl()) {
-        return url;
-      }
-
-      if (url.startsWith("package:")) {
-        return url;
-      }
-
-      IResource resource = getTarget().getResourceResolver().resolveUrl(url);
-
-      if (resource != null) {
-        return resource.getFullPath().toString();
-      }
-
-      try {
-        return URI.create(url).getPath();
-      } catch (IllegalArgumentException iae) {
-        // Dartium can send us bad paths:
-        // e:\b\build\slave\dartium-win-full\build ... rt\dart\CanvasRenderingContext2DImpl.dart
-        DartDebugCorePlugin.logInfo("Illegal path from Dartium: " + url);
-      }
-    }
-
-    return null;
+    return getTarget().getScriptStorage(script);
   }
 
   protected IValue getClassValue() throws DebugException {
@@ -471,7 +457,7 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
           + sourceLocation.getColumnNumber() + "] ==> mapped to " + targetLocation);
     }
 
-    return targetLocation.file.getLocation().toPortableString();
+    return targetLocation.getStorage().getFullPath().toPortableString();
   }
 
   protected IVariable getThisVariable() throws DebugException {
@@ -539,13 +525,13 @@ public class DartiumDebugStackFrame extends DartiumDebugElement implements IStac
   private SourceMapManager.SourceLocation getMappedLocation() {
     SourceMapManager sourceMapManager = getTarget().getSourceMapManager();
 
-    IFile file = WorkspaceSourceContainer.locatePathAsFile(getActualLocationPath());
+    IStorage storage = getActualLocationStorage();
 
-    if (sourceMapManager.isMapSource(file)) {
+    if (sourceMapManager.isMapSource(storage)) {
       WebkitLocation location = webkitFrame.getLocation();
 
       return sourceMapManager.getMappingFor(
-          file,
+          storage,
           location.getLineNumber(),
           location.getColumnNumber());
     } else {

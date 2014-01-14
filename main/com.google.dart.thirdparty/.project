@@ -25,31 +25,4 @@
 		<nature>org.eclipse.pde.PluginNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>lib/args4j</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/args4j</locationURI>
-		</link>
-		<link>
-			<name>lib/commons-lang</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/commons-lang/</locationURI>
-		</link>
-		<link>
-			<name>lib/guava</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/guava</locationURI>
-		</link>
-		<link>
-			<name>lib/json</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/json</locationURI>
-		</link>
-		<link>
-			<name>lib/snakeyaml</name>
-			<type>2</type>
-			<locationURI>DART_TRUNK/third_party/snakeyaml</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>

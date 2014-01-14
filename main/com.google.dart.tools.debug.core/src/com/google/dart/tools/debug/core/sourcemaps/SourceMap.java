@@ -20,6 +20,7 @@ import com.google.common.io.Files;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -59,13 +60,18 @@ public class SourceMap {
     }
   }
 
-  public static SourceMap createFrom(IFile file) throws IOException, CoreException {
-    Reader reader = new InputStreamReader(file.getContents(), file.getCharset());
+  public static SourceMap createFrom(IStorage storage) throws IOException, CoreException {
+    Reader reader;
+    if (storage instanceof IFile) {
+      reader = new InputStreamReader(storage.getContents(), ((IFile) storage).getCharset());
+    } else {
+      reader = new InputStreamReader(storage.getContents());
+    }
 
     try {
       String contents = CharStreams.toString(reader);
 
-      return createFrom(file.getFullPath(), contents);
+      return createFrom(storage.getFullPath(), contents);
     } catch (JSONException e) {
       throw new IOException(e);
     } finally {

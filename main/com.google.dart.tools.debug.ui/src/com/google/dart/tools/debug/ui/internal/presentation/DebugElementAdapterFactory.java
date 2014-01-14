@@ -14,7 +14,6 @@
 
 package com.google.dart.tools.debug.ui.internal.presentation;
 
-import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.dartium.DartiumDebugThread;
 import com.google.dart.tools.debug.core.dartium.DartiumDebugVariable;
 import com.google.dart.tools.debug.core.server.ServerDebugThread;
@@ -25,7 +24,6 @@ import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.ILaunch;
-import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.internal.ui.model.elements.DebugElementLabelProvider;
 import org.eclipse.debug.internal.ui.model.elements.ViewerInputProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
@@ -79,9 +77,10 @@ public class DebugElementAdapterFactory implements IAdapterFactory {
     manager.registerAdapters(factory, ServerDebugVariable.class);
     manager.registerAdapters(factory, ServerDebugThread.class);
 
-    if (!DartCore.isPluginsBuild()) {
-      manager.registerAdapters(factory, Launch.class);
-    }
+//&&&    
+//    if (!DartCore.isPluginsBuild()) {
+//      manager.registerAdapters(factory, Launch.class);
+//    }
   }
 
   private IAdapterFactory defaultAdapter = new org.eclipse.debug.internal.ui.views.launch.DebugElementAdapterFactory();
@@ -153,11 +152,12 @@ public class DebugElementAdapterFactory implements IAdapterFactory {
     adapterClasses.add(IElementLabelProvider.class);
     adapterClasses.add(IViewerInputProvider.class);
 
-    // For the RCP, we override the content provider for ILaunches on order to shave
-    // one level off the process/thread/stack-frame tree.
-    if (!DartCore.isPluginsBuild()) {
-      adapterClasses.add(IElementContentProvider.class);
-    }
+//&&&    
+//    // For the RCP, we override the content provider for ILaunches on order to shave
+//    // one level off the process/thread/stack-frame tree.
+//    if (!DartCore.isPluginsBuild()) {
+//      adapterClasses.add(IElementContentProvider.class);
+//    }
 
     return adapterClasses.toArray(new Class[adapterClasses.size()]);
   }

@@ -14,30 +14,26 @@
 
 package com.google.dart.tools.debug.ui.internal.view;
 
-import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
-import com.google.dart.tools.debug.ui.internal.DartUtil;
-
 import org.eclipse.jface.action.Action;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 
 /**
  * An action to show the Breakpoints view.
  */
 public class ShowBreakpointsAction extends Action {
-
-  public ShowBreakpointsAction() {
-    super("Show Breakpoints", DartDebugUIPlugin.getImageDescriptor("obj16/breakpoint_view.gif"));
-  }
-
-  @Override
-  public synchronized void run() {
-    try {
-      PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(
-          BreakpointsView.VIEW_ID);
-    } catch (PartInitException e) {
-      DartUtil.logError(e);
-    }
-  }
-
+//&&& Probably not really needed  
+//
+//  public ShowBreakpointsAction() {
+//    super("Show Breakpoints", DartDebugUIPlugin.getImageDescriptor("obj16/breakpoint_view.gif"));
+//  }
+//
+//  @Override
+//  public synchronized void run() {
+//    try {
+//      PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(
+//          BreakpointsView.VIEW_ID);
+//    } catch (PartInitException e) {
+//      DartUtil.logError(e);
+//    }
+//  }
+//
 }

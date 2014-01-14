@@ -13,7 +13,6 @@
  */
 package com.google.dart.tools.debug.core.dartium;
 
-import com.google.dart.tools.debug.core.breakpoints.DartBreakpoint;
 import com.google.dart.tools.debug.core.webkit.WebkitCallFrame;
 import com.google.dart.tools.debug.core.webkit.WebkitDebugger.PausedReasonType;
 import com.google.dart.tools.debug.core.webkit.WebkitRemoteObject;
@@ -240,7 +239,7 @@ public class DartiumDebugThread extends DartiumDebugElement implements IThread {
       reason = expectedSuspendReason;
       expectedSuspendReason = DebugEvent.UNSPECIFIED;
     } else {
-      DartBreakpoint breakpoint = getBreakpointFor(webkitFrames);
+      IBreakpoint breakpoint = getBreakpointFor(webkitFrames);
 
       if (breakpoint != null) {
         suspendedBreakpoints = new IBreakpoint[] {breakpoint};
@@ -289,7 +288,7 @@ public class DartiumDebugThread extends DartiumDebugElement implements IThread {
     return frames.toArray(new IStackFrame[frames.size()]);
   }
 
-  private DartBreakpoint getBreakpointFor(List<WebkitCallFrame> frames) {
+  private IBreakpoint getBreakpointFor(List<WebkitCallFrame> frames) {
     if (frames.size() > 0) {
       return getBreakpointFor(frames.get(0));
     } else {
@@ -297,7 +296,7 @@ public class DartiumDebugThread extends DartiumDebugElement implements IThread {
     }
   }
 
-  private DartBreakpoint getBreakpointFor(WebkitCallFrame frame) {
+  private IBreakpoint getBreakpointFor(WebkitCallFrame frame) {
     BreakpointManager breakpointManager = getTarget().getBreakpointManager();
 
     if (breakpointManager != null) {

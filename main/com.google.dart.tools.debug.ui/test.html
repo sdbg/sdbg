@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+<div id="abc"></div>
+<script>
+var i = 0;
+function xxx() {
+  document.getElementById("abc").innerHTML = i + "";
+  i += 1000;
+  setTimeout(xxx, 1000);
+}
+
+setTimeout(xxx, 1000);
+</script>
+</body>
+</html>

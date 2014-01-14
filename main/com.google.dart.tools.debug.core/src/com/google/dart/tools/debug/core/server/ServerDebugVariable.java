@@ -14,7 +14,6 @@
 
 package com.google.dart.tools.debug.core.server;
 
-import com.google.dart.tools.core.model.DartElement;
 import com.google.dart.tools.debug.core.util.DebuggerUtils;
 import com.google.dart.tools.debug.core.util.IDartDebugVariable;
 
@@ -135,28 +134,29 @@ public class ServerDebugVariable extends ServerDebugElement implements IDartDebu
     this.name = vmVariable.getName();
   }
 
-  public DartElement coerceToDartElement() {
-    if (isLibraryObject()) {
-      return null;
-    }
-
-    if (isThisObject()) {
-      return null;
-    }
-
-    if (isListElement()) {
-      return null;
-    }
-
-    // TODO(devoncarew): top-level
-
-    // TODO(devoncarew): instance or static vars
-
-    // TODO(devoncarew): params or locals
-
-    return null;
-  }
-
+//&&&  
+//  public DartElement coerceToDartElement() {
+//    if (isLibraryObject()) {
+//      return null;
+//    }
+//
+//    if (isThisObject()) {
+//      return null;
+//    }
+//
+//    if (isListElement()) {
+//      return null;
+//    }
+//
+//    // TODO(devoncarew): top-level
+//
+//    // TODO(devoncarew): instance or static vars
+//
+//    // TODO(devoncarew): params or locals
+//
+//    return null;
+//  }
+//
   public String getDisplayName() throws DebugException {
     return getName();
   }
@@ -256,8 +256,9 @@ public class ServerDebugVariable extends ServerDebugElement implements IDartDebu
     this.isStatic = value;
   }
 
-  private boolean isListElement() {
-    return name.startsWith("[");
-  }
+//&&&  
+//  private boolean isListElement() {
+//    return name.startsWith("[");
+//  }
 
 }

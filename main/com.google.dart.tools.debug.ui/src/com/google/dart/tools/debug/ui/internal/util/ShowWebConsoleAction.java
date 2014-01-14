@@ -14,9 +14,9 @@
 
 package com.google.dart.tools.debug.ui.internal.util;
 
-import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.util.ResourceServer;
 import com.google.dart.tools.debug.core.util.ResourceServerManager;
+import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
 
 import org.eclipse.jface.action.Action;
@@ -53,11 +53,16 @@ public class ShowWebConsoleAction extends Action implements IWorkbenchWindowActi
       String localAddress = server.getLocalAddress();
 
       if (localAddress == null) {
-        DartCore.getConsole().println("Unable to get local IP address.");
+        DartDebugUIPlugin.logError("Unable to get local IP address.");
+        //&&&DartCore.getConsole().println("Unable to get local IP address.");
       } else {
-        DartCore.getConsole().println(
-            "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
-                + ".");
+        DartDebugUIPlugin.logError( // TODO XXX FIXME
+        "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
+            + ".");
+//&&&        
+//        DartCore.getConsole().println(
+//            "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
+//                + ".");
       }
     } catch (IOException ioe) {
       DartUtil.logError(ioe);

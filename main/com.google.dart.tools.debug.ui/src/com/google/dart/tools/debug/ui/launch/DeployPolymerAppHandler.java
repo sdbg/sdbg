@@ -13,17 +13,9 @@
  */
 package com.google.dart.tools.debug.ui.launch;
 
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.analysis.model.PubFolder;
-import com.google.dart.tools.core.pub.RunPubJob;
-
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.ui.handlers.HandlerUtil;
 
 /**
  * Run the build.dart with deploy option which compiles the Polymer app to JavaScript.
@@ -36,22 +28,23 @@ public class DeployPolymerAppHandler extends AbstractHandler {
 
   @Override
   public Object execute(ExecutionEvent event) throws ExecutionException {
-    ISelection selection = HandlerUtil.getActivePart(event).getSite().getSelectionProvider().getSelection();
-    if (!selection.isEmpty()) {
-      if (selection instanceof IStructuredSelection) {
-        Object selectedObject = ((IStructuredSelection) selection).getFirstElement();
-        if (selectedObject instanceof IResource) {
-          PubFolder folder = DartCore.getProjectManager().getPubFolder((IResource) selectedObject);
-          if (folder != null) {
-            RunPubJob job = new RunPubJob(folder.getResource(), RunPubJob.BUILD_COMMAND, false);
-            job.schedule(0);
-            return null;
-          }
-          DartCore.getConsole().println(
-              "Error: Could not run pub build. Use Run Tools > Pub Build to build Polymer app");
-        }
-      }
-    }
+    //&&&
+//    ISelection selection = HandlerUtil.getActivePart(event).getSite().getSelectionProvider().getSelection();
+//    if (!selection.isEmpty()) {
+//      if (selection instanceof IStructuredSelection) {
+//        Object selectedObject = ((IStructuredSelection) selection).getFirstElement();
+//        if (selectedObject instanceof IResource) {
+//          PubFolder folder = DartCore.getProjectManager().getPubFolder((IResource) selectedObject);
+//          if (folder != null) {
+//            RunPubJob job = new RunPubJob(folder.getResource(), RunPubJob.BUILD_COMMAND, false);
+//            job.schedule(0);
+//            return null;
+//          }
+//          DartCore.getConsole().println(
+//              "Error: Could not run pub build. Use Run Tools > Pub Build to build Polymer app");
+//        }
+//      }
+//    }
     return null;
   }
 }

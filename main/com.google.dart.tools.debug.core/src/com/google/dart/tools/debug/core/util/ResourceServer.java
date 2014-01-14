@@ -16,7 +16,6 @@ package com.google.dart.tools.debug.core.util;
 
 import com.google.common.io.CharStreams;
 import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.internal.model.DartProjectNature;
 import com.google.dart.tools.core.utilities.net.NetUtils;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 
@@ -190,8 +189,10 @@ public class ResourceServer implements IResourceResolver {
     if (!previousAgents.contains(userAgent)) {
       previousAgents.add(userAgent);
 
-      DartCore.getConsole().println(
-          "Remote connection from " + hostAddress + " [" + userAgent + "]");
+//&&&      
+//      DartCore.getConsole().println(
+//          "Remote connection from " + hostAddress + " [" + userAgent + "]");
+      DartDebugCorePlugin.log("Remote connection from " + hostAddress + " [" + userAgent + "]");
     }
   }
 
@@ -199,28 +200,30 @@ public class ResourceServer implements IResourceResolver {
     final List<IFile> files = new ArrayList<IFile>();
 
     for (IProject project : ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
-      if (DartProjectNature.hasDartNature(project)) {
-        try {
-          project.accept(new IResourceVisitor() {
-            @Override
-            public boolean visit(IResource resource) throws CoreException {
-              if (resource instanceof IFile) {
-                IFile file = (IFile) resource;
+//&&&      
+//      if (DartProjectNature.hasDartNature(project)) {
+      try {
+        project.accept(new IResourceVisitor() {
+          @Override
+          public boolean visit(IResource resource) throws CoreException {
+            if (resource instanceof IFile) {
+              IFile file = (IFile) resource;
 
-                if (DartCore.isHtmlLikeFileName(file.getName())) {
-                  files.add(file);
-                } else if ("crx".equals(file.getFileExtension())) {
-                  files.add(file);
-                }
+              if (DartCore.isHtmlLikeFileName(file.getName())) {
+                files.add(file);
+              } else if ("crx".equals(file.getFileExtension())) {
+                files.add(file);
               }
-
-              return true;
             }
-          });
-        } catch (CoreException e) {
 
-        }
+            return true;
+          }
+        });
+      } catch (CoreException e) {
+
       }
+//&&&        
+//      }
     }
 
     return files;

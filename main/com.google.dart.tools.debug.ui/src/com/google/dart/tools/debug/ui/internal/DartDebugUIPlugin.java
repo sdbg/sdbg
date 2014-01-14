@@ -15,7 +15,6 @@ package com.google.dart.tools.debug.ui.internal;
 
 import com.google.dart.tools.debug.ui.internal.objectinspector.InspectorActionFilter;
 import com.google.dart.tools.debug.ui.internal.presentation.DebugElementAdapterFactory;
-import com.google.dart.tools.debug.ui.internal.view.DebuggerViewManager;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -117,7 +116,7 @@ public class DartDebugUIPlugin extends AbstractUIPlugin {
     InspectorActionFilter.registerAdapters();
 
     // Initialize the DebuggerViewManager.
-    DebuggerViewManager.getDefault();
+//&&&    DebuggerViewManager.getDefault();
 
     // Install our user agent manager.
     DartDebugUserAgentManager.install();
@@ -128,7 +127,7 @@ public class DartDebugUIPlugin extends AbstractUIPlugin {
    */
   @Override
   public void stop(BundleContext context) throws Exception {
-    DebuggerViewManager.dispose();
+//&&&    DebuggerViewManager.dispose();
 
     super.stop(context);
 

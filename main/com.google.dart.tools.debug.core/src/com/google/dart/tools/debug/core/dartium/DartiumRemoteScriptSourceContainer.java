@@ -123,7 +123,8 @@ public class DartiumRemoteScriptSourceContainer extends AbstractSourceContainer 
         url = url.substring(url.lastIndexOf('\\') + 1);
       }
 
-      File file = File.createTempFile(sanitizeFileName(url) + "$$", ".dart");
+      //&&&!!! File file = File.createTempFile(sanitizeFileName(url) + "$$", ".dart");
+      File file = File.createTempFile("$$$", sanitizeFileName(url));
       file.deleteOnExit();
 
       Writer out = new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF8"));

@@ -15,8 +15,6 @@ package com.google.dart.tools.debug.core.configs;
 
 import com.google.dart.engine.utilities.instrumentation.InstrumentationBuilder;
 import com.google.dart.tools.core.DartCoreDebug;
-import com.google.dart.tools.core.model.DartSdkManager;
-import com.google.dart.tools.core.pub.IPackageRootProvider;
 import com.google.dart.tools.core.utilities.net.NetUtils;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
@@ -58,19 +56,21 @@ public class DartServerLaunchConfigurationDelegate extends DartLaunchConfigurati
     implements IRemoteConnectionDelegate {
   private static final int DEFAULT_PORT_NUMBER = 5858;
 
-  private IPackageRootProvider packageRootProvider;
+//&&&  
+//  private IPackageRootProvider packageRootProvider;
 
   /**
    * Create a new DartServerLaunchConfigurationDelegate.
    */
   public DartServerLaunchConfigurationDelegate() {
-    this(IPackageRootProvider.DEFAULT);
+    //&&&this(IPackageRootProvider.DEFAULT);
   }
 
-  public DartServerLaunchConfigurationDelegate(IPackageRootProvider packageRootProvider) {
-    this.packageRootProvider = packageRootProvider;
-  }
-
+  //&&&  
+//  public DartServerLaunchConfigurationDelegate(IPackageRootProvider packageRootProvider) {
+//    this.packageRootProvider = packageRootProvider;
+//  }
+//
   @Override
   public void doLaunch(ILaunchConfiguration configuration, String mode, ILaunch launch,
       IProgressMonitor monitor, InstrumentationBuilder instrumentation) throws CoreException {
@@ -139,15 +139,16 @@ public class DartServerLaunchConfigurationDelegate extends DartLaunchConfigurati
 
     String vmExecPath = "";
 
-    if (DartSdkManager.getManager().hasSdk()) {
-      File vmExec = DartSdkManager.getManager().getSdk().getVmExecutable();
-
-      if (vmExec != null) {
-        vmExecPath = vmExec.getAbsolutePath().toString();
-      }
-    } else {
-      vmExecPath = DartDebugCorePlugin.getPlugin().getDartVmExecutablePath();
-    }
+//&&&    
+//    if (DartSdkManager.getManager().hasSdk()) {
+//      File vmExec = DartSdkManager.getManager().getSdk().getVmExecutable();
+//
+//      if (vmExec != null) {
+//        vmExecPath = vmExec.getAbsolutePath().toString();
+//      }
+//    } else {
+    vmExecPath = DartDebugCorePlugin.getPlugin().getDartVmExecutablePath();
+//&&&    }
 
     if (vmExecPath.length() == 0) {
       throw new CoreException(
@@ -165,7 +166,7 @@ public class DartServerLaunchConfigurationDelegate extends DartLaunchConfigurati
       commandsList.add("--debug:" + connectionPort);
     }
 
-    File packageRoot = packageRootProvider.getPackageRoot(launchConfig.getProject());
+    File packageRoot = null; //&&&packageRootProvider.getPackageRoot(launchConfig.getProject());
     if (packageRoot != null) {
       String packageRootString = packageRoot.getAbsolutePath();
       String fileSeparator = System.getProperty("file.separator");

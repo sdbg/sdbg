@@ -16,8 +16,6 @@ package com.google.dart.tools.debug.core.util;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.analysis.model.IFileInfo;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 
 import org.eclipse.core.resources.IFile;
@@ -336,7 +334,8 @@ class ResourceServerHandler implements Runnable {
   }
 
   private HttpResponse addStandardResponseHeaders(HttpResponse response) {
-    response.headers.put("Server", "Dart Editor v" + DartCore.getVersion());
+    //&&&response.headers.put("Server", "Dart Editor v" + DartCore.getVersion());
+    response.headers.put("Server", "Script Debugger v0");
     response.headers.put("Connection", "close");
     return response;
   }
@@ -632,12 +631,14 @@ class ResourceServerHandler implements Runnable {
 
         if (arr != null) {
           for (int i = 0; i < arr.length(); i++) {
-            DartCore.getConsole().println(stripQuotes(arr.getString(i)));
+            //&&&DartCore.getConsole().println(stripQuotes(arr.getString(i)));
+            DartDebugCorePlugin.log(stripQuotes(arr.getString(i)));
           }
         } else {
           String log = obj.getString("message");
 
-          DartCore.getConsole().println(log);
+          //&&&DartCore.getConsole().println(log);
+          DartDebugCorePlugin.log(log);
         }
       }
     } catch (JSONException ex) {
@@ -752,18 +753,19 @@ class ResourceServerHandler implements Runnable {
 
     File file = new File(projectLocation.toFile(), childPath.toOSString());
 
-    if (!file.exists() && childPath.toString().contains(DartCore.PACKAGES_DIRECTORY_PATH)) {
-
-      int packagesIndex = childPath.toString().indexOf(DartCore.PACKAGES_DIRECTORY_PATH);
-      String pathString = childPath.toString().substring(
-          packagesIndex + DartCore.PACKAGES_DIRECTORY_PATH.length());
-      IFileInfo fileInfo = DartCore.getProjectManager().resolveUriToFileInfo(
-          project,
-          DartCore.PACKAGE_SCHEME_SPEC + pathString);
-      if (fileInfo != null) {
-        file = fileInfo.getFile();
-      }
-    }
+//&&&    
+//    if (!file.exists() && childPath.toString().contains(DartCore.PACKAGES_DIRECTORY_PATH)) {
+//
+//      int packagesIndex = childPath.toString().indexOf(DartCore.PACKAGES_DIRECTORY_PATH);
+//      String pathString = childPath.toString().substring(
+//          packagesIndex + DartCore.PACKAGES_DIRECTORY_PATH.length());
+//      IFileInfo fileInfo = DartCore.getProjectManager().resolveUriToFileInfo(
+//          project,
+//          DartCore.PACKAGE_SCHEME_SPEC + pathString);
+//      if (fileInfo != null) {
+//        file = fileInfo.getFile();
+//      }
+//    }
 
     return file.exists() ? file : null;
   }
@@ -775,7 +777,7 @@ class ResourceServerHandler implements Runnable {
     if (resource instanceof IFile) {
       IFile resourceFile = (IFile) resource;
 
-      String mappingPath = DartCore.getResourceRemapping(resourceFile);
+      String mappingPath = null; //&&&DartCore.getResourceRemapping(resourceFile);
 
       if (mappingPath != null) {
         IResource mappedResource = ResourcesPlugin.getWorkspace().getRoot().findMember(

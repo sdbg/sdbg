@@ -21,7 +21,7 @@ public class TestAll {
   public static Test suite() {
     TestSuite suite = new TestSuite("Tests in " + TestAll.class.getPackage().getName());
     suite.addTestSuite(VlqDecoderTest.class);
-    suite.addTestSuite(SourceMapTest.class);
+    //&&&suite.addTestSuite(SourceMapTest.class);
     return suite;
   }
 }

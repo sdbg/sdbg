@@ -13,7 +13,6 @@
  */
 package com.google.dart.tools.debug.ui.internal.browser;
 
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.util.LaunchTargetComposite;
@@ -218,12 +217,13 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
   }
 
   private String performSdkCheck() {
-    if (!DartSdkManager.getManager().hasSdk()) {
-      return "Dart2js is not installed ("
-          + DartSdkManager.getManager().getSdk().getDart2JsExecutable() + ")";
-    } else {
-      return null;
-    }
+//&&&    
+//    if (!DartSdkManager.getManager().hasSdk()) {
+//      return "Dart2js is not installed ("
+//          + DartSdkManager.getManager().getSdk().getDart2JsExecutable() + ")";
+//    } else {
+    return null;
+//    }
   }
 
   private void updateEnablements(boolean isFile) {

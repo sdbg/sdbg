@@ -13,8 +13,6 @@
  */
 package com.google.dart.tools.debug.ui.internal.util;
 
-import com.google.dart.tools.core.internal.model.DartProjectNature;
-
 import org.eclipse.core.expressions.PropertyTester;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IContainer;
@@ -98,6 +96,15 @@ public class DartPropertyTester extends PropertyTester {
     return resolvedResource != null ? resolvedResource : resource;
   }
 
+  protected boolean isDartProject(IResource resource) {
+    return false; //&&& DartProjectNature.hasDartNature(resource.getProject())
+    //&& resource == resource.getProject();
+  }
+
+  protected boolean isInDartProject(IResource resource) {
+    return false; //&&&DartProjectNature.hasDartNature(resource.getProject());
+  }
+
   @Override
   public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
     IResource resource = getAdapter(receiver, IResource.class);
@@ -117,15 +124,6 @@ public class DartPropertyTester extends PropertyTester {
     } else {
       return false;
     }
-  }
-
-  protected boolean isDartProject(IResource resource) {
-    return DartProjectNature.hasDartNature(resource.getProject())
-        && resource == resource.getProject();
-  }
-
-  protected boolean isInDartProject(IResource resource) {
-    return DartProjectNature.hasDartNature(resource.getProject());
   }
 
 }

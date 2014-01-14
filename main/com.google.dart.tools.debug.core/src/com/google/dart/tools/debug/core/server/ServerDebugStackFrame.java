@@ -14,8 +14,6 @@
 
 package com.google.dart.tools.debug.core.server;
 
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.core.expr.IExpressionEvaluator;
 import com.google.dart.tools.debug.core.expr.WatchExpressionResult;
 import com.google.dart.tools.debug.core.util.DebuggerUtils;
@@ -23,8 +21,6 @@ import com.google.dart.tools.debug.core.util.IDartStackFrame;
 import com.google.dart.tools.debug.core.util.IExceptionStackFrame;
 import com.google.dart.tools.debug.core.util.IVariableResolver;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IRegisterGroup;
@@ -238,13 +234,14 @@ public class ServerDebugStackFrame extends ServerDebugElement implements IStackF
     URI uri = URI.create(location.getUrl());
 
     // Resolve a package: reference.
-    if (DartCore.isPackageSpec(location.getUrl())) {
-      DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(
-          getDebugTarget().getLaunch().getLaunchConfiguration());
-
-      uri = resolvePackageUri(wrapper.getApplicationResource(), uri);
-    }
-
+//&&&    
+//    if (DartCore.isPackageSpec(location.getUrl())) {
+//      DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(
+//          getDebugTarget().getLaunch().getLaunchConfiguration());
+//
+//      uri = resolvePackageUri(wrapper.getApplicationResource(), uri);
+//    }
+//
     if (uri != null && "file".equals(uri.getScheme())) {
       return uri.getPath();
     } else {
@@ -302,6 +299,19 @@ public class ServerDebugStackFrame extends ServerDebugElement implements IStackF
     return false;
   }
 
+  //&&&  
+//  private URI resolvePackageUri(IResource resource, URI uri) {
+//    if (resource != null) {
+//      IFile file = DartCore.getProjectManager().resolvePackageUri(resource, uri.toString());
+//
+//      if (file != null) {
+//        return file.getLocation().toFile().toURI();
+//      }
+//    }
+//
+//    return null;
+//  }
+//
   @Override
   public void resume() throws DebugException {
     getThread().resume();
@@ -413,18 +423,6 @@ public class ServerDebugStackFrame extends ServerDebugElement implements IStackF
         return url.substring(index + 1);
       } else {
         return url;
-      }
-    }
-
-    return null;
-  }
-
-  private URI resolvePackageUri(IResource resource, URI uri) {
-    if (resource != null) {
-      IFile file = DartCore.getProjectManager().resolvePackageUri(resource, uri.toString());
-
-      if (file != null) {
-        return file.getLocation().toFile().toURI();
       }
     }
 

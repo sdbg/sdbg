@@ -14,8 +14,6 @@
 
 package com.google.dart.tools.debug.ui.internal.breakpoints;
 
-import com.google.dart.tools.core.DartCore;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
@@ -45,7 +43,8 @@ public class DartBreakpointAdapterFactory implements IAdapterFactory {
       if (resource != null) {
         String name = resource.getName().toLowerCase();
 
-        if (DartCore.isDartLikeFileName(name) || name.endsWith(".html") || name.endsWith(".htm")) {
+        if (/*&&&DartCore.isDartLikeFileName(name)*/name.endsWith(".html")
+            || name.endsWith(".htm")) {
           return new DartBreakpointAdapter();
         }
       }

@@ -13,7 +13,6 @@
  */
 package com.google.dart.tools.debug.ui.internal.dartium;
 
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.util.LaunchTargetComposite;
@@ -254,12 +253,13 @@ public class DartiumMainTab extends AbstractLaunchConfigurationTab {
   }
 
   private String performSdkCheck() {
-    if (!DartSdkManager.getManager().hasSdk()) {
-      return "Dartium is not installed ("
-          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
-    } else {
-      return null;
-    }
+//&&&    
+//    if (!DartSdkManager.getManager().hasSdk()) {
+//      return "Dartium is not installed ("
+//          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
+//    } else {
+    return null;
+//    }
   }
 
 }

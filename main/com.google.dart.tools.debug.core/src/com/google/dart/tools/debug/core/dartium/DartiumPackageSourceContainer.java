@@ -13,17 +13,13 @@
  */
 package com.google.dart.tools.debug.core.dartium;
 
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.analysis.model.IFileInfo;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.ISourceContainerType;
 import org.eclipse.debug.core.sourcelookup.containers.AbstractSourceContainer;
-import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 
 /**
  * A source container for Dartium that resolves package: urls to resources or files
@@ -40,26 +36,27 @@ public class DartiumPackageSourceContainer extends AbstractSourceContainer {
 
   @Override
   public Object[] findSourceElements(String name) throws CoreException {
-    if (!name.startsWith("package:")) {
-      return EMPTY;
-    }
-
-    IContainer parent = wrapper.getProject();
-
-    if (wrapper.getApplicationResource() != null) {
-      parent = wrapper.getApplicationResource().getParent();
-    }
-
-    IFileInfo fileInfo = DartCore.getProjectManager().resolveUriToFileInfo(parent, name);
-
-    if (fileInfo != null) {
-      if (fileInfo.getResource() != null) {
-        return new Object[] {fileInfo.getResource()};
-      } else {
-        return new Object[] {new LocalFileStorage(fileInfo.getFile())};
-      }
-    }
-
+//&&&    
+//    if (!name.startsWith("package:")) {
+//      return EMPTY;
+//    }
+//
+//    IContainer parent = wrapper.getProject();
+//
+//    if (wrapper.getApplicationResource() != null) {
+//      parent = wrapper.getApplicationResource().getParent();
+//    }
+//
+//    IFileInfo fileInfo = DartCore.getProjectManager().resolveUriToFileInfo(parent, name);
+//
+//    if (fileInfo != null) {
+//      if (fileInfo.getResource() != null) {
+//        return new Object[] {fileInfo.getResource()};
+//      } else {
+//        return new Object[] {new LocalFileStorage(fileInfo.getFile())};
+//      }
+//    }
+//
     return EMPTY;
   }
 

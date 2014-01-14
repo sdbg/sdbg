@@ -14,68 +14,58 @@
 
 package com.google.dart.tools.debug.ui.internal.objectinspector;
 
-import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
-import com.google.dart.tools.ui.instrumentation.UIInstrumentation;
-import com.google.dart.tools.ui.instrumentation.UIInstrumentationBuilder;
-import com.google.dart.tools.ui.internal.util.SelectionUtil;
-
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.model.IValue;
-import org.eclipse.debug.core.model.IVariable;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IObjectActionDelegate;
-import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * Open an object inspector on the given object selection.
  */
-public class OpenNewInspectorAction implements IObjectActionDelegate {
-  private ISelection selection;
-
-  public OpenNewInspectorAction() {
-
-  }
-
-  @Override
-  public void run(IAction action) {
-    if (selection != null) {
-      UIInstrumentationBuilder instrumentation = UIInstrumentation.builder(getClass());
-
-      try {
-        instrumentation.record(selection);
-
-        Object obj = SelectionUtil.getSingleElement(selection);
-
-        if (obj instanceof IVariable) {
-          IVariable variable = (IVariable) obj;
-
-          try {
-            ObjectInspectorView.inspect(variable.getValue(), true);
-          } catch (DebugException e) {
-            DartDebugUIPlugin.logError(e);
-          }
-        } else if (obj instanceof IValue) {
-          IValue value = (IValue) obj;
-
-          ObjectInspectorView.inspect(value, true);
-        }
-
-        instrumentation.metric("Inspect", "Completed");
-      } finally {
-        instrumentation.log();
-      }
-    }
-  }
-
-  @Override
-  public void selectionChanged(IAction action, ISelection selection) {
-    this.selection = selection;
-  }
-
-  @Override
-  public void setActivePart(IAction action, IWorkbenchPart targetPart) {
-
-  }
-
+public/*&&&*/abstract class OpenNewInspectorAction implements IObjectActionDelegate {
+//&&& PRobably not really needed  
+//  private ISelection selection;
+//
+//  public OpenNewInspectorAction() {
+//
+//  }
+//
+//  @Override
+//  public void run(IAction action) {
+//    if (selection != null) {
+//      UIInstrumentationBuilder instrumentation = UIInstrumentation.builder(getClass());
+//
+//      try {
+//        instrumentation.record(selection);
+//
+//        Object obj = SelectionUtil.getSingleElement(selection);
+//
+//        if (obj instanceof IVariable) {
+//          IVariable variable = (IVariable) obj;
+//
+//          try {
+//            ObjectInspectorView.inspect(variable.getValue(), true);
+//          } catch (DebugException e) {
+//            DartDebugUIPlugin.logError(e);
+//          }
+//        } else if (obj instanceof IValue) {
+//          IValue value = (IValue) obj;
+//
+//          ObjectInspectorView.inspect(value, true);
+//        }
+//
+//        instrumentation.metric("Inspect", "Completed");
+//      } finally {
+//        instrumentation.log();
+//      }
+//    }
+//  }
+//
+//  @Override
+//  public void selectionChanged(IAction action, ISelection selection) {
+//    this.selection = selection;
+//  }
+//
+//  @Override
+//  public void setActivePart(IAction action, IWorkbenchPart targetPart) {
+//
+//  }
+//
 }

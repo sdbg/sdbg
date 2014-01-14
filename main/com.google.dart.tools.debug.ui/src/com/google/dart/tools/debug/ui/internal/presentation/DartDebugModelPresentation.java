@@ -14,7 +14,6 @@
 package com.google.dart.tools.debug.ui.internal.presentation;
 
 import com.google.common.io.CharStreams;
-import com.google.dart.tools.debug.core.breakpoints.DartBreakpoint;
 import com.google.dart.tools.debug.core.dartium.DartiumDebugValue;
 import com.google.dart.tools.debug.core.server.ServerDebugValue;
 import com.google.dart.tools.debug.core.source.DartNoSourceFoundElement;
@@ -24,13 +23,13 @@ import com.google.dart.tools.debug.core.util.IExceptionStackFrame;
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
 import com.google.dart.tools.debug.ui.internal.util.DebuggerEditorInput;
-import com.google.dart.tools.ui.internal.viewsupport.DartElementImageProvider;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IStackFrame;
 import org.eclipse.debug.core.model.IValue;
@@ -142,6 +141,13 @@ public class DartDebugModelPresentation implements IDebugModelPresentation,
     }
 
     if (element instanceof LocalFileStorage) {
+      //&&&!!!
+      try {
+        return IDE.getEditorDescriptor(((LocalFileStorage) element).getFile().getAbsolutePath()).getId();
+      } catch (PartInitException e) {
+
+      }
+
       return DART_EDITOR_ID;
     }
 
@@ -228,9 +234,12 @@ public class DartDebugModelPresentation implements IDebugModelPresentation,
       } else if (element instanceof IDartStackFrame) {
         IDartStackFrame frame = (IDartStackFrame) element;
 
-        Image image = DartDebugUIPlugin.getImage(DartElementImageProvider.getMethodImageDescriptor(
-            false,
-            frame.isPrivate()));
+        //&&&!!!
+        Image image = DartDebugUIPlugin.getImage("obj16/field_public.png"); // TODO: Copy over the images for methods
+//&&&        
+//        Image image = DartDebugUIPlugin.getImage(DartElementImageProvider.getMethodImageDescriptor(
+//            false,
+//            frame.isPrivate()));
 
         if (frame.isUsingSourceMaps()) {
           DecorationOverlayIcon overlayDescriptor = new DecorationOverlayIcon(
@@ -242,8 +251,8 @@ public class DartDebugModelPresentation implements IDebugModelPresentation,
         }
 
         return image;
-      } else if (element instanceof DartBreakpoint) {
-        return getBreakpointImage((DartBreakpoint) element);
+      } else if (element instanceof IBreakpoint) {
+        return getBreakpointImage((IBreakpoint) element);
       } else {
         return null;
       }
@@ -314,8 +323,8 @@ public class DartDebugModelPresentation implements IDebugModelPresentation,
 
   @Override
   public String getText(Object element) {
-    if (element instanceof DartBreakpoint) {
-      DartBreakpoint bp = (DartBreakpoint) element;
+    if (element instanceof IBreakpoint) {
+      IBreakpoint bp = (IBreakpoint) element;
 
       return getBreakpointText(bp);
     }
@@ -367,18 +376,25 @@ public class DartDebugModelPresentation implements IDebugModelPresentation,
    * @param bp
    * @return
    */
-  protected String getBreakpointText(DartBreakpoint bp) {
-    String text = bp.getFile().getProject().getName() + ", "
-        + bp.getFile().getProjectRelativePath().toPortableString() + ", line "
-        + NumberFormat.getNumberInstance().format(bp.getLine());
+  protected String getBreakpointText(IBreakpoint bp) {
+    try {
+      String text = bp.getMarker().getResource().getProject().getName() + ", "
+          + bp.getMarker().getResource().getProjectRelativePath().toPortableString();
 
-    String lineInfo = getLineExtract(bp);
+      if (bp instanceof ILineBreakpoint) {
+        text += ", line "
+            + NumberFormat.getNumberInstance().format(((ILineBreakpoint) bp).getLineNumber());
 
-    if (lineInfo != null) {
-      text = text + ", '" + lineInfo + "'";
+        String lineInfo = getLineExtract((ILineBreakpoint) bp);
+        if (lineInfo != null) {
+          text = text + ", '" + lineInfo + "'";
+        }
+      }
+
+      return text;
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
     }
-
-    return text;
   }
 
   /**
@@ -418,21 +434,27 @@ public class DartDebugModelPresentation implements IDebugModelPresentation,
     }
   }
 
-  private Image getBreakpointImage(DartBreakpoint bp) {
-    if (bp.isBreakpointEnabled()) {
-      return DartDebugUIPlugin.getImage("obj16/brkp_obj.png");
-    } else {
-      return DartDebugUIPlugin.getImage("obj16/brkpd_obj.png");
+  private Image getBreakpointImage(IBreakpoint bp) {
+    try {
+      if (bp.isEnabled()) {
+        return DartDebugUIPlugin.getImage("obj16/brkp_obj.png");
+      } else {
+        return DartDebugUIPlugin.getImage("obj16/brkpd_obj.png");
+      }
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  private String getLineExtract(DartBreakpoint bp) {
+  private String getLineExtract(ILineBreakpoint bp) {
     try {
-      Reader r = new InputStreamReader(bp.getFile().getContents(), bp.getFile().getCharset());
+      Reader r = new InputStreamReader(
+          ((IFile) bp.getMarker().getResource()).getContents(),
+          ((IFile) bp.getMarker().getResource()).getCharset());
 
       List<String> lines = CharStreams.readLines(r);
 
-      int line = bp.getLine() - 1;
+      int line = bp.getLineNumber() - 1;
 
       if (line > 0 && line < lines.size()) {
         String lineStr = lines.get(line).trim();

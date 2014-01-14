@@ -16,7 +16,6 @@ package com.google.dart.tools.debug.core.configs;
 
 import com.google.dart.engine.utilities.instrumentation.InstrumentationBuilder;
 import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.core.utilities.net.NetUtils;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
@@ -187,7 +186,9 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
 
     boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
 
-    File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
+    //&&&File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
+    File dartium = new File(
+        "C:\\Users\\ivan\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe");
 
     if (dartium == null) {
       throw new CoreException(new Status(

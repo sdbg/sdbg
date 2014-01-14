@@ -16,7 +16,6 @@ package com.google.dart.tools.debug.ui.internal.view;
 
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
-import com.google.dart.tools.debug.ui.internal.objectinspector.ObjectInspectorView;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
@@ -55,7 +54,7 @@ public class ShowInspectorAction extends Action {
         }
 
         if (obj instanceof IValue) {
-          ObjectInspectorView.inspect((IValue) obj);
+          //&&&ObjectInspectorView.inspect((IValue) obj);
           return;
         }
       }

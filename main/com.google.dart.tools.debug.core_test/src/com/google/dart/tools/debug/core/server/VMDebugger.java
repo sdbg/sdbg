@@ -14,7 +14,7 @@
 package com.google.dart.tools.debug.core.server;
 
 import com.google.common.base.Charsets;
-import com.google.dart.tools.core.model.DartSdkManager;
+import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.configs.DartServerLaunchConfigurationDelegate;
 
 import org.eclipse.core.runtime.CoreException;
@@ -43,7 +43,8 @@ public class VMDebugger {
 
   public void connect(String scriptPath) throws IOException, CoreException {
     ProcessBuilder builder = new ProcessBuilder(
-        DartSdkManager.getManager().getSdk().getVmExecutable().getPath(),
+    //&&&DartSdkManager.getManager().getSdk().getVmExecutable().getPath(),
+        DartDebugCorePlugin.getPlugin().getDartVmExecutablePath(),
         "--debug:0",
         scriptPath);
 

@@ -14,7 +14,6 @@
 
 package com.google.dart.tools.debug.core;
 
-import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.dartium.DartiumDebugTarget;
 
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -81,7 +80,8 @@ public abstract class DebugUIHelper {
 
     if (elements.length > 0) {
       if (elements.length > 1) {
-        DartCore.logError("Error, more then one debug UI helper contributed", null);
+        //&&&DartCore.logError("Error, more then one debug UI helper contributed", null);
+        DartDebugCorePlugin.logError("Error, more then one debug UI helper contributed", null);
       }
 
       IConfigurationElement element = elements[0];

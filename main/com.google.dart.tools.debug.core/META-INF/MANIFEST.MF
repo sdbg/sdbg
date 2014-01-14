@@ -8,10 +8,13 @@ Bundle-Activator: com.google.dart.tools.debug.core.DartDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.debug.core,
- com.google.dart.tools.core
+ com.google.dart.thirdparty;visibility:=reexport
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Export-Package: com.google.dart.tools.debug.core,
+Export-Package: com.google.dart.engine.utilities.instrumentation,
+ com.google.dart.tools.core,
+ com.google.dart.tools.core.utilities.net,
+ com.google.dart.tools.debug.core,
  com.google.dart.tools.debug.core.breakpoints,
  com.google.dart.tools.debug.core.configs,
  com.google.dart.tools.debug.core.dartium;x-friends:="com.google.dart.tools.debug.ui,com.google.dart.tools.debug.core_test",

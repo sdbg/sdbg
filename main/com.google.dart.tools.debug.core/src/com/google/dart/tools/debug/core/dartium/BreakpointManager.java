@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2012, the Dart project authors.
- *
+ * 
  * Licensed under the Eclipse Public License v1.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
- *
+ * 
  * http://www.eclipse.org/legal/epl-v10.html
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software distributed under the License
  * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
  * or implied. See the License for the specific language governing permissions and limitations under
@@ -14,10 +14,7 @@
 
 package com.google.dart.tools.debug.core.dartium;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
-import com.google.dart.tools.debug.core.breakpoints.DartBreakpoint;
 import com.google.dart.tools.debug.core.util.IResourceResolver;
 import com.google.dart.tools.debug.core.webkit.WebkitBreakpoint;
 import com.google.dart.tools.debug.core.webkit.WebkitCallback;
@@ -25,14 +22,15 @@ import com.google.dart.tools.debug.core.webkit.WebkitLocation;
 import com.google.dart.tools.debug.core.webkit.WebkitResult;
 import com.google.dart.tools.debug.core.webkit.WebkitScript;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IMarkerDelta;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointListener;
 import org.eclipse.debug.core.model.IBreakpoint;
+import org.eclipse.debug.core.model.ILineBreakpoint;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,16 +41,16 @@ import java.util.Map;
 /**
  * Handle adding a removing breakpoints to the WebKit connection for the DartiumDebugTarget class.
  */
-public class BreakpointManager implements IBreakpointListener {
-  private static String PACKAGES_DIRECTORY_PATH = "/packages/";
-  private static String LIB_DIRECTORY_PATH = "/lib/";
+class BreakpointManager implements IBreakpointListener {
 
+//&&&  
+//  private static String PACKAGES_DIRECTORY_PATH = "/packages/";
+//  private static String LIB_DIRECTORY_PATH = "/lib/";
+//
   private DartiumDebugTarget debugTarget;
 
-  private Map<IBreakpoint, List<String>>
-      breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
-  private Map<String, DartBreakpoint>
-      breakpointsToUpdateMap = new HashMap<String, DartBreakpoint>();
+  private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
+  private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
 
   private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
 
@@ -64,7 +62,7 @@ public class BreakpointManager implements IBreakpointListener {
   public void breakpointAdded(IBreakpoint breakpoint) {
     if (debugTarget.supportsBreakpoint(breakpoint)) {
       try {
-        addBreakpoint((DartBreakpoint) breakpoint);
+        addBreakpoint(breakpoint);
       } catch (IOException exception) {
         if (!debugTarget.isTerminated()) {
           DartDebugCorePlugin.logError(exception);
@@ -91,7 +89,7 @@ public class BreakpointManager implements IBreakpointListener {
   @Override
   public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
     if (debugTarget.supportsBreakpoint(breakpoint)) {
-      List<String> breakpointIds = breakpointToIdMap.get(breakpoint);
+      List<String> breakpointIds = breakpointToIdMap.remove(breakpoint);
 
       if (breakpointIds != null) {
         for (String breakpointId : breakpointIds) {
@@ -110,12 +108,12 @@ public class BreakpointManager implements IBreakpointListener {
   }
 
   public void connect() throws IOException {
-    IBreakpoint[] breakpoints = DebugPlugin.getDefault()
-        .getBreakpointManager().getBreakpoints(DartDebugCorePlugin.DEBUG_MODEL_ID);
+    IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
+    // &&&!!! DartDebugCorePlugin.DEBUG_MODEL_ID);
 
     for (IBreakpoint breakpoint : breakpoints) {
       if (debugTarget.supportsBreakpoint(breakpoint)) {
-        addBreakpoint((DartBreakpoint) breakpoint);
+        addBreakpoint(breakpoint);
       }
     }
 
@@ -145,65 +143,72 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-  public DartBreakpoint getBreakpointFor(WebkitLocation location) {
-    IBreakpoint[] breakpoints = DebugPlugin.getDefault()
-        .getBreakpointManager().getBreakpoints(DartDebugCorePlugin.DEBUG_MODEL_ID);
+  public IBreakpoint getBreakpointFor(WebkitLocation location) {
+    try {
+      IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
+          DartDebugCorePlugin.DEBUG_MODEL_ID);
 
-    WebkitScript script = debugTarget.getWebkitConnection()
-        .getDebugger().getScript(location.getScriptId());
+      WebkitScript script = debugTarget.getWebkitConnection().getDebugger().getScript(
+          location.getScriptId());
 
-    if (script == null) {
-      return null;
-    }
+      if (script == null) {
+        return null;
+      }
 
-    String url = script.getUrl();
-    int line = WebkitLocation.webkitToElipseLine(location.getLineNumber());
+      String url = script.getUrl();
+      int line = WebkitLocation.webkitToElipseLine(location.getLineNumber());
 
-    for (IBreakpoint bp : breakpoints) {
-      if (debugTarget.supportsBreakpoint(bp)) {
-        DartBreakpoint breakpoint = (DartBreakpoint) bp;
+      for (IBreakpoint bp : breakpoints) {
+        if (debugTarget.supportsBreakpoint(bp) && bp instanceof ILineBreakpoint) {
+          ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
 
-        if (breakpoint.getLine() == line) {
-          String bpUrl = getResourceResolver().getUrlForResource(breakpoint.getFile());
+          if (breakpoint.getLineNumber() == line) {
+            String bpUrl = getResourceResolver().getUrlForResource(
+                breakpoint.getMarker().getResource());
 
-          if (bpUrl != null && bpUrl.equals(url)) {
-            return breakpoint;
+            if (bpUrl != null && bpUrl.equals(url)) {
+              return breakpoint;
+            }
           }
         }
       }
-    }
 
-    return null;
+      return null;
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  @VisibleForTesting
-  public String getPackagePath(String regex, IFile resource) {
-    Path path = new Path(regex);
-    int i = 0;
-    if (regex.indexOf(LIB_DIRECTORY_PATH) != -1) {
-      // remove all segments after "lib", they show path in the package
-      while (i < path.segmentCount() && !path.segment(i).equals("lib")) {
-        i++;
-      }
-    } else {
-      i = 1;
-    }
-    String filePath = regex;
-    if (path.segmentCount() > i + 1) {
-      filePath = new Path(regex).removeLastSegments(path.segmentCount() - (i + 1)).toString();
-    }
+//&&&  
+//  @VisibleForTesting
+//  public String getPackagePath(String regex, IFile resource) {
+//    Path path = new Path(regex);
+//    int i = 0;
+//    if (regex.indexOf(LIB_DIRECTORY_PATH) != -1) {
+//      // remove all segments after "lib", they show path in the package
+//      while (i < path.segmentCount() && !path.segment(i).equals("lib")) {
+//        i++;
+//      }
+//    } else {
+//      i = 1;
+//    }
+//    String filePath = regex;
+//    if (path.segmentCount() > i + 1) {
+//      filePath = new Path(regex).removeLastSegments(path.segmentCount() - (i + 1)).toString();
+//    }
+//
+//    String packagePath = resolvePathToPackage(resource, filePath);
+//    if (packagePath != null) {
+//      packagePath += "/" + path.removeFirstSegments(i + 1);
+//    }
+//    return packagePath;
+//  }
 
-    String packagePath = resolvePathToPackage(resource, filePath);
-    if (packagePath != null) {
-      packagePath += "/" + path.removeFirstSegments(i + 1);
-    }
-    return packagePath;
-  }
-
-  @VisibleForTesting
-  protected String resolvePathToPackage(IFile resource, String filePath) {
-    return DartCore.getProjectManager().resolvePathToPackage(resource, filePath);
-  }
+//&&&  
+//  @VisibleForTesting
+//  protected String resolvePathToPackage(IFile resource, String filePath) {
+//    return DartCore.getProjectManager().resolvePathToPackage(resource, filePath);
+//  }
 
   void addToBreakpointMap(IBreakpoint breakpoint, String id, boolean trackChanges) {
     synchronized (breakpointToIdMap) {
@@ -214,124 +219,159 @@ public class BreakpointManager implements IBreakpointListener {
       breakpointToIdMap.get(breakpoint).add(id);
 
       if (trackChanges) {
-        breakpointsToUpdateMap.put(id, (DartBreakpoint) breakpoint);
+        breakpointsToUpdateMap.put(id, breakpoint);
       }
     }
   }
 
   void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
-    DartBreakpoint breakpoint = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
+    try {
+      IBreakpoint bp = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
 
-    if (breakpoint != null) {
-      int eclipseLine = WebkitLocation.webkitToElipseLine(
-          webkitBreakpoint.getLocation().getLineNumber());
+      if (bp != null && bp instanceof ILineBreakpoint) {
+        ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
 
-      if (breakpoint.getLine() != eclipseLine) {
-        ignoredBreakpoints.add(breakpoint);
+        int eclipseLine = WebkitLocation.webkitToElipseLine(webkitBreakpoint.getLocation().getLineNumber());
 
-        String message = "[breakpoint in " + breakpoint.getFile().getName() + " moved from line "
-            + breakpoint.getLine() + " to " + eclipseLine + "]";
-        debugTarget.writeToStdout(message);
+        if (breakpoint.getLineNumber() != eclipseLine) {
+          ignoredBreakpoints.add(breakpoint);
 
-        breakpoint.updateLineNumber(eclipseLine);
+          String message = "[breakpoint in " + breakpoint.getMarker().getResource().getName()
+              + " moved from line " + breakpoint.getLineNumber() + " to " + eclipseLine + "]";
+          debugTarget.writeToStdout(message);
+
+          breakpoint.getMarker().setAttribute(IMarker.LINE_NUMBER, eclipseLine);
+        }
       }
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
     }
   }
 
   void handleGlobalObjectCleared() {
-
+    //&&&!!! Breakpoints' cleanup code should be present here?!
+    System.out.println("!!!");
   }
 
-  private void addBreakpoint(final DartBreakpoint breakpoint) throws IOException {
-    if (breakpoint.isBreakpointEnabled()) {
-      String regex = getResourceResolver().getUrlRegexForResource(breakpoint.getFile());
-
-      if (regex == null) {
-        return;
-      }
-
-      int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLine());
-
-      int packagesIndex = regex.indexOf(PACKAGES_DIRECTORY_PATH);
-
-      if (packagesIndex != -1) {
-        // convert xxx/packages/foo/foo.dart to *foo/foo.dart
-        regex = regex.substring(packagesIndex + PACKAGES_DIRECTORY_PATH.length());
-      } else if (isInSelfLinkedLib(breakpoint.getFile())) {
-        // Check if source is located in the "lib" directory; if there is a link to it from the 
-        // packages directory breakpoint should be /packages/...
-        String packageName = DartCore.getSelfLinkedPackageName(breakpoint.getFile());
-
-        if (packageName != null) {
-          // Create a breakpoint for self-links.
-          int libIndex = regex.lastIndexOf(LIB_DIRECTORY_PATH);
-          String packageRegex = packageName + "/"
-              + regex.substring(libIndex + LIB_DIRECTORY_PATH.length());
-
-          debugTarget.getWebkitConnection().getDebugger()
-              .setBreakpointByUrl(null, packageRegex, line, -1, new WebkitCallback<String>() {
-                @Override
-                public void handleResult(WebkitResult<String> result) {
-                  if (!result.isError()) {
-                    addToBreakpointMap(breakpoint, result.getResult(), false);
-                  }
-                }
-              });
+  void updateBreakpointsConcerningScript(IStorage script) {
+    SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+    for (IStorage source : sourceMapManager.getSources(script)) {
+      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+        if (source.equals(breakpoint.getMarker().getResource())) {
+          breakpointRemoved(breakpoint, null/*delta*/);
+          breakpointAdded(breakpoint);
         }
       }
+    }
+  }
 
-      // check if it is a file in a package, if so replace regex with package uri path
-      // TODO(keertip): revisit when moved to calling pub for package info
-      String packagePath = getPackagePath(regex, breakpoint.getFile());
-      if (packagePath != null) {
-        regex = packagePath;
-      }
+  private void addBreakpoint(final IBreakpoint bp) throws IOException {
+    try {
+      if (bp.isEnabled() && bp instanceof ILineBreakpoint) {
+        final ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
 
-      debugTarget.getWebkitConnection()
-          .getDebugger().setBreakpointByUrl(null, regex, line, -1, new WebkitCallback<String>() {
-            @Override
-            public void handleResult(WebkitResult<String> result) {
-              if (!result.isError()) {
-                addToBreakpointMap(breakpoint, result.getResult(), true);
+        String regex = getResourceResolver().getUrlRegexForResource(
+            breakpoint.getMarker().getResource());
+
+        if (regex == null) {
+          return;
+        }
+
+        int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLineNumber());
+
+//&&&      
+//      int packagesIndex = regex.indexOf(PACKAGES_DIRECTORY_PATH);
+//
+//      if (packagesIndex != -1) {
+//        // convert xxx/packages/foo/foo.dart to *foo/foo.dart
+//        regex = regex.substring(packagesIndex + PACKAGES_DIRECTORY_PATH.length());
+//      } else if (isInSelfLinkedLib(breakpoint.getFile())) {
+//        // Check if source is located in the "lib" directory; if there is a link to it from the 
+//        // packages directory breakpoint should be /packages/...
+//        String packageName = DartCore.getSelfLinkedPackageName(breakpoint.getFile());
+//
+//        if (packageName != null) {
+//          // Create a breakpoint for self-links.
+//          int libIndex = regex.lastIndexOf(LIB_DIRECTORY_PATH);
+//          String packageRegex = packageName + "/"
+//              + regex.substring(libIndex + LIB_DIRECTORY_PATH.length());
+//
+//          debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
+//              null,
+//              packageRegex,
+//              line,
+//              -1,
+//              new WebkitCallback<String>() {
+//                @Override
+//                public void handleResult(WebkitResult<String> result) {
+//                  if (!result.isError()) {
+//                    addToBreakpointMap(breakpoint, result.getResult(), false);
+//                  }
+//                }
+//              });
+//        }
+//      }
+//
+        debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
+            null,
+            regex,
+            line,
+            -1,
+            new WebkitCallback<String>() {
+              @Override
+              public void handleResult(WebkitResult<String> result) {
+                if (!result.isError()) {
+                  addToBreakpointMap(breakpoint, result.getResult(), true);
+                }
               }
+            });
+
+        // Handle source mapped breakpoints - set an additional breakpoint if the file is under
+        // source mapping.
+        SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+
+        if (sourceMapManager.isMapTarget((IFile) breakpoint.getMarker().getResource())) {
+          List<SourceMapManager.SourceLocation> locations = sourceMapManager.getReverseMappingsFor(
+              (IFile) breakpoint.getMarker().getResource(),
+              line);
+
+          for (SourceMapManager.SourceLocation location : locations) {
+            String mappedRegex;
+            // &&&!!!
+            if (location.getStorage() instanceof IFile) {
+              mappedRegex = getResourceResolver().getUrlRegexForResource(
+                  (IFile) location.getStorage());
+            } else {
+              mappedRegex = location.getStorage().getFullPath().toPortableString();
             }
-          });
 
-      // Handle source mapped breakpoints - set an additional breakpoint if the file is under
-      // source mapping.
-      SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+            if (mappedRegex != null) {
+              if (DartDebugCorePlugin.LOGGING) {
+                System.out.println("breakpoint [" + regex + ","
+                    + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
+                    + ",-1] ==> mapped to [" + mappedRegex + "," + location.getLine() + ","
+                    + location.getColumn() + "]");
+              }
 
-      if (sourceMapManager.isMapTarget(breakpoint.getFile())) {
-        List<SourceMapManager.SourceLocation> locations = sourceMapManager.getReverseMappingsFor(
-            breakpoint.getFile(),
-            line);
-
-        for (SourceMapManager.SourceLocation location : locations) {
-          String mappedRegex = getResourceResolver().getUrlRegexForResource(location.getFile());
-
-          if (mappedRegex != null) {
-            if (DartDebugCorePlugin.LOGGING) {
-              System.out.println(
-                  "breakpoint [" + regex + "," + breakpoint.getLine() + ",-1] ==> mapped to ["
-                      + mappedRegex + "," + location.getLine() + "," + location.getColumn() + "]");
-            }
-
-            debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
-                null,
-                mappedRegex,
-                location.getLine(),
-                location.getColumn(),
-                new WebkitCallback<String>() {
-                  @Override
-                  public void handleResult(WebkitResult<String> result) {
-                    if (!result.isError()) {
-                      addToBreakpointMap(breakpoint, result.getResult(), false);
+              debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
+                  null,
+                  mappedRegex,
+                  location.getLine(),
+                  location.getColumn(),
+                  new WebkitCallback<String>() {
+                    @Override
+                    public void handleResult(WebkitResult<String> result) {
+                      if (!result.isError()) {
+                        addToBreakpointMap(breakpoint, result.getResult(), false);
+                      }
                     }
-                  }
-                });
+                  });
+            }
           }
         }
       }
+    } catch (CoreException e) {
+      throw new IOException(e);
     }
   }
 
@@ -339,30 +379,31 @@ public class BreakpointManager implements IBreakpointListener {
     return debugTarget.getResourceResolver();
   }
 
-  private boolean isInSelfLinkedLib(IFile file) {
-    if (file == null) {
-      return false;
-    }
-
-    return isPubLib(file.getParent());
-  }
-
-  private boolean isPubLib(IContainer container) {
-    if (container.getParent() == null) {
-      return false;
-    }
-
-    if (container.getName().equals("lib")) {
-      if (DartCore.isApplicationDirectory(container.getParent())) {
-        return true;
-      }
-    }
-
-    if (container.getParent() instanceof IWorkspaceRoot) {
-      return false;
-    }
-
-    return isPubLib(container.getParent());
-  }
-
+//&&&  
+//  private boolean isInSelfLinkedLib(IFile file) {
+//    if (file == null) {
+//      return false;
+//    }
+//
+//    return isPubLib(file.getParent());
+//  }
+//
+//  private boolean isPubLib(IContainer container) {
+//    if (container.getParent() == null) {
+//      return false;
+//    }
+//
+//    if (container.getName().equals("lib")) {
+//      if (DartCore.isApplicationDirectory(container.getParent())) {
+//        return true;
+//      }
+//    }
+//
+//    if (container.getParent() instanceof IWorkspaceRoot) {
+//      return false;
+//    }
+//
+//    return isPubLib(container.getParent());
+//  }
+//
 }

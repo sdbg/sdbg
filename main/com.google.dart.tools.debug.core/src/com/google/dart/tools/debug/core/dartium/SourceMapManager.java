@@ -18,25 +18,31 @@ import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.source.WorkspaceSourceContainer;
 import com.google.dart.tools.debug.core.sourcemaps.SourceMap;
 import com.google.dart.tools.debug.core.sourcemaps.SourceMapInfo;
-import com.google.dart.tools.debug.core.util.ResourceChangeManager;
-import com.google.dart.tools.debug.core.util.ResourceChangeParticipant;
+import com.google.dart.tools.debug.core.util.IResourceResolver;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
-import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.core.runtime.URIUtil;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 // TODO(devoncarew): use the symbol name information in the maps?
 // it's possible this will help us de-mangle the method names for frames
@@ -50,106 +56,150 @@ import java.util.Map;
  * 
  * @see SourceMap
  */
-public class SourceMapManager implements ResourceChangeParticipant {
+//&&&!!!
+public class SourceMapManager {
 
   public static class SourceLocation {
-    public IFile file;
-    public int line;
-    public int column;
+    private IStorage storage; // TODO: Besides this, an IPath member is needed, because the storage may not always get resolved
+    private int line;
+    private int column;
+    private String name;
 
-    public SourceLocation() {
-
-    }
-
-    public SourceLocation(IFile file, int line) {
-      this.file = file;
-      this.line = line;
-    }
-
-    public SourceLocation(IFile file, int line, int column) {
-      this.file = file;
+    public SourceLocation(IStorage storage, int line, int column, String name) {
+      this.storage = storage;
       this.line = line;
       this.column = column;
+      this.name = name;
     }
 
     public int getColumn() {
       return column;
     }
 
-    public IFile getFile() {
-      return file;
-    }
-
     public int getLine() {
       return line;
     }
 
-    public void setLine(int line) {
-      this.line = line;
+    public String getName() {
+      return name;
+    }
+
+    public IStorage getStorage() {
+      return storage;
     }
 
     @Override
     public String toString() {
-      return "[" + file + "," + line + "," + column + "]";
+      return "[" + storage + "," + line + "," + column + "," + name + "]";
     }
   }
 
-  private Map<IFile, SourceMap> sourceMaps = new HashMap<IFile, SourceMap>();
+  private static class URLStorage extends PlatformObject implements IStorage {
+    private URL url;
 
-  public SourceMapManager(IProject project) {
-    // TODO(devoncarew): scope our changes to the current project
+    public URLStorage(URL url) {
+      this.url = url;
+    }
 
-    this((IContainer) project);
-  }
-
-  public SourceMapManager(IWorkspaceRoot workspace) {
-    this((IContainer) workspace);
-  }
-
-  protected SourceMapManager(IContainer container) {
-    // Collect all maps in the current container.
-    try {
-      container.accept(new IResourceVisitor() {
-        @Override
-        public boolean visit(IResource resource) throws CoreException {
-          if (resource instanceof IFile && isMapFileName((IFile) resource)) {
-            handleFileAdded((IFile) resource);
-          }
-
-          return true;
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (obj == null) {
+        return false;
+      }
+      if (getClass() != obj.getClass()) {
+        return false;
+      }
+      URLStorage other = (URLStorage) obj;
+      if (url == null) {
+        if (other.url != null) {
+          return false;
         }
-      });
-    } catch (CoreException e) {
-
+      } else if (!url.equals(other.url)) {
+        return false;
+      }
+      return true;
     }
+
+    @Override
+    public InputStream getContents() throws CoreException {
+      try {
+        return url.openStream();
+      } catch (IOException e) {
+        throw new CoreException(null); // FIXME
+      }
+    }
+
+    @Override
+    public IPath getFullPath() {
+      return Path.fromPortableString(url.getPath());
+    }
+
+    @Override
+    public String getName() {
+      return url.toString();
+    }
+
+    public URL getURL() {
+      return url;
+    }
+
+    @Override
+    public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((url == null) ? 0 : url.hashCode());
+      return result;
+    }
+
+    @Override
+    public boolean isReadOnly() {
+      return true;
+    }
+  }
+
+  private IResourceResolver resourceResolver;
+
+  private Map<IStorage, IStorage> sourceMapsStorages = new HashMap<IStorage, IStorage>();
+  private Map<IStorage, SourceMap> sourceMaps = new HashMap<IStorage, SourceMap>();
+
+  public SourceMapManager(IResourceResolver resourceResolver) {
+    this.resourceResolver = resourceResolver;
   }
 
   public void dispose() {
-    ResourceChangeManager.removeChangeParticipant(this);
   }
 
   /**
    * Given a source (foo.dart.js) file and a location, return the corresponding target location (in
    * foo.dart).
    * 
-   * @param file
+   * @param storage
    * @param line
    * @param column
    * @return
    */
-  public SourceLocation getMappingFor(IFile file, int line, int column) {
-    IFile mapFile = file.getParent().getFile(new Path(file.getName() + SourceMap.SOURCE_MAP_EXT));
+  public SourceLocation getMappingFor(IStorage storage, int line, int column) {
+    synchronized (sourceMaps) {
+      IStorage mapStorage = sourceMapsStorages.get(storage);
+      if (mapStorage != null) {
+        SourceMap map = sourceMaps.get(mapStorage);
+        if (map != null) {
+          SourceMapInfo mapping = map.getMappingFor(line, column);
 
-    SourceMap map = sourceMaps.get(mapFile);
+          if (mapping != null) {
+            IStorage resolvedStorage = resolveStorage(mapStorage, mapping.getFile());
 
-    if (map != null) {
-      SourceMapInfo mapping = map.getMappingFor(line, column);
-
-      if (mapping != null) {
-        IFile resolvedFile = resolveFile(mapFile, mapping.getFile());
-
-        if (resolvedFile != null) {
-          return new SourceLocation(resolvedFile, mapping.getLine());
+            if (resolvedStorage != null) {
+              return new SourceLocation(
+                  resolvedStorage,
+                  mapping.getLine(),
+                  mapping.getColumn(),
+                  mapping.getName());
+            }
+          }
         }
       }
     }
@@ -161,33 +211,35 @@ public class SourceMapManager implements ResourceChangeParticipant {
    * Given a target location (in foo.dart), return the corresponding source location (in
    * foo.dart.js).
    * 
-   * @param file
+   * @param storage
    * @param line
    * @return
    */
-  public List<SourceLocation> getReverseMappingsFor(IFile targetFile, int line) {
+  public List<SourceLocation> getReverseMappingsFor(IStorage targetStorage, int line) {
     List<SourceLocation> mappings = new ArrayList<SourceMapManager.SourceLocation>();
 
     synchronized (sourceMaps) {
-      for (IFile sourceFile : sourceMaps.keySet()) {
-        SourceMap map = sourceMaps.get(sourceFile);
+      for (IStorage scriptStorage : sourceMapsStorages.keySet()) {
+        IStorage mapStorage = sourceMapsStorages.get(scriptStorage);
+        SourceMap map = sourceMaps.get(mapStorage);
 
         for (String path : map.getSourceNames()) {
           // TODO(devoncarew): the files in the maps should all be pre-resolved
-          IFile file = resolveFile(sourceFile, path);
+          IStorage storage = resolveStorage(mapStorage, path);
 
-          if (file != null && file.equals(targetFile)) {
+          if (storage != null && storage.equals(targetStorage)) {
             List<SourceMapInfo> reverseMappings = map.getReverseMappingsFor(path, line);
 
             for (SourceMapInfo reverseMapping : reverseMappings) {
               if (reverseMapping != null) {
-                IFile mapSource = map.getMapSource();
+                IStorage mapSource = scriptStorage; //&&&!!! map.getMapSource();
 
                 if (mapSource != null) {
                   mappings.add(new SourceLocation(
                       mapSource,
                       reverseMapping.getLine(),
-                      reverseMapping.getColumn()));
+                      reverseMapping.getColumn(),
+                      reverseMapping.getName()));
                 }
               }
             }
@@ -199,39 +251,30 @@ public class SourceMapManager implements ResourceChangeParticipant {
     return mappings;
   }
 
-  @Override
-  public void handleFileAdded(IFile file) {
-    handleFileChanged(file);
-  }
+  public List<IStorage> getSources(IStorage storage) {
+    List<IStorage> sources = new ArrayList<IStorage>();
 
-  @Override
-  public final void handleFileChanged(IFile file) {
-    if (isMapFileName(file)) {
-      try {
-        // We speculatively parse the .map file to determine if it is indeed a source map.
-        SourceMap sourceMap = SourceMap.createFrom(file);
+    synchronized (sourceMaps) {
+      IStorage mapStorage = sourceMapsStorages.get(storage);
+      if (mapStorage != null) {
+        SourceMap map = sourceMaps.get(mapStorage);
+        if (map != null) {
+          String[] sourceNames = map.getSourceNames();
 
-        synchronized (sourceMaps) {
-          // It's a source map file; put it in the source map map.
-          sourceMaps.put(file, sourceMap);
-        }
-      } catch (CoreException ce) {
+          if (sourceNames != null) {
+            for (String sourceName : sourceNames) {
+              IStorage resolvedStorage = resolveStorage(mapStorage, sourceName);
 
-      } catch (IOException e) {
-
-      }
-    }
-  }
-
-  @Override
-  public void handleFileRemoved(IFile file) {
-    if (isMapFileName(file)) {
-      synchronized (sourceMaps) {
-        if (sourceMaps.containsKey(file)) {
-          sourceMaps.remove(file);
+              if (resolvedStorage != null) {
+                sources.add(resolvedStorage);
+              }
+            }
+          }
         }
       }
     }
+
+    return sources;
   }
 
   /**
@@ -241,29 +284,26 @@ public class SourceMapManager implements ResourceChangeParticipant {
    * @param resource
    * @return true if the the source map manager contains mapping information for the given file
    */
-  public boolean isMapSource(IFile file) {
-    if (file != null) {
-      IFile mapFile = file.getParent().getFile(new Path(file.getName() + SourceMap.SOURCE_MAP_EXT));
-
-      if (mapFile.exists() && sourceMaps.containsKey(mapFile)) {
-        return true;
+  public boolean isMapSource(IStorage storage) { //&&&!!! There can be race conditions because of that method
+    if (storage != null) {
+      synchronized (sourceMaps) {
+        return sourceMapsStorages.containsKey(storage);
       }
     }
 
     return false;
   }
 
-  public boolean isMapTarget(IFile targetFile) {
-    if (targetFile != null) {
+  public boolean isMapTarget(IStorage targetStorage) { //&&&!!! There can be race conditions because of that method
+    if (targetStorage != null) {
       synchronized (sourceMaps) {
-        for (IFile sourceFile : sourceMaps.keySet()) {
-          SourceMap map = sourceMaps.get(sourceFile);
-
+        for (IStorage sourceStorage : sourceMaps.keySet()) {
+          SourceMap map = sourceMaps.get(sourceStorage);
           for (String path : map.getSourceNames()) {
             // TODO(devoncarew): the files in the maps should all be pre-resolved
-            IFile file = resolveFile(sourceFile, path);
+            IStorage storage = resolveStorage(sourceStorage, path);
 
-            if (file != null && file.equals(targetFile)) {
+            if (storage != null && storage.equals(targetStorage)) {
               return true;
             }
           }
@@ -274,11 +314,96 @@ public class SourceMapManager implements ResourceChangeParticipant {
     return false;
   }
 
-  private boolean isMapFileName(IFile file) {
-    return file.getName().endsWith(SourceMap.SOURCE_MAP_EXT);
+  void handleGlobalObjectCleared() {
+    synchronized (sourceMaps) {
+      sourceMapsStorages.clear();
+      sourceMaps.clear();
+    }
   }
 
-  private IFile resolveFile(IFile relativeFile, String path) {
+  void handleScriptParsed(IStorage script, String sourceMapUrl) {
+    synchronized (sourceMaps) {
+      IStorage mapStorage = sourceMapsStorages.remove(script);
+      if (mapStorage != null) {
+        sourceMaps.remove(script);
+      }
+
+      System.out.println("Processing script " + script);
+      processScript(script, sourceMapUrl);
+    }
+  }
+
+  private SourceMap parseSourceMap(IStorage mapStorage) {
+    if (mapStorage != null) {
+      try {
+        return SourceMap.createFrom(mapStorage);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      } catch (CoreException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    return null;
+  }
+
+  private void processScript(IStorage script, String sourceMapUrl) {
+    try {
+      if (sourceMapUrl == null) {
+        BufferedReader reader;
+        if (script instanceof IFile) {
+          reader = new BufferedReader(new InputStreamReader(
+              script.getContents(),
+              ((IFile) script).getCharset()));
+        } else {
+          reader = new BufferedReader(new InputStreamReader(script.getContents()));
+        }
+
+        try {
+          String sourceMapUrlLine = null;
+          for (sourceMapUrlLine = reader.readLine(); sourceMapUrlLine != null; sourceMapUrlLine = reader.readLine()) {
+            sourceMapUrlLine = sourceMapUrlLine.trim();
+            if (sourceMapUrlLine.startsWith("//#") || sourceMapUrlLine.startsWith("//@")) {
+              sourceMapUrlLine = sourceMapUrlLine.substring(2).trim();
+
+              if (sourceMapUrlLine.matches("sourceMapURL\\s*\\=")) {
+                break;
+              }
+            }
+          }
+
+          if (sourceMapUrlLine != null) {
+            Properties properties = new Properties();
+            properties.load(new StringReader(sourceMapUrlLine));
+            sourceMapUrl = properties.getProperty("sourceMapURL");
+          }
+        } finally {
+          reader.close();
+        }
+      }
+
+      IStorage mapStorage;
+      if (sourceMapUrl != null) {
+        mapStorage = resolveStorage(script, sourceMapUrl);
+      } else {
+        mapStorage = null;
+      }
+
+      if (mapStorage != null) {
+        SourceMap map = parseSourceMap(mapStorage);
+        if (map != null) {
+          sourceMapsStorages.put(script, mapStorage);
+          sourceMaps.put(mapStorage, map);
+        }
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private IStorage resolveStorage(IStorage relativeStorage, String path) {
     if (path.startsWith("file:")) {
       try {
         // These incoming uris are not properly uri encoded. If we uri encoded them, we would then
@@ -298,15 +423,48 @@ public class SourceMapManager implements ResourceChangeParticipant {
       }
 
       return null;
-    } else {
-      IFile file = relativeFile.getParent().getFile(new Path(path));
+    } else if (relativeStorage instanceof IFile) {
+      IFile file = ((IFile) relativeStorage).getParent().getFile(new Path(path));
 
       if (file.exists()) {
         return file;
       } else {
         return null;
       }
+    } else {
+      try {
+        URI uri = URIUtil.fromString(path);
+        if (relativeStorage instanceof URLStorage) {
+          IPath newPath = Path.fromPortableString(((URLStorage) relativeStorage).getURL().getPath()).removeLastSegments(
+              1).append(uri.getPath());
+          uri = new URI(
+              uri.getScheme(),
+              null,
+              uri.getHost(),
+              uri.getPort(),
+              newPath.toPortableString(),
+              null,
+              null);
+        }
+
+        IResource resource = resourceResolver.resolveUrl(uri.toString());
+
+        if (resource instanceof IFile) {
+          return (IFile) resource;
+        }
+
+        if (uri.getScheme() != null
+            && (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
+            && uri.getHost() != null) {
+          return new URLStorage(new URL(path));
+        }
+
+        return null;
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      } catch (MalformedURLException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
-
 }

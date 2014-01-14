@@ -13,7 +13,6 @@
  */
 package com.google.dart.tools.debug.ui.internal.dartium;
 
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
@@ -41,14 +40,15 @@ public class DartiumLaunchShortcut extends AbstractLaunchShortcut implements ILa
 
   @Override
   public boolean canLaunch(IResource resource) {
-    if (!DartSdkManager.getManager().hasSdk()) {
-      return false;
-    }
-
-    if (!DartSdkManager.getManager().getSdk().isDartiumInstalled()) {
-      return false;
-    }
-
+//&&&    
+//    if (!DartSdkManager.getManager().hasSdk()) {
+//      return false;
+//    }
+//
+//    if (!DartSdkManager.getManager().getSdk().isDartiumInstalled()) {
+//      return false;
+//    }
+//
     if (resource instanceof IFile) {
       if ("html".equalsIgnoreCase(resource.getFileExtension())) {
         return true;

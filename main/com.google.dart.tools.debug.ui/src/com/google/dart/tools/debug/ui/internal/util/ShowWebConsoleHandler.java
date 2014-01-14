@@ -14,9 +14,9 @@
 
 package com.google.dart.tools.debug.ui.internal.util;
 
-import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.util.ResourceServer;
 import com.google.dart.tools.debug.core.util.ResourceServerManager;
+import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -36,11 +36,16 @@ public class ShowWebConsoleHandler extends AbstractHandler {
       String localAddress = server.getLocalAddress();
 
       if (localAddress == null) {
-        DartCore.getConsole().println("Unable to get local IP address.");
+        //&&&DartCore.getConsole().println("Unable to get local IP address.");
+        DartDebugUIPlugin.logError("Unable to get local IP address.");
       } else {
-        DartCore.getConsole().println(
-            "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
-                + ".");
+//&&&        
+//        DartCore.getConsole().println(
+//            "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
+//                + ".");
+        // TODO XXX FIXME
+        DartDebugUIPlugin.logError("Connect to the embedded web server at http://" + localAddress
+            + ":" + server.getPort() + ".");
       }
 
       return null;

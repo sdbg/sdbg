@@ -14,7 +14,6 @@
 package com.google.dart.tools.debug.core.util;
 
 import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.model.DartSdkManager;
 import com.google.dart.tools.core.utilities.net.NetUtils;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
@@ -220,16 +219,19 @@ public class BrowserManager {
 
     monitor.beginTask("Launching Dartium...", enableDebugging ? 7 : 2);
 
-    File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
+//&&&    File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
+//    
+//    if (dartium == null) {
+//      throw new CoreException(new Status(
+//          IStatus.ERROR,
+//          DartDebugCorePlugin.PLUGIN_ID,
+//          "Could not find Dartium executable in "
+//              + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory()
+//              + ". Download and install Dartium from http://www.dartlang.org/tools/dartium/."));
+//    }
 
-    if (dartium == null) {
-      throw new CoreException(new Status(
-          IStatus.ERROR,
-          DartDebugCorePlugin.PLUGIN_ID,
-          "Could not find Dartium executable in "
-              + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory()
-              + ". Download and install Dartium from http://www.dartlang.org/tools/dartium/."));
-    }
+    File dartium = new File(
+        "C:\\Users\\ivan\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe");
 
     IPath browserLocation = new Path(dartium.getAbsolutePath());
 

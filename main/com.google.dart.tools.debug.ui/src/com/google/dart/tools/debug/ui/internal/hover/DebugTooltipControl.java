@@ -17,7 +17,6 @@ package com.google.dart.tools.debug.ui.internal.hover;
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.objectinspector.ObjectInspectorContentProvider;
 import com.google.dart.tools.debug.ui.internal.presentation.DartDebugModelPresentation;
-import com.google.dart.tools.debug.ui.internal.view.DebuggerView;
 
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.internal.ui.SWTFactory;
@@ -366,11 +365,12 @@ public class DebugTooltipControl extends AbstractInformationControl implements
       return variablesView;
     }
 
-    AbstractDebugView debuggerView = (AbstractDebugView) page.findView(DebuggerView.ID);
-    if (debuggerView != null && debuggerView.isVisible()) {
-      return debuggerView;
-    }
-
+//&&&    
+//    AbstractDebugView debuggerView = (AbstractDebugView) page.findView(DebuggerView.ID);
+//    if (debuggerView != null && debuggerView.isVisible()) {
+//      return debuggerView;
+//    }
+//
     if (expressionsView != null) {
       return expressionsView;
     }

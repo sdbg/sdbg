@@ -13,13 +13,7 @@
  */
 package com.google.dart.tools.debug.ui.launch;
 
-import com.google.dart.engine.source.SourceKind;
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.analysis.model.ProjectManager;
-
 import org.eclipse.core.expressions.PropertyTester;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.jface.viewers.IStructuredSelection;
 
 /**
  * A {@link PropertyTester} for checking whether the resource can be launched in Dartium. It is used
@@ -30,23 +24,24 @@ public class RunInDartiumPropertyTester extends PropertyTester {
 
   @Override
   public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
-    if ("canLaunchDartium".equalsIgnoreCase(property)) {
-      if (receiver instanceof IStructuredSelection) {
-        Object o = ((IStructuredSelection) receiver).getFirstElement();
-        if (o instanceof IFile) {
-          IFile file = (IFile) o;
-          if (DartCore.isHtmlLikeFileName(((IFile) o).getName())) {
-            return true;
-          }
-
-          ProjectManager manager = DartCore.getProjectManager();
-          if (manager.getSourceKind(file) == SourceKind.LIBRARY
-              && manager.isClientLibrary(manager.getSource(file))) {
-            return true;
-          }
-        }
-      }
-    }
+//&&&    
+//    if ("canLaunchDartium".equalsIgnoreCase(property)) {
+//      if (receiver instanceof IStructuredSelection) {
+//        Object o = ((IStructuredSelection) receiver).getFirstElement();
+//        if (o instanceof IFile) {
+//          IFile file = (IFile) o;
+//          if (DartCore.isHtmlLikeFileName(((IFile) o).getName())) {
+//            return true;
+//          }
+//
+//          ProjectManager manager = DartCore.getProjectManager();
+//          if (manager.getSourceKind(file) == SourceKind.LIBRARY
+//              && manager.isClientLibrary(manager.getSource(file))) {
+//            return true;
+//          }
+//        }
+//      }
+//    }
     return false;
   }
 

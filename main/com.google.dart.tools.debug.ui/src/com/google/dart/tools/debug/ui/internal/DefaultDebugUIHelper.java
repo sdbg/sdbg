@@ -18,7 +18,6 @@ import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DebugUIHelper;
 import com.google.dart.tools.debug.core.dartium.DartiumDebugTarget;
-import com.google.dart.tools.debug.ui.internal.view.DebuggerView;
 
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -116,7 +115,7 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
 
         IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
-        IViewPart part = page.findView(DebuggerView.ID);
+        IViewPart part = null; //&&&page.findView(DebuggerView.ID);
 
         if (part != null) {
           IStatusLineManager manager = part.getViewSite().getActionBars().getStatusLineManager();

@@ -14,7 +14,6 @@
 
 package com.google.dart.tools.debug.ui.launch;
 
-import com.google.dart.tools.core.model.DartModelException;
 import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
 import com.google.dart.tools.debug.ui.internal.DebugErrorHandler;
@@ -148,7 +147,7 @@ public class DartRunAction extends DartRunAbstractAction implements IViewActionD
   }
 
   protected void launchResource(IResource resource, UIInstrumentationBuilder instrumentation)
-      throws DartModelException {
+      throws /*&&&DartModelException*/CoreException {
 
     ILaunchConfiguration config = null;
 

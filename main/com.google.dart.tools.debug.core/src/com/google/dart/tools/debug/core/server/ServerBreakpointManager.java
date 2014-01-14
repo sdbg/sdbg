@@ -14,7 +14,6 @@
 
 package com.google.dart.tools.debug.core.server;
 
-import com.google.dart.tools.core.DartCore;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.breakpoints.DartBreakpoint;
 
@@ -24,7 +23,6 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointListener;
 import org.eclipse.debug.core.model.IBreakpoint;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -193,35 +191,36 @@ class ServerBreakpointManager implements IBreakpointListener {
   }
 
   private String getPubUrlForResource(IFile file) {
-    String locationUrl = file.getLocation().toFile().toURI().toString();
-
-    int index = locationUrl.indexOf(DartCore.PACKAGES_DIRECTORY_URL);
-
-    if (index != -1) {
-      locationUrl = DartCore.PACKAGE_SCHEME_SPEC
-          + locationUrl.substring(index + DartCore.PACKAGES_DIRECTORY_URL.length());
-
-      return locationUrl;
-    }
-
-    index = locationUrl.lastIndexOf(DartCore.LIB_URL_PATH);
-
-    if (index != -1) {
-      String path = file.getLocation().toString();
-      path = path.substring(0, path.lastIndexOf(DartCore.LIB_URL_PATH));
-      File packagesDir = new File(path, DartCore.PACKAGES_DIRECTORY_NAME);
-
-      if (packagesDir.exists()) {
-        String packageName = DartCore.getSelfLinkedPackageName(file);
-
-        if (packageName != null) {
-          locationUrl = DartCore.PACKAGE_SCHEME_SPEC + packageName + "/"
-              + locationUrl.substring(index + DartCore.LIB_URL_PATH.length());
-
-          return locationUrl;
-        }
-      }
-    }
+//&&&    
+//    String locationUrl = file.getLocation().toFile().toURI().toString();
+//
+//    int index = locationUrl.indexOf(DartCore.PACKAGES_DIRECTORY_URL);
+//
+//    if (index != -1) {
+//      locationUrl = DartCore.PACKAGE_SCHEME_SPEC
+//          + locationUrl.substring(index + DartCore.PACKAGES_DIRECTORY_URL.length());
+//
+//      return locationUrl;
+//    }
+//
+//    index = locationUrl.lastIndexOf(DartCore.LIB_URL_PATH);
+//
+//    if (index != -1) {
+//      String path = file.getLocation().toString();
+//      path = path.substring(0, path.lastIndexOf(DartCore.LIB_URL_PATH));
+//      File packagesDir = new File(path, DartCore.PACKAGES_DIRECTORY_NAME);
+//
+//      if (packagesDir.exists()) {
+//        String packageName = DartCore.getSelfLinkedPackageName(file);
+//
+//        if (packageName != null) {
+//          locationUrl = DartCore.PACKAGE_SCHEME_SPEC + packageName + "/"
+//              + locationUrl.substring(index + DartCore.LIB_URL_PATH.length());
+//
+//          return locationUrl;
+//        }
+//      }
+//    }
 
     return null;
   }

@@ -13,24 +13,13 @@
  */
 package com.google.dart.tools.debug.ui.internal.util;
 
-import com.google.dart.tools.core.DartCore;
-import com.google.dart.tools.core.internal.model.DartLibraryImpl;
-import com.google.dart.tools.core.internal.model.DartProjectImpl;
-import com.google.dart.tools.core.model.CompilationUnit;
-import com.google.dart.tools.core.model.DartElement;
-import com.google.dart.tools.core.model.DartLibrary;
-import com.google.dart.tools.core.model.DartModelException;
-import com.google.dart.tools.core.model.HTMLFile;
 import com.google.dart.tools.debug.core.DartDebugCorePlugin;
 import com.google.dart.tools.debug.core.DartLaunchConfigWrapper;
-import com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin;
 import com.google.dart.tools.debug.ui.internal.DartUtil;
 import com.google.dart.tools.debug.ui.internal.browser.BrowserLaunchShortcut;
 import com.google.dart.tools.debug.ui.internal.dartium.DartiumLaunchShortcut;
 import com.google.dart.tools.debug.ui.internal.server.DartServerLaunchShortcut;
 
-import org.apache.commons.lang3.ObjectUtils;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -93,21 +82,22 @@ public class LaunchUtils {
       return false;
     }
 
-    // if pubspec.yaml is not up-to-date, return false
-    IFile pubspecYamlFile = project.getFile(DartCore.PUBSPEC_FILE_NAME);
-
-    if (pubspecYamlFile.exists()) {
-      IFile pubspecLockFile = project.getFile(DartCore.PUBSPEC_LOCK_FILE_NAME);
-
-      if (!pubspecLockFile.exists()) {
-        return false;
-      }
-
-      if (pubspecLockFile.getLocalTimeStamp() < pubspecYamlFile.getLocalTimeStamp()) {
-        return false;
-      }
-    }
-
+//&&&    
+//    // if pubspec.yaml is not up-to-date, return false
+//    IFile pubspecYamlFile = project.getFile(DartCore.PUBSPEC_FILE_NAME);
+//
+//    if (pubspecYamlFile.exists()) {
+//      IFile pubspecLockFile = project.getFile(DartCore.PUBSPEC_LOCK_FILE_NAME);
+//
+//      if (!pubspecLockFile.exists()) {
+//        return false;
+//      }
+//
+//      if (pubspecLockFile.getLocalTimeStamp() < pubspecYamlFile.getLocalTimeStamp()) {
+//        return false;
+//      }
+//    }
+//
     return true;
   }
 
@@ -259,39 +249,40 @@ public class LaunchUtils {
     return null;
   }
 
-  /**
-   * @return given an IResource, return the corresponding DartLibrary
-   */
-  public static DartLibrary[] getDartLibraries(IResource resource) {
-    DartElement element = DartCore.create(resource);
-
-    if (element instanceof CompilationUnit) {
-      CompilationUnit unit = (CompilationUnit) element;
-
-      return new DartLibrary[] {unit.getLibrary()};
-    } else if (element instanceof DartLibrary) {
-      return new DartLibrary[] {(DartLibrary) element};
-    } else if (element instanceof HTMLFile) {
-      HTMLFile htmlFile = (HTMLFile) element;
-
-      try {
-        return htmlFile.getReferencedLibraries();
-
-      } catch (DartModelException exception) {
-        DartUtil.logError(exception);
-      }
-
-    } else if (element instanceof DartProjectImpl) {
-      try {
-        return ((DartProjectImpl) element).getDartLibraries();
-      } catch (DartModelException e) {
-
-      }
-    }
-
-    return new DartLibrary[] {};
-  }
-
+//&&&  
+//  /**
+//   * @return given an IResource, return the corresponding DartLibrary
+//   */
+//  public static DartLibrary[] getDartLibraries(IResource resource) {
+//    DartElement element = DartCore.create(resource);
+//
+//    if (element instanceof CompilationUnit) {
+//      CompilationUnit unit = (CompilationUnit) element;
+//
+//      return new DartLibrary[] {unit.getLibrary()};
+//    } else if (element instanceof DartLibrary) {
+//      return new DartLibrary[] {(DartLibrary) element};
+//    } else if (element instanceof HTMLFile) {
+//      HTMLFile htmlFile = (HTMLFile) element;
+//
+//      try {
+//        return htmlFile.getReferencedLibraries();
+//
+//      } catch (DartModelException exception) {
+//        DartUtil.logError(exception);
+//      }
+//
+//    } else if (element instanceof DartProjectImpl) {
+//      try {
+//        return ((DartProjectImpl) element).getDartLibraries();
+//      } catch (DartModelException e) {
+//
+//      }
+//    }
+//
+//    return new DartLibrary[] {};
+//  }
+//
   public static List<ILaunchConfiguration> getExistingLaunchesFor(IResource resource) {
     Set<ILaunchConfiguration> configs = new LinkedHashSet<ILaunchConfiguration>();
 
@@ -337,7 +328,8 @@ public class LaunchUtils {
    * @return
    * @throws DartModelException
    */
-  public static ILaunchConfiguration getLaunchFor(IResource resource) throws DartModelException {
+  public static ILaunchConfiguration getLaunchFor(IResource resource)
+      throws /*&&&DartModelException*/CoreException {
     // If it's a project, find any launches in that project.
     if (resource instanceof IProject) {
       ILaunchConfiguration config = getLaunchForProject((IProject) resource);
@@ -408,10 +400,11 @@ public class LaunchUtils {
               while (iterator.hasNext()) {
                 Object next = iterator.next();
 
-                if (next instanceof DartElement) {
-                  next = ((DartElement) next).getResource();
-                }
-
+//&&&                
+//                if (next instanceof DartElement) {
+//                  next = ((DartElement) next).getResource();
+//                }
+//
                 if (next instanceof IResource) {
                   return (IResource) next;
                 } else if (next != null) {
@@ -454,27 +447,28 @@ public class LaunchUtils {
   public static boolean isLaunchableWith(IResource resource, ILaunchConfiguration config) {
     DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(config);
 
-    IResource appResource = launchWrapper.getApplicationResource();
-
-    if (ObjectUtils.equals(appResource, resource)) {
-      DartLibrary[] testLibraries = LaunchUtils.getDartLibraries(resource);
-      if (testLibraries.length > 0) {
-        return isCorrectLaunchConfigType(config, testLibraries[0]);
-      }
-    }
-
-    // TODO: this does not use the launch configurations correctly
-
-    DartLibrary[] testLibraries = LaunchUtils.getDartLibraries(resource);
-    DartLibrary[] existingLibrary = LaunchUtils.getDartLibraries(launchWrapper.getApplicationResource());
-
-    if (testLibraries.length > 0 & existingLibrary.length > 0) {
-      for (DartLibrary testLibrary : testLibraries) {
-        if (testLibrary.equals(existingLibrary[0])) {
-          return isCorrectLaunchConfigType(config, testLibrary);
-        }
-      }
-    }
+//&&&    
+//    IResource appResource = launchWrapper.getApplicationResource();
+//
+//    if (ObjectUtils.equals(appResource, resource)) {
+//      DartLibrary[] testLibraries = LaunchUtils.getDartLibraries(resource);
+//      if (testLibraries.length > 0) {
+//        return isCorrectLaunchConfigType(config, testLibraries[0]);
+//      }
+//    }
+//
+//    // TODO: this does not use the launch configurations correctly
+//
+//    DartLibrary[] testLibraries = LaunchUtils.getDartLibraries(resource);
+//    DartLibrary[] existingLibrary = LaunchUtils.getDartLibraries(launchWrapper.getApplicationResource());
+//
+//    if (testLibraries.length > 0 & existingLibrary.length > 0) {
+//      for (DartLibrary testLibrary : testLibraries) {
+//        if (testLibrary.equals(existingLibrary[0])) {
+//          return isCorrectLaunchConfigType(config, testLibrary);
+//        }
+//      }
+//    }
 
     return false;
   }
@@ -512,31 +506,32 @@ public class LaunchUtils {
     DebugUITools.launch(config, mode);
   }
 
-  /**
-   * Check if the given launch configuration - server/client can launch the library specified. This
-   * check will catch changes made to library client <=> server after configuration has been
-   * created.
-   */
-  private static boolean isCorrectLaunchConfigType(ILaunchConfiguration config,
-      DartLibrary testLibrary) {
-
-    try {
-      if (config.getType().getIdentifier().equals(DartDebugCorePlugin.SERVER_LAUNCH_CONFIG_ID)
-          && testLibrary != null) {
-        if (((DartLibraryImpl) testLibrary).isServerApplication()) {
-          return true;
-        }
-      } else {
-        if (((DartLibraryImpl) testLibrary).isBrowserApplication()) {
-          return true;
-        }
-      }
-    } catch (Exception e) {
-      DartDebugUIPlugin.logError(e);
-    }
-    return false;
-  }
-
+//&&&  
+//  /**
+//   * Check if the given launch configuration - server/client can launch the library specified. This
+//   * check will catch changes made to library client <=> server after configuration has been
+//   * created.
+//   */
+//  private static boolean isCorrectLaunchConfigType(ILaunchConfiguration config,
+//      DartLibrary testLibrary) {
+//
+//    try {
+//      if (config.getType().getIdentifier().equals(DartDebugCorePlugin.SERVER_LAUNCH_CONFIG_ID)
+//          && testLibrary != null) {
+//        if (((DartLibraryImpl) testLibrary).isServerApplication()) {
+//          return true;
+//        }
+//      } else {
+//        if (((DartLibraryImpl) testLibrary).isBrowserApplication()) {
+//          return true;
+//        }
+//      }
+//    } catch (Exception e) {
+//      DartDebugUIPlugin.logError(e);
+//    }
+//    return false;
+//  }
+//
   private LaunchUtils() {
 
   }

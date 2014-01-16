@@ -2,13 +2,13 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Localization: plugin
 Bundle-Name: %pluginName
-Bundle-SymbolicName: com.google.dart.tools.debug.core;singleton:=true
+Bundle-SymbolicName: com.github.sdb.debug.core;singleton:=true
 Bundle-Version: 0.0.0.qualifier
 Bundle-Activator: com.google.dart.tools.debug.core.DartDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.debug.core,
- com.google.dart.thirdparty;visibility:=reexport
+ com.github.sdb.thirdparty;visibility:=reexport
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Export-Package: com.google.dart.engine.utilities.instrumentation,
@@ -17,7 +17,7 @@ Export-Package: com.google.dart.engine.utilities.instrumentation,
  com.google.dart.tools.debug.core,
  com.google.dart.tools.debug.core.breakpoints,
  com.google.dart.tools.debug.core.configs,
- com.google.dart.tools.debug.core.dartium;x-friends:="com.google.dart.tools.debug.ui,com.google.dart.tools.debug.core_test",
+ com.google.dart.tools.debug.core.dartium;x-friends:="com.github.sdb.debug.ui,com.github.sdb.debug.core_test",
  com.google.dart.tools.debug.core.expr,
  com.google.dart.tools.debug.core.server,
  com.google.dart.tools.debug.core.source,

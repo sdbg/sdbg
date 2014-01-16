@@ -2,14 +2,14 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Localization: plugin
 Bundle-Name: %pluginName
-Bundle-SymbolicName: com.google.dart.tools.debug.ui;singleton:=true
+Bundle-SymbolicName: com.github.sdb.debug.ui;singleton:=true
 Bundle-Version: 0.0.0.qualifier
 Bundle-Activator: com.google.dart.tools.debug.ui.internal.DartDebugUIPlugin
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui,
  org.eclipse.debug.ui,
  org.eclipse.ui.ide,
- com.google.dart.tools.debug.core,
+ com.github.sdb.debug.core,
  org.eclipse.ui.editors,
  org.eclipse.jface.text,
  org.eclipse.core.expressions,

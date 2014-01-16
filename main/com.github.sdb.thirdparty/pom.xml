@@ -4,19 +4,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.google.dart</groupId>
+    <groupId>com.github.sdb</groupId>
     <version>0.0.0.qualifier</version>
-    <artifactId>sourcemap-plugin-parent</artifactId>
+    <artifactId>com.github.sdb.parent</artifactId>
   </parent>
 
-  <version>0.0.0.qualifier</version>
-  <artifactId>com.google.dart.thirdparty</artifactId>
+  <artifactId>com.github.sdb.thirdparty</artifactId>
   <packaging>eclipse-plugin</packaging>
-
-  <build>
-    <sourceDirectory>src</sourceDirectory>
-    <outputDirectory>bin</outputDirectory>
-    <testSourceDirectory>test</testSourceDirectory>
-  </build>
 
 </project>

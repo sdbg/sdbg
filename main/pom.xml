@@ -3,8 +3,8 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.google.dart</groupId>
-  <artifactId>sourcemap-plugin-parent</artifactId>
+  <groupId>com.github.sdb</groupId>
+  <artifactId>com.github.sdb.parent</artifactId>
   <version>0.0.0.qualifier</version>
   <packaging>pom</packaging>
 
@@ -28,12 +28,13 @@
   </repositories>
 
   <modules>
-    <module>com.google.dart.eclipse.feature</module>
-    <module>com.google.dart.thirdparty</module>
-    <module>com.google.dart.thirdparty_test</module>
-    <module>com.google.dart.tools.debug.core_test</module>
-    <module>com.google.dart.tools.debug.core</module>
-    <module>com.google.dart.tools.debug.ui</module>
+    <module>com.github.sdb.feature</module>
+    <module>com.github.sdb.thirdparty</module>
+    <module>com.github.sdb.thirdparty_test</module>
+    <module>com.github.sdb.debug.core_test</module>
+    <module>com.github.sdb.debug.core</module>
+    <module>com.github.sdb.debug.ui</module>
+    <module>com.github.sdb.p2</module>
   </modules>
 
   <build>

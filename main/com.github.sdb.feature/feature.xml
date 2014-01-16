@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-      id="com.google.dart.eclipse.feature"
+      id="com.github.sdb.feature"
       label="%featureName"
       version="0.0.0.qualifier"
       provider-name="%providerName"
-      plugin="com.google.dart.eclipse.ui">
+      plugin="com.github.sdb.debug.ui">
 
    <description>
       %description
@@ -19,19 +19,19 @@
    </license>
 
    <plugin
-         id="com.google.dart.tools.debug.core"
+         id="com.github.sdb.debug.core"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
 
    <plugin
-         id="com.google.dart.tools.debug.ui"
+         id="com.github.sdb.debug.ui"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
 
    <plugin
-         id="com.google.dart.thirdparty"
+         id="com.github.sdb.thirdparty"
          download-size="0"
          install-size="0"
          version="0.0.0"

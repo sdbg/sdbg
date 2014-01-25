@@ -11,6 +11,6 @@ Require-Bundle: com.github.sdbg.debug.core,
  org.eclipse.core.runtime,
  com.github.sdbg.thirdparty_test,
  org.eclipse.debug.core
-Export-Package: com.google.dart.tools.debug.core
-Bundle-Activator: com.google.dart.tools.debug.core.DartDebugCoreTestPlugin
+Export-Package: com.github.sdbg.debug.core
+Bundle-Activator: com.github.sdbg.debug.core.DartDebugCoreTestPlugin
 Bundle-ActivationPolicy: lazy

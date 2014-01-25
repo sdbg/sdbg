@@ -11,8 +11,8 @@
 
   <artifactId>com.github.sdbg.releng.launch</artifactId>
   <properties>
-<features>org.eclipse.sdk.ide,org.eclipse.platform,org.eclipse.jdt,org.eclipse.m2e.feature.feature.group,org.eclipse.m2e.logback.feature.feature.group,com.github.sdbg.debug.ui,com.google.gdt.eclipse.suite.${eclipse.version.text}.feature.feature.group,com.google.gwt.eclipse.sdkbundle.feature.feature.group,com.google.appengine.eclipse.sdkbundle.feature.feature.group,org.eclipse.wst.web_ui.feature.feature.group</features>
-    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,${eclipse.url}/eclipse/updates/${eclipse.version.number},https://dl.google.com/eclipse/plugin/${eclipse.version.number},file://${project.parent.basedir}/com.github.sdbg.p2/target/repository</sites>
+<features>org.eclipse.sdk.ide,org.eclipse.platform,org.eclipse.equinox.p2.core.feature.feature.group,org.eclipse.jdt,org.eclipse.m2e.feature.feature.group,org.jboss.tools.m2e.jdt.feature.feature.group,org.eclipse.m2e.logback.feature.feature.group,com.github.sdbg.debug.ui</features>
+    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.p2/target/repository</sites>
   </properties>
   <build>
     <plugins>
@@ -22,7 +22,7 @@
             <version>${tycho-version}</version>
             <configuration>
                 <argLine>-Declipse.p2.mirrors=false</argLine>
-                <appArgLine>-consoleLog -application org.eclipse.equinox.p2.director -nosplash -destination target/eclipse -repository ${sites} -installIUs ${features}</appArgLine>
+                <appArgLine>-consoleLog -application org.eclipse.equinox.p2.director -nosplash -destination target/eclipse -bundlePool target/eclipse -repository ${sites} -installIUs ${features} -profileProperties org.eclipse.update.install.features=true -profile SDKProfile</appArgLine>
                 <dependencies>
                     <dependency>
                         <artifactId>org.eclipse.equinox.p2.transport.ecf</artifactId>
@@ -33,16 +33,23 @@
                         <type>eclipse-plugin</type>
                     </dependency>
                     <dependency>
-                        <artifactId>org.eclipse.equinox.p2.touchpoint.natives</artifactId>
-                        <type>eclipse-plugin</type>
-                    </dependency>
-                    <dependency>
                         <artifactId>org.eclipse.equinox.p2.touchpoint.eclipse</artifactId>
                         <type>eclipse-plugin</type>
                     </dependency>
                     <dependency>
-                        <artifactId>org.eclipse.equinox.p2.artifact.repository
-                        </artifactId>
+                        <artifactId>org.eclipse.equinox.p2.extras.feature</artifactId>
+                        <type>eclipse-feature</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.core.feature</artifactId>
+                        <type>eclipse-feature</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.touchpoint.natives</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.artifact.repository</artifactId>
                         <type>eclipse-plugin</type>
                     </dependency>
                     <dependency>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="debugUIHelper" name="Debug UI Helper" schema="schema/debugUIHelper.exsd"/>
+
+   <extension point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.DartServerLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.serverLaunchConfig"
+            modes="run,debug"
+            name="%launchconfig.server.name"
+            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
+            sourcePathComputerId="com.github.sdbg.debug.core.serverSourcePathComputer">
+      </launchConfigurationType>
+
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.DartiumLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.dartiumLaunchConfig"
+            modes="run,debug"
+            name="%launchconfig.dartium.name"
+            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
+            sourcePathComputerId="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+      </launchConfigurationType>
+      
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.ChromeAppLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.chromeAppLaunchConfig"
+            modes="run,debug"
+            name="%launchconfig.chromeApp.name"
+            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
+            sourcePathComputerId="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+      </launchConfigurationType>
+      <!--&&&launchConfigurationType
+            delegate="com.github.sdbg.debug.core.pubserve.PubServeLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.pubServeLaunchConfig"
+            modes="run"
+            name="Pub serve launch"
+            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
+            sourcePathComputerId="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+      </launchConfigurationType-->
+   </extension>
+
+   <!-- breakpoints -->
+
+   <extension
+      id="breakpointMarker"
+      point="org.eclipse.core.resources.markers">
+
+      <super type="org.eclipse.debug.core.lineBreakpointMarker"/>
+      <persistent value="true"/>
+   </extension>
+
+   <extension point="org.eclipse.debug.core.breakpoints">
+      <breakpoint
+            class="com.github.sdbg.debug.core.breakpoints.DartBreakpoint"
+            id="com.github.sdbg.debug.core.lineBreakpoint"
+            markerType="com.github.sdbg.debug.core.breakpointMarker"
+            name="Dart breakpoint">
+      </breakpoint>
+   </extension>
+
+   <!-- source locator -->
+
+   <extension point="org.eclipse.debug.core.sourceLocators">
+      <sourceLocator
+         name="Dart Source Lookup Director"
+         class="com.github.sdbg.debug.core.source.DartSourceLookupDirector"
+         id="com.github.sdbg.debug.core.sourceLookupDirector">
+      </sourceLocator>
+   </extension>
+
+   <extension point="org.eclipse.debug.core.sourcePathComputers">
+      <sourcePathComputer
+         class="com.github.sdbg.debug.core.server.ServerSourcePathComputerDelegate"
+         id="com.github.sdbg.debug.core.serverSourcePathComputer">
+       </sourcePathComputer>
+      <sourcePathComputer
+         class="com.github.sdbg.debug.core.dartium.DartiumSourcePathComputerDelegate"
+         id="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+       </sourcePathComputer>
+   </extension>
+   
+   <!-- debugger expression evaluation -->
+   <extension point="org.eclipse.debug.core.watchExpressionDelegates">
+      <watchExpressionDelegate
+         debugModel="com.github.sdbg.debug.core"
+         delegateClass="com.github.sdbg.debug.core.expr.WatchExpressionDelegate"/>
+   </extension>
+
+   <extension point="org.eclipse.debug.core.logicalStructureTypes">
+      <logicalStructureType
+         id="com.github.sdbg.debug.core.logical.mapStructureType"
+         class="com.github.sdbg.debug.core.logical.MapStructureType"
+         description="Dart Maps"
+         modelIdentifier="com.github.sdbg.debug.core">
+      </logicalStructureType>
+   </extension>
+
+</plugin>

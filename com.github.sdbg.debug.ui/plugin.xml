@@ -1,0 +1,921 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+    <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            class="com.github.sdbg.debug.ui.launch.RunPropertyTester"
+            id="com.github.sdbg.debug.ui.run.propertyTester"
+            namespace="com.github.sdbg.debug.ui.launch"
+            properties="canLaunch"
+            type="org.eclipse.jface.viewers.ISelection">
+      </propertyTester>
+      <propertyTester
+            class="com.github.sdbg.debug.ui.launch.RunInBrowserPropertyTester"
+            id="com.github.sdbg.debug.ui.run.browserPropertyTester"
+            namespace="com.github.sdbg.debug.ui.launch"
+            properties="canLaunchBrowser"
+            type="org.eclipse.jface.viewers.ISelection">
+      </propertyTester>
+      <propertyTester
+            class="com.github.sdbg.debug.ui.launch.RunInChromeAppPropertyTester"
+            id="com.github.sdbg.debug.ui.run.chromeAppPropertyTester"
+            namespace="com.github.sdbg.debug.ui.launch"
+            properties="canLaunchChromeApp"
+            type="org.eclipse.jface.viewers.ISelection">
+      </propertyTester>
+       <propertyTester
+            class="com.github.sdbg.debug.ui.launch.RunInBrowserPropertyTester"
+            id="com.github.sdbg.debug.ui.run.deployPolymerPropertyTester"
+            namespace="com.github.sdbg.debug.ui.launch"
+            properties=" canDeployPolymer"
+            type="org.eclipse.jface.viewers.ISelection">
+      </propertyTester>
+       <propertyTester
+             class="com.github.sdbg.debug.ui.launch.RunInDartiumPropertyTester"
+             id="com.github.sdbg.debug.ui.run.dartiumPropertyTester"
+             namespace="com.github.sdbg.debug.ui.launch"
+             properties="canLaunchDartium"
+             type="org.eclipse.jface.viewers.ISelection">
+       </propertyTester>
+   </extension>
+
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+         id="com.github.sdbg.debug.dartPropertyTester"
+         namespace="com.github.sdbg.debug"
+         properties="isDartProject"
+         type="org.eclipse.core.runtime.IAdaptable"
+         class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
+      </propertyTester>
+      <propertyTester
+         id="com.github.sdbg.debug.dartPropertyTester"
+         namespace="com.github.sdbg.debug"
+         properties="isInDartProject"
+         type="org.eclipse.core.runtime.IAdaptable"
+         class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
+      </propertyTester>
+   </extension>
+   
+   <!-- Dartium launch configuration -->
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.dartiumLaunchConfig"
+            icon="icons/chromium_16.png"
+            id="com.github.sdbg.debug.core.chromeLaunchConfigImage">
+      </launchConfigurationTypeImage>
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.pubServeLaunchConfig"
+            icon="icons/chromium_16_ps.png"
+            id="com.github.sdbg.debug.ui.pubServeLaunchImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.dartium.DartiumTabGroup"
+            id="com.github.sdbg.debug.core.chromeLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.dartiumLaunchConfig"
+            description="Run a Dart web application in Dartium">
+      </launchConfigurationTabGroup>
+   </extension>
+  
+  <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.pubserve.PubServeTabGroup"
+            id="com.github.sdbg.debug.core.pubServeLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.pubServeLaunchConfig"
+            description="Run a Dart web application in Dartium using pub serve">
+      </launchConfigurationTabGroup>
+   </extension>
+
+
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.dartium.DartiumLaunchShortcut"
+            icon="icons/chromium_16.png"
+            id="com.github.sdbg.debug.ui.dartChromeShortcut"
+            label="%dart.dartiumlaunch.shortcut.label"
+            modes="run,debug">
+         <configurationType
+               id="com.github.sdbg.debug.core.dartiumLaunchConfig">
+         </configurationType>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <or>
+                                 <test property="org.eclipse.core.resources.extension" value="html"/>
+                                 <test property="org.eclipse.core.resources.extension" value="dart"/>
+                              </or>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   
+   <!-- Chrome App launch configuration -->
+   
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.chromeAppLaunchConfig"
+            icon="icons/chrome_app.png"
+            id="com.github.sdbg.debug.core.chromeAppLaunchConfigImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.chromeapp.ChromeAppTabGroup"
+            id="com.github.sdbg.debug.core.chromeAppLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.chromeAppLaunchConfig"
+            description="Run a Chrome packaged app">
+      </launchConfigurationTabGroup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.chromeapp.ChromeAppLaunchShortcut"
+            id="com.github.sdbg.debug.ui.chromeAppLaunchShortcut"
+            label="%dart.chromeApplaunch.shortcut.label"
+            icon="icons/chrome_app.png"
+            modes="run,debug">
+         <configurationType
+               id="com.github.sdbg.debug.core.chromeAppLaunchConfig">
+         </configurationType>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <test property="org.eclipse.core.resources.name" value="manifest.json"/>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   
+   <!-- Browser launch configuration -->
+   <extension
+         point="org.eclipse.debug.core.launchConfigurationTypes">
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.browserLaunchConfig"
+            modes="run"
+            name="%dart.launch.config.client.name">
+      </launchConfigurationType>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.browserLaunchConfig"
+            icon="icons/obj16/globe_dark.png"
+            id="com.github.sdbg.debug.core.browserLaunchConfigImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchConfigurationTabGroup"
+            id="com.github.sdbg.debug.core.browserLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.browserLaunchConfig"
+            description="Run a Dart web application in a non-Dartium browser (using dart2js)">
+      </launchConfigurationTabGroup>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut"
+            icon="icons/obj16/globe_dark.png"
+            id="com.github.sdbg.debug.ui.dartBrowserShortcut"
+            label="%dart.clientlaunch.shortcut.label"
+            modes="run">
+         <configurationType
+               id="com.github.sdbg.debug.core.browserLaunchConfig">
+         </configurationType>
+          <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <or>
+                                 <test property="org.eclipse.core.resources.extension" value="html"/>
+                                 <test property="org.eclipse.core.resources.extension" value="dart"/>
+                              </or>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+       
+   <!-- Server launch configuration -->
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.serverLaunchConfig"
+            icon="icons/obj16/osprc_obj.png"
+            id="com.github.sdbg.debug.core.serverLaunchConfigTypeImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.server.DartServerTabGroup"
+            id="com.github.sdbg.debug.core.serverLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.serverLaunchConfig"
+            description="Run a command-line Dart application">
+      </launchConfigurationTabGroup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.server.DartServerLaunchShortcut"
+            id="com.github.sdbg.debug.ui.serverLaunchShortcut"
+            label="%dart.serverlaunch.shortcut.label"
+            icon="icons/obj16/osprc_obj.png"
+            modes="run,debug">
+         <configurationType
+               id="com.github.sdbg.debug.core.serverLaunchConfig">
+         </configurationType>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <test property="org.eclipse.core.resources.extension" value="dart"/>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   
+   <!-- breakpoints -->
+
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="org.eclipse.ui.texteditor.ITextEditor"
+            class="com.github.sdbg.debug.ui.internal.breakpoints.DartBreakpointAdapterFactory">
+         <adapter
+               type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget">
+         </adapter>
+      </factory>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.editorActions">
+      <editorContribution
+            targetID="com.github.sdbg.ui.text.editor.CompilationUnitEditor"
+            id="com.github.sdbg.debug.ui.breakpointActions">
+         <action
+               label="%toggleBreakpoints.label"
+               class="com.github.sdbg.debug.ui.internal.breakpoints.DartToggleBreakpointDelegate"
+               actionID="RulerDoubleClick"
+               id="com.github.sdbg.debug.breakpointActions.toggle">
+         </action>
+      </editorContribution>
+      <!-- TODO update for breakpoints in new HTML editor
+      <editorContribution
+            targetID="com.github.sdbg.ui.web.html.HtmlEditor"
+            id="com.github.sdbg.debug.ui.breakpointActions.html">
+         <action
+               label="%toggleBreakpoints.label"
+               class="com.github.sdbg.debug.ui.internal.breakpoints.DartToggleBreakpointDelegate"
+               actionID="RulerDoubleClick"
+               id="com.github.sdbg.debug.breakpointActions.toggle.html">
+         </action>
+      </editorContribution>
+      -->
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <viewerContribution
+            targetID="#DartRulerContext"
+            id="com.github.sdbg.debug.ui.CompilationUnitRulerPopupActions">
+         <action
+               label="%enableBreakpoint.label"
+               class="org.eclipse.debug.ui.actions.RulerEnableDisableBreakpointActionDelegate"
+               menubarPath="debug"
+               id="com.github.sdbg.debug.breakpointActions.menuEnableDisable">
+         </action>
+         <action
+               class="com.github.sdbg.debug.ui.internal.breakpoints.DartToggleBreakpointDelegate"
+               icon="icons/obj16/brkp_obj.gif"
+               id="com.github.sdbg.debug.breakpointActions.menuToggle"
+               label="%toggleBreakpoints.label"
+               menubarPath="debug">
+         </action>
+      </viewerContribution>
+   </extension>
+
+   <!-- debug model presentation -->
+
+   <extension point="org.eclipse.debug.ui.debugModelPresentations">
+      <debugModelPresentation
+         class="com.github.sdbg.debug.ui.internal.presentation.DartDebugModelPresentation"
+         id="com.github.sdbg.debug.core">
+      </debugModelPresentation>
+   </extension>
+
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="com.github.sdbg.core.model.DartElement"
+            class="com.github.sdbg.debug.ui.launch.ActionFilterAdapterFactory">
+         <adapter
+               type="org.eclipse.ui.IActionFilter">
+         </adapter>
+      </factory>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="Source not available"
+            icon="icons/obj16/dart.png"
+            class="com.github.sdbg.debug.ui.internal.presentation.DartSourceNotFoundEditor"
+            id="com.github.sdbg.debug.ui.internal.presentation.DartSourceNotFoundEditor">
+      </editor>
+   </extension>
+   
+   <extension
+      point="org.eclipse.ui.commands">
+       <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.DartRunHandler"
+            description="Run selection"
+            id="com.github.sdbg.debug.ui.run.selection"
+            name="%runCommandName">
+      </command>
+       <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.RunInDartiumHandler"
+            description="Run in Dartium"
+            id="com.github.sdbg.debug.ui.run.dartium"
+            name="%runDartiumName">
+      </command>
+       <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.RunInChromeAppHandler"
+            description="Run as Chrome App"
+            id="com.github.sdbg.debug.ui.run.chromeapp"
+            name="Run as Chrome App">
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.RunInBrowserHandler"
+            description="Run as JavaScript"
+            id="com.github.sdbg.debug.ui.run.browser"
+            name="%runBrowserName">
+      </command>
+       <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.RunInServerHandler"
+            description="Run"
+            id="com.github.sdbg.debug.ui.run.server"
+            name="%runCommandName">
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.ManageLaunchesHandler"
+            description="%launchDialogCommandName"
+            id="com.github.sdbg.debug.ui.launchDialog"
+            name="%launchDialogCommandName">
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.internal.util.ShowWebConsoleHandler"
+            description="Show Web Server Address"
+            id="com.github.sdbg.debug.ui.showWebConsole"
+            name="Show Web Server Address">
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.internal.view.RemoveAllBreakpointsHandler"
+            description="%removeBreakpointsCommandName"
+            id="com.github.sdbg.debug.ui.removeBreakpoints"
+            name="%removeBreakpointsCommandName">
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.internal.util.RemoteConnectionHandler"
+            description="Connect to remote host"
+            id="com.github.sdbg.debug.ui.remoteConnection"
+            name="Remote Connection...">
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.SetRunLastLaunchHandler"
+            description="Run the last launch"
+            id="com.github.sdbg.debug.ui.run.last.launch"
+            name="Always Run Last Launch">
+         <state
+               class="org.eclipse.ui.handlers.RegistryToggleState"
+               id="org.eclipse.ui.commands.toggleState">
+         </state>
+      </command>
+      <command
+            categoryId="org.eclipse.ui.category.window"
+            defaultHandler="com.github.sdbg.debug.ui.launch.DeployPolymerAppHandler"
+            description="Generate JavaScript for Polymer App"
+            id="com.github.sdbg.debug.ui.run.deploypolymer"
+            name="Build Polymer App">
+      </command>
+   </extension>
+   
+   <!-- extension point="org.eclipse.ui.views">
+      <view
+            class="com.github.sdbg.debug.ui.internal.webinspector.WebInspectorView"
+            id="com.github.sdbg.debug.webInspectorView"
+            name="Web Inspector"
+            restorable="true"
+            category="com.github.sdbg.ui.dart"
+            icon="icons/obj16/insp_sbook.gif">
+      </view>
+   </extension -->
+      
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            allPopups="true"
+            locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
+         <command
+               commandId="com.github.sdbg.debug.ui.run.server"
+               icon="icons/obj16/run_exc.png"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <and>
+                        <test
+                              forcePluginActivation="true"
+                              property="com.github.sdbg.debug.ui.launch.canLaunch">
+                        </test>
+                  </and>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="true"
+            locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
+         <command
+               commandId="com.github.sdbg.debug.ui.run.browser"
+               icon="icons/obj16/run_exc.png"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <and>
+                        <test
+                              forcePluginActivation="true"
+                              property="com.github.sdbg.debug.ui.launch.canLaunchBrowser">
+                        </test>
+                  </and>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="true"
+            locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
+         <command
+               commandId="com.github.sdbg.debug.ui.run.dartium"
+               icon="icons/obj16/run_exc.png"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <and>
+                        <test
+                              forcePluginActivation="true"
+                              property="com.github.sdbg.debug.ui.launch.canLaunchDartium">
+                        </test>
+                  </and>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="true"
+            locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
+         <command
+               commandId="com.github.sdbg.debug.ui.run.chromeapp"
+               icon="icons/obj16/run_exc.png"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <and>
+                        <test
+                              forcePluginActivation="true"
+                              property="com.github.sdbg.debug.ui.launch.canLaunchChromeApp">
+                        </test>
+                  </and>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
+         <command
+               commandId="com.github.sdbg.debug.ui.run.deploypolymer"
+               icon="icons/obj16/run_exc.png"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <and>
+                     <test
+                           forcePluginActivation="true"
+                           property="com.github.sdbg.debug.ui.launch.canDeployPolymer">
+                     </test>
+                  </and>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+   
+   <extension point="org.eclipse.ui.actionSets">
+      <actionSet
+            label="%BreakpointActionSet.label"
+            visible="false"
+            id="com.github.sdbg.debug.ui.breakpointActionSet">
+         <action
+               definitionId="org.eclipse.debug.ui.commands.ToggleBreakpoint"
+               label="%ToggleBreakpointAction.label"
+               icon="icons/obj16/brkp_obj.gif"
+               class="com.github.sdbg.debug.ui.internal.breakpoints.RetargetToggleBreakpointAction"
+               menubarPath="org.eclipse.ui.run/runGroup"
+               id="org.eclipse.debug.ui.actions.ToggleBreakpoint">
+         </action>
+      </actionSet>
+   </extension>
+
+   <extension point="org.eclipse.ui.actionSets">
+      <actionSet
+            label="Dart Launching"
+            visible="true"
+            id="com.github.sdbg.debug.ui.launchActionSet">
+         <action
+               definitionId="com.github.sdbg.debug.ui.showWebConsole"
+               label="Show Web Server Address"
+               class="com.github.sdbg.debug.ui.internal.util.ShowWebConsoleAction"
+               menubarPath="org.eclipse.ui.run/emptyLaunchGroup"
+               id="com.github.sdbg.debug.ui.actions.showWebConsole">
+         </action>         
+      </actionSet>
+   </extension>
+   
+   <!-- extension point="org.eclipse.ui.popupMenus"> 
+      <viewerContribution 
+         id="com.github.sdbg.debug.ui.breakpointActionSet.popup"
+         targetID="#DartEditorContext"> 
+         <action
+            id="com.github.sdbg.debug.ui.breakpointActionSet.popup.1" 
+            label="%ToggleBreakpointAction.label"
+            icon="icons/obj16/brkp_obj.gif"
+            menubarPath="additions" 
+            class="com.github.sdbg.debug.ui.internal.breakpoints.DartBreakpointContextMenuDelegate"> 
+         </action> 
+      </viewerContribution> 
+   </extension -->
+
+   <extension point="org.eclipse.ui.bindings">
+      <key
+            sequence="F5"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.debug.ui.commands.StepInto"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"/>
+      <key
+            sequence="F6"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.debug.ui.commands.StepOver"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"/>
+      <key
+            sequence="F7"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.debug.ui.commands.StepReturn"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"/>
+       <key
+            sequence="F8"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.debug.ui.commands.Resume"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"/>
+       <key
+            sequence="M1+F2"
+            contextId="org.eclipse.debug.ui.debugging"
+            commandId="org.eclipse.debug.ui.commands.Terminate"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"/>            
+      <key
+            sequence="M1+M2+B"
+            
+            commandId="org.eclipse.debug.ui.commands.ToggleBreakpoint"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"/>
+       <!-- key
+            commandId="org.eclipse.debug.ui.commands.eof"
+            contextId="org.eclipse.debug.ui.console"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"
+            sequence="CTRL+D"/>
+      <key
+            contextId="org.eclipse.debug.ui.console"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"
+            sequence="CTRL+D"
+            platform="win32"/>
+      <key
+            commandId="org.eclipse.debug.ui.commands.eof"
+            contextId="org.eclipse.debug.ui.console"
+            schemeId="com.github.sdbg.dartAcceleratorConfiguration"
+            sequence="CTRL+Z"
+            platform="win32"/ -->                                
+    </extension>
+    
+   <extension
+         point="org.eclipse.ltk.core.refactoring.deleteParticipants">
+      <deleteParticipant
+            class="com.github.sdbg.debug.ui.launch.LaunchesDeleteResourceParticipant"
+            id="com.github.sdbg.debug.ui.launch.DeleteResourceParticipant"
+            name="Remove Dart launches">
+            <enablement>
+              <with variable="affectedNatures">
+                <iterate operator="or">
+                  <equals value="com.github.sdbg.core.dartNature"/>
+                </iterate>
+              </with>
+            </enablement>
+      </deleteParticipant>
+   </extension>
+    
+   <extension
+         point="org.eclipse.ltk.core.refactoring.renameParticipants">
+      <renameParticipant
+            class="com.github.sdbg.debug.ui.launch.LaunchesRenameResourceParticipant"
+            id="com.github.sdbg.debug.ui.launch.LaunchesRenameResourceParticipant"
+            name="Update HTML file in Dart launches">
+            <enablement>
+              <with variable="affectedNatures">
+                <iterate operator="or">
+                  <equals value="com.github.sdbg.core.dartNature"/>
+                </iterate>
+              </with>
+            </enablement>
+      </renameParticipant>
+   </extension>
+   
+   <extension
+         point="com.github.sdbg.debug.core.debugUIHelper">
+      <helper
+            class="com.github.sdbg.debug.ui.internal.DefaultDebugUIHelper">
+      </helper>
+   </extension>
+
+   <!-- exception on breakpoint annotation -->
+   
+   <extension point="org.eclipse.ui.editors.annotationTypes">
+      <type
+         name="org.eclipse.debug.ui.currentIPEx">
+      </type>
+   </extension>   
+   
+   <extension point="org.eclipse.ui.editors.markerAnnotationSpecification">
+      <specification
+            icon="icons/obj16/inst_ptr_exception.png"
+            annotationType="org.eclipse.debug.ui.currentIPEx"
+            colorPreferenceKey="currentIPColorEx"
+            colorPreferenceValue="255,150,150"
+            highlightPreferenceKey="currentIPHighlight"
+            highlightPreferenceValue="true"
+            label="Debug Current Instruction Pointer"
+            overviewRulerPreferenceKey="currentIPOverviewRuler"
+            overviewRulerPreferenceValue="true"
+            presentationLayer="6"
+            textPreferenceKey="currentIPIndication"
+            textPreferenceValue="false"
+            verticalRulerPreferenceKey="currentIPVerticalRuler"
+            verticalRulerPreferenceValue="true"
+            textStylePreferenceKey="currentIPTextStyle"
+            textStylePreferenceValue="NONE"
+            includeOnPreferencePage="false">
+      </specification>
+   </extension>
+
+   <extension
+          point="org.eclipse.ui.views">
+      <view
+            category="com.github.sdbg.ui.dart"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.ObjectInspectorView"
+            icon="icons/obj16/value_show.gif"
+            id="com.github.sdbg.debug.objectInspectorView"
+            name="Inspector"
+            allowMultiple="true">
+      </view>
+   </extension>
+
+   <!-- debugger variables object contributions -->
+   
+   <extension point="org.eclipse.ui.popupMenus">
+      <objectContribution
+         id="com.github.sdbg.debug.ui.inspectLibraryContribution"
+         objectClass="org.eclipse.debug.core.model.IVariable">
+         <action
+            id="com.github.sdbg.debug.ui.internal.objectinspector.OpenLibraryInspectorAction"
+            label="Inspect Library..."
+            icon="icons/obj16/watchlist_view.gif"
+            menubarPath="additions1"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.OpenLibraryInspectorAction"
+            enablesFor="1">
+         </action>
+         <visibility>
+            <objectState name="canInspectLibrary" value="true"></objectState>
+         </visibility>
+      </objectContribution>
+
+      <objectContribution
+         id="com.github.sdbg.debug.ui.inspectClassContribution"
+         objectClass="org.eclipse.debug.core.model.IVariable">
+         <action
+            id="com.github.sdbg.debug.ui.internal.objectinspector.OpenClassInspectorAction"
+            label="Inspect Type..."
+            icon="icons/obj16/watchlist_view.gif"
+            menubarPath="additions1"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.OpenClassInspectorAction"
+            enablesFor="1">
+         </action>
+         <visibility>
+            <objectState name="canInspectClass" value="true"></objectState>
+         </visibility>
+      </objectContribution>
+      
+      <objectContribution
+         id="com.github.sdbg.debug.ui.inspectObjectContribution"
+         objectClass="org.eclipse.debug.core.model.IVariable">
+         <action
+            id="com.github.sdbg.debug.ui.internal.objectinspector.OpenInspectorAction"
+            label="Inspect Instance..."
+            icon="icons/obj16/watchlist_view.gif"
+            menubarPath="additions1"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.OpenInspectorAction"
+            enablesFor="1">
+            <enablement>
+               <objectState name="canInspectObject" value="true"></objectState>
+            </enablement>
+         </action>
+         <visibility>
+            <objectState name="isInspectableObject" value="true"></objectState>
+         </visibility>
+      </objectContribution>
+      
+      <objectContribution
+         id="com.github.sdbg.debug.ui.inspectNewLibraryContribution"
+         objectClass="org.eclipse.debug.core.model.IVariable">
+         <action
+            id="com.github.sdbg.debug.ui.internal.objectinspector.OpenNewLibraryInspectorAction"
+            label="New Library Inspector..."
+            icon="icons/obj16/watchlist_view.gif"
+            menubarPath="additions2"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.OpenNewLibraryInspectorAction"
+            enablesFor="1">
+         </action>
+         <visibility>
+            <objectState name="canInspectLibrary" value="true"></objectState>
+         </visibility>
+      </objectContribution>
+
+      <objectContribution
+         id="com.github.sdbg.debug.ui.inspectNewClassContribution"
+         objectClass="org.eclipse.debug.core.model.IVariable">
+         <action
+            id="com.github.sdbg.debug.ui.internal.objectinspector.OpenNewClassInspectorAction"
+            label="New Type Inspector..."
+            icon="icons/obj16/watchlist_view.gif"
+            menubarPath="additions2"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.OpenNewClassInspectorAction"
+            enablesFor="1">
+         </action>
+         <visibility>
+            <objectState name="canInspectClass" value="true"></objectState>
+         </visibility>
+      </objectContribution>
+      
+      <objectContribution
+         id="com.github.sdbg.debug.ui.inspectNewObjectContribution"
+         objectClass="org.eclipse.debug.core.model.IVariable">
+         <action
+            id="com.github.sdbg.debug.ui.internal.objectinspector.OpenNewInspectorAction"
+            label="New Instance Inspector..."
+            icon="icons/obj16/watchlist_view.gif"
+            menubarPath="additions2"
+            class="com.github.sdbg.debug.ui.internal.objectinspector.OpenNewInspectorAction"
+            enablesFor="1">
+         </action>
+         <visibility>
+            <objectState name="canInspectObject" value="true"></objectState>
+         </visibility>
+      </objectContribution>      
+   </extension>
+
+   <!-- extension point="org.eclipse.ui.popupMenus">
+      <objectContribution
+         id="com.github.sdbg.debug.ui.openServerTypeContribution"
+         objectClass="com.github.sdbg.debug.core.server.ServerDebugVariable">
+         <action
+            id="com.github.sdbg.debug.ui.openServerDeclarationAction"
+            label="Open Object Type"
+            menubarPath="additions"
+            class="com.github.sdbg.debug.ui.internal.server.OpenServerVariableTypeAction"
+            enablesFor="1">
+         </action>
+      </objectContribution>
+      
+      <objectContribution
+         id="com.github.sdbg.debug.ui.openDartiumDeclarationContribution"
+         objectClass="com.github.sdbg.debug.core.dartium.DartiumDebugVariable">
+         <action
+            id="com.github.sdbg.debug.ui.openDartiumDeclarationAction"
+            label="Open Declaration"
+            menubarPath="additions"
+            class="com.github.sdbg.debug.ui.internal.util.OpenDartiumVariableDeclaration"
+            enablesFor="1">
+         </action>
+      </objectContribution>
+   </extension -->
+      
+</plugin>

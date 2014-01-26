@@ -23,9 +23,9 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
 
 /**
- * The abstract super class of the Dartiun debug elements. This provides common functionality like
+ * The abstract super class of the Webkit debug elements. This provides common functionality like
  * access to the debug target and ILaunch object, as well as making sure that all Webkit debug
- * elements return the return DartDebugCorePlugin.DEBUG_MODEL_ID debug model identifier.
+ * elements return the return SDBGDebugCorePlugin.DEBUG_MODEL_ID debug model identifier.
  */
 public abstract class WebkitDebugElement extends DebugElement {
 

@@ -84,7 +84,7 @@
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
             icon="icons/chromium_16.png"
-            id="com.github.sdbg.debug.ui.dartChromeShortcut"
+            id="com.github.sdbg.debug.ui.chromeLaunchShortcut"
             label="%dart.chromelaunch.shortcut.label"
             modes="run,debug">
          <configurationType
@@ -141,7 +141,7 @@
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chromeapp.ChromeAppLaunchShortcut"
             id="com.github.sdbg.debug.ui.chromeAppLaunchShortcut"
-            label="%dart.chromeApplaunch.shortcut.label"
+            label="%chrome.chromeApplaunch.shortcut.label"
             icon="icons/chrome_app.png"
             modes="run,debug">
          <configurationType
@@ -176,7 +176,7 @@
             delegate="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchConfigurationDelegate"
             id="com.github.sdbg.debug.core.browserLaunchConfig"
             modes="run"
-            name="%dart.launch.config.client.name">
+            name="%chrome.launch.config.client.name">
       </launchConfigurationType>
    </extension>
 
@@ -195,7 +195,7 @@
             class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchConfigurationTabGroup"
             id="com.github.sdbg.debug.core.browserLaunchConfigTabGroup"
             type="com.github.sdbg.debug.core.browserLaunchConfig"
-            description="Run a Dart web application in a non-Chrome browser (using dart2js)">
+            description="Run a web application in a non-Chrome browser (using dart2js)">
       </launchConfigurationTabGroup>
    </extension>
 
@@ -204,7 +204,7 @@
       <shortcut
             class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut"
             icon="icons/obj16/globe_dark.png"
-            id="com.github.sdbg.debug.ui.dartBrowserShortcut"
+            id="com.github.sdbg.debug.ui.browserLaunchShortcut"
             label="%dart.clientlaunch.shortcut.label"
             modes="run">
          <configurationType
@@ -235,59 +235,6 @@
       </shortcut>
    </extension>
        
-   <!-- Server launch configuration -->
-   <extension
-         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
-      <launchConfigurationTypeImage
-            configTypeID="com.github.sdbg.debug.core.serverLaunchConfig"
-            icon="icons/obj16/osprc_obj.png"
-            id="com.github.sdbg.debug.core.serverLaunchConfigTypeImage">
-      </launchConfigurationTypeImage>
-   </extension>
-
-   <extension
-         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
-      <launchConfigurationTabGroup
-            class="com.github.sdbg.debug.ui.internal.server.DartServerTabGroup"
-            id="com.github.sdbg.debug.core.serverLaunchConfigTabGroup"
-            type="com.github.sdbg.debug.core.serverLaunchConfig"
-            description="Run a command-line Dart application">
-      </launchConfigurationTabGroup>
-   </extension>
-   
-   <extension
-         point="org.eclipse.debug.ui.launchShortcuts">
-      <shortcut
-            class="com.github.sdbg.debug.ui.internal.server.DartServerLaunchShortcut"
-            id="com.github.sdbg.debug.ui.serverLaunchShortcut"
-            label="%dart.serverlaunch.shortcut.label"
-            icon="icons/obj16/osprc_obj.png"
-            modes="run,debug">
-         <configurationType
-               id="com.github.sdbg.debug.core.serverLaunchConfig">
-         </configurationType>
-         <contextualLaunch>
-            <enablement>
-               <with variable="selection">
-                  <count value="1">
-                  </count>
-                  <iterate>
-                     <adapt type="org.eclipse.core.resources.IResource">
-                        <or>
-                           <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
-                              <test property="org.eclipse.core.resources.extension" value="dart"/>
-                           </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
-                        </or>
-                     </adapt>
-                  </iterate>
-               </with>
-            </enablement>
-         </contextualLaunch>
-      </shortcut>
-   </extension>
-   
    <!-- breakpoints -->
 
    <extension
@@ -357,6 +304,7 @@
       </debugModelPresentation>
    </extension>
 
+<!-- &&&
    <extension
          point="org.eclipse.core.runtime.adapters">
       <factory
@@ -367,6 +315,7 @@
          </adapter>
       </factory>
    </extension>
+-->
 
    <extension
          point="org.eclipse.ui.editors">
@@ -407,13 +356,6 @@
             description="Run as JavaScript"
             id="com.github.sdbg.debug.ui.run.browser"
             name="%runBrowserName">
-      </command>
-       <command
-            categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunInServerHandler"
-            description="Run"
-            id="com.github.sdbg.debug.ui.run.server"
-            name="%runCommandName">
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
@@ -476,30 +418,6 @@
       
    <extension
          point="org.eclipse.ui.menus">
-      <menuContribution
-            allPopups="true"
-            locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
-         <command
-               commandId="com.github.sdbg.debug.ui.run.server"
-               icon="icons/obj16/run_exc.png"
-               style="push">
-            <visibleWhen
-                  checkEnabled="false">
-               <with
-                     variable="selection">
-                  <count
-                        value="1">
-                  </count>
-                  <and>
-                        <test
-                              forcePluginActivation="true"
-                              property="com.github.sdbg.debug.ui.launch.canLaunch">
-                        </test>
-                  </and>
-               </with>
-            </visibleWhen>
-         </command>
-      </menuContribution>
       <menuContribution
             allPopups="true"
             locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">

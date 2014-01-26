@@ -12,8 +12,8 @@ import com.github.sdbg.core.utilities.general.StringUtilities;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 /***
- * Just the minimum possible from the original DartCore. Most likely these functions should not be
- * part of DartCore anyway
+ * &&& Just the minimum possible from the original DartCore. Most likely these functions should not
+ * be part of DartCore anyway
  */
 public class DartCore {
   /**

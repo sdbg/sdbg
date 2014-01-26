@@ -66,7 +66,7 @@ import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut;
 @SuppressWarnings("restriction")
 public class LaunchUtils {
 
-  public static final String DARTIUM_LAUNCH_NAME = "Dartium launch";
+  public static final String LAUNCH_NAME = "Browser launch";
 
   private static List<ILaunchShortcut> shortcuts;
 
@@ -144,11 +144,11 @@ public class LaunchUtils {
     return latestLaunch;
   }
 
-  public static void clearDartiumConsoles() {
+  public static void clearConsoles() {
     IConsole[] consoles = ConsolePlugin.getDefault().getConsoleManager().getConsoles();
     for (IConsole console : consoles) {
       if (console instanceof ProcessConsole) {
-        if (console.getName().contains(DARTIUM_LAUNCH_NAME)) {
+        if (console.getName().contains(LAUNCH_NAME)) {
           ((ProcessConsole) console).clearConsole();
         }
       }
@@ -239,7 +239,7 @@ public class LaunchUtils {
     return null;
   }
 
-  public static ILaunchShortcut getDartiumLaunchShortcut() {
+  public static ILaunchShortcut getChromeLaunchShortcut() {
     for (ILaunchShortcut shortcut : getAllLaunchShortcuts()) {
       if (shortcut instanceof ChromeLaunchShortcut) {
         return shortcut;

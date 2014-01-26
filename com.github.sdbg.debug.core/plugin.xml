@@ -36,7 +36,7 @@
             modes="run"
             name="Pub serve launch"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
-            sourcePathComputerId="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+            sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType-->
    </extension>
 

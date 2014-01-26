@@ -89,8 +89,8 @@ public class LaunchService {
     launchShortcut.launch(launchedSelection, ILaunchManager.DEBUG_MODE);
   }
 
-  public void launchInDartium(IResource resource) {
-    launch(resource, LaunchUtils.getDartiumLaunchShortcut());
+  public void launchInChrome(IResource resource) {
+    launch(resource, LaunchUtils.getChromeLaunchShortcut());
   }
 
   private void notifyLaunchStarted(ILaunch[] launches) {

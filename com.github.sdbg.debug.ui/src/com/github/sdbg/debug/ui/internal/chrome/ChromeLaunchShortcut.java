@@ -13,13 +13,6 @@
  */
 package com.github.sdbg.debug.ui.internal.chrome;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
-import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
-import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -29,13 +22,20 @@ import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.core.ILaunchManager;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
+import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
+import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+
 /**
- * A launch shortcut to allow users to launch Dart applications in Chromium / Dartium.
+ * A launch shortcut to allow users to launch applications in Chrome.
  */
 public class ChromeLaunchShortcut extends AbstractLaunchShortcut implements ILaunchShortcutExt {
 
   public ChromeLaunchShortcut() {
-    super("Chromium");
+    super("Chrome");
   }
 
   @Override
@@ -105,7 +105,7 @@ public class ChromeLaunchShortcut extends AbstractLaunchShortcut implements ILau
 
     SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
     launchWrapper.markAsLaunched();
-    LaunchUtils.clearDartiumConsoles();
+    LaunchUtils.clearConsoles();
 
     LaunchUtils.launch(config, mode);
   }

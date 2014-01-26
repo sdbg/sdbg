@@ -13,10 +13,6 @@
  */
 package com.github.sdbg.debug.ui.internal.browser;
 
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
-
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -36,6 +32,10 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
 
 /**
  * Main launch tab for Browser launch configurations
@@ -117,7 +117,10 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
       control.dispose();
       setControl(null);
     }
-    italicFont.dispose();
+
+    if (italicFont != null) {
+      italicFont.dispose();
+    }
   }
 
   @Override
@@ -173,6 +176,12 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     dart2jsFlagsText.setText(wrapper.getDart2jsFlags());
   }
 
+  private void notifyPanelChanged() {
+    setDirty(true);
+    updateEnablements(launchTargetGroup.getHtmlButtonSelection());
+    updateLaunchConfigurationDialog();
+  }
+
   /**
    * Store the value specified in the UI into the launch configuration
    */
@@ -202,20 +211,6 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
 
   }
 
-  @Override
-  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
-    wrapper.setShouldLaunchFile(true);
-    wrapper.setApplicationName(""); //$NON-NLS-1$
-    wrapper.setRunDart2js(true);
-  }
-
-  private void notifyPanelChanged() {
-    setDirty(true);
-    updateEnablements(launchTargetGroup.getHtmlButtonSelection());
-    updateLaunchConfigurationDialog();
-  }
-
   private String performSdkCheck() {
 //&&&    
 //    if (!DartSdkManager.getManager().hasSdk()) {
@@ -224,6 +219,14 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
 //    } else {
     return null;
 //    }
+  }
+
+  @Override
+  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
+    wrapper.setShouldLaunchFile(true);
+    wrapper.setApplicationName(""); //$NON-NLS-1$
+    wrapper.setRunDart2js(true);
   }
 
   private void updateEnablements(boolean isFile) {

@@ -13,9 +13,6 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchMessages;
-import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog.HtmlResourceFilter;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
@@ -41,8 +38,11 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 import org.eclipse.ui.dialogs.FilteredItemsSelectionDialog;
 
+import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchMessages;
+import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog.HtmlResourceFilter;
+
 /**
- * A composite that creates a group to enter html and url information for dartium/browser launch
+ * A composite that creates a group to enter html and url information for chrome/browser launch
  */
 public class LaunchTargetComposite extends Composite {
 
@@ -75,7 +75,7 @@ public class LaunchTargetComposite extends Composite {
     GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(this);
 
     Group group = new Group(this, SWT.NONE);
-    group.setText(ChromeLaunchMessages.DartiumMainTab_LaunchTarget);
+    group.setText(ChromeLaunchMessages.ChromeMainTab_LaunchTarget);
     GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
 
@@ -87,6 +87,79 @@ public class LaunchTargetComposite extends Composite {
     createUrlField(group);
   }
 
+  protected void createHtmlField(Composite composite) {
+    htmlButton = new Button(composite, SWT.RADIO);
+    htmlButton.setText(ChromeLaunchMessages.ChromeMainTab_HtmlFileLabel);
+    htmlButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        updateEnablements(true);
+        notifyPanelChanged();
+      }
+    });
+
+    htmlText = new Text(composite, SWT.BORDER | SWT.SINGLE);
+    htmlText.addModifyListener(textModifyListener);
+    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).hint(400, SWT.DEFAULT).grab(
+        true,
+        false).applyTo(htmlText);
+
+    htmlBrowseButton = new Button(composite, SWT.PUSH);
+    htmlBrowseButton.setText(ChromeLaunchMessages.ChromeMainTab_Browse);
+    PixelConverter converter = new PixelConverter(htmlBrowseButton);
+    int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
+        htmlBrowseButton);
+    htmlBrowseButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        handleApplicationBrowseButton();
+      }
+    });
+  }
+
+  protected void createUrlField(Composite composite) {
+    urlButton = new Button(composite, SWT.RADIO);
+    urlButton.setText(ChromeLaunchMessages.ChromeMainTab_UrlLabel);
+    urlButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        updateEnablements(false);
+        notifyPanelChanged();
+      }
+    });
+
+    urlText = new Text(composite, SWT.BORDER | SWT.SINGLE);
+    urlText.addModifyListener(textModifyListener);
+    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(urlText);
+
+    // spacer
+    new Label(composite, SWT.NONE);
+
+    projectLabel = new Label(composite, SWT.NONE);
+    projectLabel.setText(ChromeLaunchMessages.ChromeMainTab_SourceDirectoryLabel);
+    GridDataFactory.swtDefaults().indent(20, 0).applyTo(projectLabel);
+
+    sourceDirectoryText = new Text(composite, SWT.BORDER | SWT.SINGLE);
+    sourceDirectoryText.setCursor(composite.getShell().getDisplay().getSystemCursor(
+        SWT.CURSOR_ARROW));
+    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
+        sourceDirectoryText);
+
+    projectBrowseButton = new Button(composite, SWT.PUSH);
+    projectBrowseButton.setText(ChromeLaunchMessages.ChromeMainTab_Browse);
+    PixelConverter converter = new PixelConverter(htmlBrowseButton);
+    widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
+        projectBrowseButton);
+    projectBrowseButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        handleSourceDirectoryBrowseButton();
+      }
+    });
+  }
+
   public int getButtonWidthHint() {
     return widthHint;
   }
@@ -94,22 +167,22 @@ public class LaunchTargetComposite extends Composite {
   public String getErrorMessage() {
 
     if (htmlButton.getSelection() && htmlText.getText().length() == 0) {
-      return ChromeLaunchMessages.DartiumMainTab_NoHtmlFile;
+      return ChromeLaunchMessages.ChromeMainTab_NoHtmlFile;
     }
 
     if (urlButton.getSelection()) {
       String url = urlText.getText();
 
       if (url.length() == 0) {
-        return ChromeLaunchMessages.DartiumMainTab_NoUrl;
+        return ChromeLaunchMessages.ChromeMainTab_NoUrl;
       }
 
       if (!isValidUrl(url)) {
-        return ChromeLaunchMessages.DartiumMainTab_InvalidURL;
+        return ChromeLaunchMessages.ChromeMainTab_InvalidURL;
       }
 
       if (sourceDirectoryText.getText().length() == 0) {
-        return ChromeLaunchMessages.DartiumMainTab_NoProject;
+        return ChromeLaunchMessages.ChromeMainTab_NoProject;
       }
     }
 
@@ -137,106 +210,13 @@ public class LaunchTargetComposite extends Composite {
     return urlText.getText().trim();
   }
 
-  public void setHtmlButtonSelection(boolean state) {
-    htmlButton.setSelection(state);
-    urlButton.setSelection(!state);
-    updateEnablements(state);
-
-  }
-
-  public void setHtmlTextValue(String string) {
-    htmlText.setText(string);
-  }
-
-  public void setSourceDirectoryTextValue(String sourceDirectoryName) {
-    sourceDirectoryText.setText(sourceDirectoryName);
-
-  }
-
-  public void setUrlTextValue(String string) {
-    urlText.setText(string);
-  }
-
-  protected void createHtmlField(Composite composite) {
-    htmlButton = new Button(composite, SWT.RADIO);
-    htmlButton.setText(ChromeLaunchMessages.DartiumMainTab_HtmlFileLabel);
-    htmlButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        updateEnablements(true);
-        notifyPanelChanged();
-      }
-    });
-
-    htmlText = new Text(composite, SWT.BORDER | SWT.SINGLE);
-    htmlText.addModifyListener(textModifyListener);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).hint(400, SWT.DEFAULT).grab(
-        true,
-        false).applyTo(htmlText);
-
-    htmlBrowseButton = new Button(composite, SWT.PUSH);
-    htmlBrowseButton.setText(ChromeLaunchMessages.DartiumMainTab_Browse);
-    PixelConverter converter = new PixelConverter(htmlBrowseButton);
-    int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
-        htmlBrowseButton);
-    htmlBrowseButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        handleApplicationBrowseButton();
-      }
-    });
-  }
-
-  protected void createUrlField(Composite composite) {
-    urlButton = new Button(composite, SWT.RADIO);
-    urlButton.setText(ChromeLaunchMessages.DartiumMainTab_UrlLabel);
-    urlButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        updateEnablements(false);
-        notifyPanelChanged();
-      }
-    });
-
-    urlText = new Text(composite, SWT.BORDER | SWT.SINGLE);
-    urlText.addModifyListener(textModifyListener);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(urlText);
-
-    // spacer
-    new Label(composite, SWT.NONE);
-
-    projectLabel = new Label(composite, SWT.NONE);
-    projectLabel.setText(ChromeLaunchMessages.DartiumMainTab_SourceDirectoryLabel);
-    GridDataFactory.swtDefaults().indent(20, 0).applyTo(projectLabel);
-
-    sourceDirectoryText = new Text(composite, SWT.BORDER | SWT.SINGLE);
-    sourceDirectoryText.setCursor(composite.getShell().getDisplay().getSystemCursor(
-        SWT.CURSOR_ARROW));
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
-        sourceDirectoryText);
-
-    projectBrowseButton = new Button(composite, SWT.PUSH);
-    projectBrowseButton.setText(ChromeLaunchMessages.DartiumMainTab_Browse);
-    PixelConverter converter = new PixelConverter(htmlBrowseButton);
-    widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
-        projectBrowseButton);
-    projectBrowseButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        handleSourceDirectoryBrowseButton();
-      }
-    });
-  }
-
   protected void handleApplicationBrowseButton() {
     IWorkspace workspace = ResourcesPlugin.getWorkspace();
     AppSelectionDialog dialog = new AppSelectionDialog(
         getShell(),
         workspace.getRoot(),
         new HtmlResourceFilter());
-    dialog.setTitle(ChromeLaunchMessages.DartiumMainTab_SelectHtml);
+    dialog.setTitle(ChromeLaunchMessages.ChromeMainTab_SelectHtml);
     dialog.setInitialPattern(".", FilteredItemsSelectionDialog.FULL_SELECTION); //$NON-NLS-1$
     IPath path = new Path(htmlText.getText());
     if (workspace.validatePath(path.toString(), IResource.FILE).isOK()) {
@@ -265,7 +245,7 @@ public class LaunchTargetComposite extends Composite {
         getShell(),
         null,
         false,
-        ChromeLaunchMessages.DartiumMainTab_SelectProject);
+        ChromeLaunchMessages.ChromeMainTab_SelectProject);
 
     dialog.open();
 
@@ -275,22 +255,6 @@ public class LaunchTargetComposite extends Composite {
       String pathStr = ((IPath) results[0]).toString();
       sourceDirectoryText.setText(pathStr);
       notifyPanelChanged();
-    }
-  }
-
-  protected void updateEnablements(boolean isFile) {
-    if (isFile) {
-      htmlText.setEnabled(true);
-      htmlBrowseButton.setEnabled(true);
-      urlText.setEnabled(false);
-      sourceDirectoryText.setEnabled(false);
-      projectBrowseButton.setEnabled(false);
-    } else {
-      htmlText.setEnabled(false);
-      htmlBrowseButton.setEnabled(false);
-      urlText.setEnabled(true);
-      sourceDirectoryText.setEnabled(true);
-      projectBrowseButton.setEnabled(true);
     }
   }
 
@@ -311,5 +275,41 @@ public class LaunchTargetComposite extends Composite {
     event.type = SWT.Modify;
     event.widget = this;
     notifyListeners(SWT.Modify, event);
+  }
+
+  public void setHtmlButtonSelection(boolean state) {
+    htmlButton.setSelection(state);
+    urlButton.setSelection(!state);
+    updateEnablements(state);
+
+  }
+
+  public void setHtmlTextValue(String string) {
+    htmlText.setText(string);
+  }
+
+  public void setSourceDirectoryTextValue(String sourceDirectoryName) {
+    sourceDirectoryText.setText(sourceDirectoryName);
+
+  }
+
+  public void setUrlTextValue(String string) {
+    urlText.setText(string);
+  }
+
+  protected void updateEnablements(boolean isFile) {
+    if (isFile) {
+      htmlText.setEnabled(true);
+      htmlBrowseButton.setEnabled(true);
+      urlText.setEnabled(false);
+      sourceDirectoryText.setEnabled(false);
+      projectBrowseButton.setEnabled(false);
+    } else {
+      htmlText.setEnabled(false);
+      htmlBrowseButton.setEnabled(false);
+      urlText.setEnabled(true);
+      sourceDirectoryText.setEnabled(true);
+      projectBrowseButton.setEnabled(true);
+    }
   }
 }

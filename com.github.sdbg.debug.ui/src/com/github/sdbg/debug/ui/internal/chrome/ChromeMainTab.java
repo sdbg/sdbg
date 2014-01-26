@@ -13,11 +13,6 @@
  */
 package com.github.sdbg.debug.ui.internal.chrome;
 
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
-import com.github.sdbg.ui.internal.util.ExternalBrowserUtil;
-
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -39,8 +34,13 @@ import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
+import com.github.sdbg.ui.internal.util.ExternalBrowserUtil;
+
 /**
- * The main launch configuration UI for running Dart applications in Dartium.
+ * The main launch configuration UI for running applications in Chrome.
  */
 public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
@@ -82,9 +82,9 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
       }
     });
 
-    // Dartium settings group
+    // Chrome settings group
     Group group = new Group(composite, SWT.NONE);
-    group.setText("Dartium settings");
+    group.setText("Chrome settings");
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
@@ -158,12 +158,12 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public String getMessage() {
-    return ChromeLaunchMessages.DartiumMainTab_Message;
+    return ChromeLaunchMessages.ChromeMainTab_Message;
   }
 
   @Override
   public String getName() {
-    return ChromeLaunchMessages.DartiumMainTab_Name;
+    return ChromeLaunchMessages.ChromeMainTab_Name;
   }
 
   @Override
@@ -203,6 +203,12 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     return getErrorMessage() == null;
   }
 
+  private void notifyPanelChanged() {
+    setDirty(true);
+
+    updateLaunchConfigurationDialog();
+  }
+
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
     SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
@@ -239,19 +245,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     }
   }
 
-  @Override
-  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setShouldLaunchFile(true);
-    dartLauncher.setApplicationName(""); //$NON-NLS-1$
-  }
-
-  private void notifyPanelChanged() {
-    setDirty(true);
-
-    updateLaunchConfigurationDialog();
-  }
-
   private String performSdkCheck() {
 //&&&    
 //    if (!DartSdkManager.getManager().hasSdk()) {
@@ -260,6 +253,13 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 //    } else {
     return null;
 //    }
+  }
+
+  @Override
+  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
+    dartLauncher.setShouldLaunchFile(true);
+    dartLauncher.setApplicationName(""); //$NON-NLS-1$
   }
 
 }

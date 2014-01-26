@@ -19,14 +19,14 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.ui.PlatformUI;
 
 /**
- * A command handler to invoke the Run in Dartium action
+ * A command handler to invoke the Run in XChrome action
  */
 public class RunInChromeHandler extends AbstractHandler {
 
   private RunInChromeAction runAction;
 
   /**
-   * Create a new RunInDartiumHandler.
+   * Create a new RunInChromeHandler.
    */
   public RunInChromeHandler() {
 

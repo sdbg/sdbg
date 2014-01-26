@@ -33,9 +33,9 @@
       </propertyTester>
        <propertyTester
              class="com.github.sdbg.debug.ui.internal.launch.RunInChromePropertyTester"
-             id="com.github.sdbg.debug.ui.run.dartiumPropertyTester"
+             id="com.github.sdbg.debug.ui.run.chromePropertyTester"
              namespace="com.github.sdbg.debug.ui.launch"
-             properties="canLaunchDartium"
+             properties="canLaunchChrome"
              type="org.eclipse.jface.viewers.ISelection">
        </propertyTester>
    </extension>
@@ -58,19 +58,14 @@
       </propertyTester>
    </extension>
    
-   <!-- Dartium launch configuration -->
+   <!-- Chrome launch configuration -->
 
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
-            configTypeID="com.github.sdbg.debug.core.dartiumLaunchConfig"
+            configTypeID="com.github.sdbg.debug.core.chromeLaunchConfig"
             icon="icons/chromium_16.png"
             id="com.github.sdbg.debug.core.chromeLaunchConfigImage">
-      </launchConfigurationTypeImage>
-      <launchConfigurationTypeImage
-            configTypeID="com.github.sdbg.debug.core.pubServeLaunchConfig"
-            icon="icons/chromium_16_ps.png"
-            id="com.github.sdbg.debug.ui.pubServeLaunchImage">
       </launchConfigurationTypeImage>
    </extension>
 
@@ -79,32 +74,21 @@
       <launchConfigurationTabGroup
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeTabGroup"
             id="com.github.sdbg.debug.core.chromeLaunchConfigTabGroup"
-            type="com.github.sdbg.debug.core.dartiumLaunchConfig"
-            description="Run a Dart web application in Dartium">
+            type="com.github.sdbg.debug.core.chromeLaunchConfig"
+            description="Run a web application in Chrome">
       </launchConfigurationTabGroup>
    </extension>
   
-  <extension
-         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
-      <launchConfigurationTabGroup
-            class="com.github.sdbg.debug.ui.internal.pubserve.PubServeTabGroup"
-            id="com.github.sdbg.debug.core.pubServeLaunchConfigTabGroup"
-            type="com.github.sdbg.debug.core.pubServeLaunchConfig"
-            description="Run a Dart web application in Dartium using pub serve">
-      </launchConfigurationTabGroup>
-   </extension>
-
-
    <extension
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
             icon="icons/chromium_16.png"
             id="com.github.sdbg.debug.ui.dartChromeShortcut"
-            label="%dart.dartiumlaunch.shortcut.label"
+            label="%dart.chromelaunch.shortcut.label"
             modes="run,debug">
          <configurationType
-               id="com.github.sdbg.debug.core.dartiumLaunchConfig">
+               id="com.github.sdbg.debug.core.chromeLaunchConfig">
          </configurationType>
          <contextualLaunch>
             <enablement>
@@ -211,7 +195,7 @@
             class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchConfigurationTabGroup"
             id="com.github.sdbg.debug.core.browserLaunchConfigTabGroup"
             type="com.github.sdbg.debug.core.browserLaunchConfig"
-            description="Run a Dart web application in a non-Dartium browser (using dart2js)">
+            description="Run a Dart web application in a non-Chrome browser (using dart2js)">
       </launchConfigurationTabGroup>
    </extension>
 
@@ -406,9 +390,9 @@
        <command
             categoryId="org.eclipse.ui.category.window"
             defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunInChromeHandler"
-            description="Run in Dartium"
-            id="com.github.sdbg.debug.ui.run.dartium"
-            name="%runDartiumName">
+            description="Run in Chrome"
+            id="com.github.sdbg.debug.ui.run.chrome"
+            name="%runChromeName">
       </command>
        <command
             categoryId="org.eclipse.ui.category.window"
@@ -544,7 +528,7 @@
             allPopups="true"
             locationURI="popup:com.github.sdbg.ui.FileExplorer?after=additions">
          <command
-               commandId="com.github.sdbg.debug.ui.run.dartium"
+               commandId="com.github.sdbg.debug.ui.run.chrome"
                icon="icons/obj16/run_exc.png"
                style="push">
             <visibleWhen
@@ -557,7 +541,7 @@
                   <and>
                         <test
                               forcePluginActivation="true"
-                              property="com.github.sdbg.debug.ui.launch.canLaunchDartium">
+                              property="com.github.sdbg.debug.ui.launch.canLaunchChrome">
                         </test>
                   </and>
                </with>

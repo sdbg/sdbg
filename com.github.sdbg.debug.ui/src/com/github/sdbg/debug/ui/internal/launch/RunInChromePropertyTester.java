@@ -16,16 +16,16 @@ package com.github.sdbg.debug.ui.internal.launch;
 import org.eclipse.core.expressions.PropertyTester;
 
 /**
- * A {@link PropertyTester} for checking whether the resource can be launched in Dartium. It is used
- * to contribute the Run in Dartium context menu in the Files view. Defines the property
- * "canLaunchDartium"
+ * A {@link PropertyTester} for checking whether the resource can be launched in Chrome. It is used
+ * to contribute the Run in Chrome context menu in the Files view. Defines the property
+ * "canLaunchChrome"
  */
 public class RunInChromePropertyTester extends PropertyTester {
 
   @Override
   public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
 //&&&    
-//    if ("canLaunchDartium".equalsIgnoreCase(property)) {
+//    if ("canLaunchChrome".equalsIgnoreCase(property)) {
 //      if (receiver instanceof IStructuredSelection) {
 //        Object o = ((IStructuredSelection) receiver).getFirstElement();
 //        if (o instanceof IFile) {

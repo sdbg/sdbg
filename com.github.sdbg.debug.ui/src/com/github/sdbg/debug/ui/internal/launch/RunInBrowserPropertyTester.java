@@ -16,7 +16,7 @@ package com.github.sdbg.debug.ui.internal.launch;
 import org.eclipse.core.expressions.PropertyTester;
 
 /**
- * A {@link PropertyTester} for checking whether the resource can be launched in a non Dartium
+ * A {@link PropertyTester} for checking whether the resource can be launched in a non Chrome
  * browser. It is used to contribute the Run as JavaScript and Run Polymer App as JavaScript context
  * menus in the Files view. Defines the property "canLaunchBrowser" and "canDeployPolymer".
  */

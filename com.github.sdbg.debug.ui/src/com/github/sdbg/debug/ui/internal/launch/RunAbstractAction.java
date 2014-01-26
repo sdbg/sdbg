@@ -152,7 +152,7 @@ public abstract class RunAbstractAction extends InstrumentedAction implements
         DebugInstrumentationUtilities.recordLaunchConfiguration(launchConfig, instrumentation);
 
         launchConfig.markAsLaunched();
-        LaunchUtils.clearDartiumConsoles();
+        LaunchUtils.clearConsoles();
       }
 
       LaunchUtils.launch(config, mode);

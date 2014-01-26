@@ -124,7 +124,7 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
       }
     }
 
-    LaunchUtils.clearDartiumConsoles();
+    LaunchUtils.clearConsoles();
 
     SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
     launchWrapper.markAsLaunched();

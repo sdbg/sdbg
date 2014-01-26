@@ -226,9 +226,9 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     String valueString = null;
 
     if (value instanceof ISDBGValue) {
-      ISDBGValue dartiumValue = (ISDBGValue) value;
+      ISDBGValue sdbgValue = (ISDBGValue) value;
 
-      valueString = getValueText(dartiumValue);
+      valueString = getValueText(sdbgValue);
     } else if (value != null) {
       valueString = value.getValueString();
 

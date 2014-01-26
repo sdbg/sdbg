@@ -13,11 +13,6 @@
  */
 package com.github.sdbg.debug.ui.internal.launch;
 
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
-import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
-import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jface.action.IAction;
@@ -25,8 +20,13 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 
+import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
+
 /**
- * Launch in Dartium
+ * Launch in Chrome
  */
 public class RunInChromeAction extends RunAbstractAction {
 
@@ -39,9 +39,9 @@ public class RunInChromeAction extends RunAbstractAction {
   }
 
   public RunInChromeAction(IWorkbenchWindow window, boolean noMenu) {
-    super(window, "Run in Dartium", noMenu ? IAction.AS_PUSH_BUTTON : IAction.AS_DROP_DOWN_MENU);
+    super(window, "Run in Chrome", noMenu ? IAction.AS_PUSH_BUTTON : IAction.AS_DROP_DOWN_MENU);
 
-    setActionDefinitionId("com.github.sdbg.tools.debug.ui.run.dartium");
+    setActionDefinitionId("com.github.sdbg.tools.debug.ui.run.chrome");
     setImageDescriptor(SDBGDebugUIPlugin.getImageDescriptor("obj16/run_exc.png"));
   }
 
@@ -55,7 +55,7 @@ public class RunInChromeAction extends RunAbstractAction {
         instrumentation.data("Resource-Name", resource.getName());
 
         // new launch config
-        ILaunchShortcut shortcut = LaunchUtils.getDartiumLaunchShortcut();
+        ILaunchShortcut shortcut = LaunchUtils.getChromeLaunchShortcut();
         ISelection selection = new StructuredSelection(resource);
         launch(shortcut, selection, instrumentation);
       }

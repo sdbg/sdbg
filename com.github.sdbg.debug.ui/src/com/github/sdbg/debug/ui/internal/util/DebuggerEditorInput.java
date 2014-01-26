@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -33,7 +33,7 @@ public class DebuggerEditorInput extends FileStoreEditorInput {
 
   @Override
   public ImageDescriptor getImageDescriptor() {
-    return DartDebugUIPlugin.getImageDescriptor("obj16/remoteDartFile.png");
+    return SDBGDebugUIPlugin.getImageDescriptor("obj16/remoteDartFile.png");
   }
 
   @Override

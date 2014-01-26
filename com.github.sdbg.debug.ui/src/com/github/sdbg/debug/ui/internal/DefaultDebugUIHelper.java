@@ -14,10 +14,12 @@
 
 package com.github.sdbg.debug.ui.internal;
 
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DebugUIHelper;
-import com.github.sdbg.debug.core.dartium.DartiumDebugTarget;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -27,12 +29,10 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.DebugUIHelper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 /**
  * A helper to allow non-UI code to interact with the UI.
@@ -52,7 +52,7 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
   }
 
   @Override
-  public void showDevtoolsDisconnectError(final String _title, final DartiumDebugTarget target) {
+  public void showDevtoolsDisconnectError(final String _title, final ISDBGDebugTarget target) {
     final Display display = Display.getDefault();
 
     Display.getDefault().asyncExec(new Runnable() {
@@ -134,7 +134,7 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
     try {
       builder.start();
     } catch (IOException e) {
-      DartDebugCorePlugin.logError(e);
+      SDBGDebugCorePlugin.logError(e);
     }
   }
 
@@ -145,7 +145,7 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
         try {
           bringWindowToFrontWin32_impl(regex);
         } catch (Exception e) {
-          DartDebugCorePlugin.logError(e);
+          SDBGDebugCorePlugin.logError(e);
         }
       }
     });

@@ -14,9 +14,9 @@
 
 package com.github.sdbg.debug.ui.internal.hover;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.objectinspector.ObjectInspectorContentProvider;
-import com.github.sdbg.debug.ui.internal.presentation.DartDebugModelPresentation;
+import com.github.sdbg.debug.ui.internal.presentation.SDBGDebugModelPresentation;
 
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.internal.ui.SWTFactory;
@@ -238,7 +238,7 @@ public class DebugTooltipControl extends AbstractInformationControl implements
       }
     }
 
-    final DartDebugModelPresentation presentation = new DartDebugModelPresentation();
+    final SDBGDebugModelPresentation presentation = new SDBGDebugModelPresentation();
 
     treeViewer = new TreeViewer(sashForm, SWT.SINGLE | SWT.V_SCROLL | SWT.FULL_SELECTION);
     treeViewer.setAutoExpandLevel(2);
@@ -321,7 +321,7 @@ public class DebugTooltipControl extends AbstractInformationControl implements
    * @param create whether to create the settings
    */
   private IDialogSettings getDialogSettings(boolean create) {
-    IDialogSettings settings = DartDebugUIPlugin.getDefault().getDialogSettings();
+    IDialogSettings settings = SDBGDebugUIPlugin.getDefault().getDialogSettings();
     IDialogSettings section = settings.getSection(this.getClass().getName());
 
     if (section == null & create) {

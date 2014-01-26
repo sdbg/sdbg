@@ -14,10 +14,6 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.debug.core.util.HistoryList;
-import com.github.sdbg.debug.core.util.HistoryListListener;
-import com.github.sdbg.debug.core.util.HistoryListMatcher;
-
 import junit.framework.TestCase;
 
 public class HistoryListTest extends TestCase {

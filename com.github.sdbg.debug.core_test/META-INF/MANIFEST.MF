@@ -12,5 +12,5 @@ Require-Bundle: com.github.sdbg.debug.core,
  com.github.sdbg.thirdparty_test,
  org.eclipse.debug.core
 Export-Package: com.github.sdbg.debug.core
-Bundle-Activator: com.github.sdbg.debug.core.DartDebugCoreTestPlugin
 Bundle-ActivationPolicy: lazy
+Fragment-Host: com.github.sdbg.debug.core

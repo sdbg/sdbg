@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.view;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 
 import org.eclipse.jface.action.Action;
@@ -27,7 +27,7 @@ import org.eclipse.ui.PlatformUI;
 public class ShowExpressionsAction extends Action {
 
   public ShowExpressionsAction() {
-    super("Show Expressions", DartDebugUIPlugin.getImageDescriptor("obj16/watchlist_view.gif"));
+    super("Show Expressions", SDBGDebugUIPlugin.getImageDescriptor("obj16/watchlist_view.gif"));
   }
 
   @Override

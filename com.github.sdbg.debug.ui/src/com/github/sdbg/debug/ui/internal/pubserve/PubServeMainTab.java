@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.ui.internal.pubserve;
 
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog;
 import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog.HtmlWebResourceFilter;
 import com.github.sdbg.ui.internal.util.ExternalBrowserUtil;
@@ -135,12 +135,12 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.swtDefaults().span(2, 1).grab(true, false).applyTo(checkedModeButton);
 
     Link infoLink = new Link(group, SWT.NONE);
-    infoLink.setText("<a href=\"" + DartDebugUIPlugin.CHECK_MODE_DESC_URL
+    infoLink.setText("<a href=\"" + SDBGDebugUIPlugin.CHECK_MODE_DESC_URL
         + "\">what is checked mode?</a>");
     infoLink.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(SelectionEvent e) {
-        ExternalBrowserUtil.openInExternalBrowser(DartDebugUIPlugin.CHECK_MODE_DESC_URL);
+        ExternalBrowserUtil.openInExternalBrowser(SDBGDebugUIPlugin.CHECK_MODE_DESC_URL);
       }
     });
 
@@ -189,17 +189,17 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void initializeFrom(ILaunchConfiguration configuration) {
-    DartLaunchConfigWrapper dartLauncher = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
 
     htmlText.setText(dartLauncher.appendQueryParams(dartLauncher.getApplicationName()));
     checkedModeButton.setSelection(dartLauncher.getCheckedMode());
-    useWebComponentsButton.setSelection(dartLauncher.getUseWebComponents());
+    useWebComponentsButton.setSelection(dartLauncher.isEnableExperimentalWebkitFeatures());
     argumentText.setText(dartLauncher.getArguments());
   }
 
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    DartLaunchConfigWrapper dartLauncher = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
     dartLauncher.setShouldLaunchFile(true);
 
     String fileUrl = htmlText.getText().trim();
@@ -222,7 +222,7 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    DartLaunchConfigWrapper dartLauncher = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
     dartLauncher.setShouldLaunchFile(true);
     dartLauncher.setApplicationName(""); //$NON-NLS-1$
   }

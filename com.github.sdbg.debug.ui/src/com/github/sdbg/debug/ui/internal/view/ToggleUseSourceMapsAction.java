@@ -14,8 +14,8 @@
 
 package com.github.sdbg.debug.ui.internal.view;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugPlugin;
@@ -36,16 +36,16 @@ public class ToggleUseSourceMapsAction extends Action {
   public ToggleUseSourceMapsAction(IViewPart launchView) {
     super("Use Source Maps", IAction.AS_CHECK_BOX);
 
-    setImageDescriptor(DartDebugUIPlugin.getImageDescriptor("obj16/map_file.png"));
+    setImageDescriptor(SDBGDebugUIPlugin.getImageDescriptor("obj16/map_file.png"));
 
-    setChecked(DartDebugCorePlugin.getPlugin().getUseSourceMaps());
+    setChecked(SDBGDebugCorePlugin.getPlugin().getUseSourceMaps());
 
     this.launchView = launchView;
   }
 
   @Override
   public void run() {
-    DartDebugCorePlugin.getPlugin().setUseSourceMaps(isChecked());
+    SDBGDebugCorePlugin.getPlugin().setUseSourceMaps(isChecked());
 
     // send a refresh to the UI
 

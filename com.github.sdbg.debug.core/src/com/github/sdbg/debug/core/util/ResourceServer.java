@@ -16,7 +16,8 @@ package com.github.sdbg.debug.core.util;
 
 import com.github.sdbg.core.DartCore;
 import com.github.sdbg.core.utilities.net.NetUtils;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.google.common.io.CharStreams;
 
 import org.eclipse.core.resources.IFile;
@@ -138,7 +139,7 @@ public class ResourceServer implements IResourceResolver {
     try {
       serverSocket.close();
     } catch (IOException exception) {
-      DartDebugCorePlugin.logError(exception);
+      SDBGDebugCorePlugin.logError(exception);
     }
   }
 
@@ -192,7 +193,7 @@ public class ResourceServer implements IResourceResolver {
 //&&&      
 //      DartCore.getConsole().println(
 //          "Remote connection from " + hostAddress + " [" + userAgent + "]");
-      DartDebugCorePlugin.log("Remote connection from " + hostAddress + " [" + userAgent + "]");
+      SDBGDebugCorePlugin.log("Remote connection from " + hostAddress + " [" + userAgent + "]");
     }
   }
 
@@ -247,7 +248,7 @@ public class ResourceServer implements IResourceResolver {
           null);
       return uri.toString();
     } catch (URISyntaxException e) {
-      DartDebugCorePlugin.logError(e);
+      SDBGDebugCorePlugin.logError(e);
 
       return null;
     }

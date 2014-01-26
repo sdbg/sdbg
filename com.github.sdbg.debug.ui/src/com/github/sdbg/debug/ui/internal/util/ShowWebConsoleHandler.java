@@ -16,7 +16,7 @@ package com.github.sdbg.debug.ui.internal.util;
 
 import com.github.sdbg.debug.core.util.ResourceServer;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -37,14 +37,14 @@ public class ShowWebConsoleHandler extends AbstractHandler {
 
       if (localAddress == null) {
         //&&&DartCore.getConsole().println("Unable to get local IP address.");
-        DartDebugUIPlugin.logError("Unable to get local IP address.");
+        SDBGDebugUIPlugin.logError("Unable to get local IP address.");
       } else {
 //&&&        
 //        DartCore.getConsole().println(
 //            "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
 //                + ".");
         // TODO XXX FIXME
-        DartDebugUIPlugin.logError("Connect to the embedded web server at http://" + localAddress
+        SDBGDebugUIPlugin.logError("Connect to the embedded web server at http://" + localAddress
             + ":" + server.getPort() + ".");
       }
 

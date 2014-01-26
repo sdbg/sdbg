@@ -14,13 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.dialogs;
 
-import com.github.sdbg.debug.core.configs.DartServerLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.configs.DartiumLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.util.IRemoteConnectionDelegate;
-import com.github.sdbg.debug.core.webkit.ChromiumTabInfo;
-import com.github.sdbg.debug.core.webkit.DefaultChromiumTabChooser;
-import com.github.sdbg.debug.core.webkit.IChromiumTabChooser;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -51,7 +45,12 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ListDialog;
 
-import java.util.List;
+import com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.model.IRemoteConnectionDelegate;
+import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabInfo;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 /**
  * A dialog to connect to remote debug instances.
@@ -61,13 +60,13 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
   /**
    * A class to choose a tab from the given list of tabs.
    */
-  public static class ChromeTabChooser implements IChromiumTabChooser {
-    public ChromeTabChooser() {
+  public static class BrowserTabChooser implements IBrowserTabChooser {
+    public BrowserTabChooser() {
 
     }
 
     @Override
-    public ChromiumTabInfo chooseTab(final List<ChromiumTabInfo> tabs) {
+    public IBrowserTabInfo chooseTab(final List<? extends IBrowserTabInfo> tabs) {
       if (tabs.size() == 0) {
         return null;
       }
@@ -76,7 +75,7 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
         return tabs.get(0);
       }
 
-      final ChromiumTabInfo[] result = new ChromiumTabInfo[1];
+      final IBrowserTabInfo[] result = new IBrowserTabInfo[1];
 
       Display.getDefault().syncExec(new Runnable() {
         @Override
@@ -88,7 +87,7 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
           dlg.setContentProvider(new ArrayContentProvider());
           dlg.setLabelProvider(new TabLabelProvider());
           if (dlg.open() == Window.OK) {
-            result[0] = (ChromiumTabInfo) dlg.getResult()[0];
+            result[0] = (IBrowserTabInfo) dlg.getResult()[0];
           }
         }
       });
@@ -97,7 +96,7 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
         return result[0];
       }
 
-      return new DefaultChromiumTabChooser().chooseTab(tabs);
+      return new DefaultBrowserTabChooser().chooseTab(tabs);
     }
   }
 
@@ -114,17 +113,6 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
       this.port = port;
     }
 
-    @Override
-    protected IStatus run(IProgressMonitor monitor) {
-      try {
-        connectionDelegate.performRemoteConnection(host, port, monitor);
-      } catch (CoreException ce) {
-        displayError(ce);
-      }
-
-      return Status.OK_STATUS;
-    }
-
     private void displayError(final CoreException exception) {
       Display.getDefault().asyncExec(new Runnable() {
         @Override
@@ -137,6 +125,17 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
         }
       });
     }
+
+    @Override
+    protected IStatus run(IProgressMonitor monitor) {
+      try {
+        connectionDelegate.performRemoteConnection(host, port, monitor);
+      } catch (CoreException ce) {
+        displayError(ce);
+      }
+
+      return Status.OK_STATUS;
+    }
   }
 
   public enum ConnectionType {
@@ -144,12 +143,7 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
         "Chrome-based browser", //
         "Connect to a Chrome-based browser", //
         "To start Chrome with remote connections enabled, use the --remote-debugging-port=<port> command-line flag.", //
-        "localhost", "9222"),
-
-    COMMAND_LINE("Command-line VM", //
-        "Connect to the stand-alone Dart VM", // 
-        "To start the command-line VM in debug mode, use the --debug[:<port>] command-line flag.", //
-        "localhost", "5858");
+        "localhost", "9222");
 
     String label;
     String message;
@@ -172,12 +166,7 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
 
       switch (this) {
         case CHROME: {
-          connectionDelegate = new DartiumLaunchConfigurationDelegate(new ChromeTabChooser());
-          break;
-        }
-
-        case COMMAND_LINE: {
-          connectionDelegate = new DartServerLaunchConfigurationDelegate();
+          connectionDelegate = new ChromeLaunchConfigurationDelegate(new BrowserTabChooser());
           break;
         }
 
@@ -202,8 +191,8 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
 
     @Override
     public String getText(Object element) {
-      if (element instanceof ChromiumTabInfo) {
-        return ((ChromiumTabInfo) element).getTitle();
+      if (element instanceof IBrowserTabInfo) {
+        return ((IBrowserTabInfo) element).getTitle();
       }
       return null;
     }
@@ -250,44 +239,13 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
     Composite contents = (Composite) super.createDialogArea(parent);
 
     setTitle(getShell().getText());
-    setTitleImage(DartDebugUIPlugin.getImage("wiz/run_wiz.png"));
+    setTitleImage(SDBGDebugUIPlugin.getImage("wiz/run_wiz.png"));
 
     Composite composite = new Composite(contents, SWT.NONE);
     GridDataFactory.fillDefaults().grab(true, true).align(SWT.FILL, SWT.FILL).applyTo(composite);
     createDialogUI(composite);
 
     return contents;
-  }
-
-  @Override
-  protected void okPressed() {
-    ConnectionType connection = getConnectionType();
-
-    String host = hostText.getText().trim();
-    String port = portText.getText().trim();
-
-    IDialogSettings settings = getDialogSettings();
-
-    settings.put("selected", connection.ordinal());
-    settings.put(connection.name() + ".host", host);
-    settings.put(connection.name() + ".port", port);
-
-    int connectionPort;
-
-    try {
-      connectionPort = Integer.parseInt(port);
-    } catch (NumberFormatException nfe) {
-      ErrorDialog.openError(getShell(), "Invalid Port", null, new Status(
-          IStatus.ERROR,
-          DartDebugUIPlugin.PLUGIN_ID,
-          "\"" + port + "\" is an invalid port."));
-
-      return;
-    }
-
-    connection.connection(host, connectionPort);
-
-    super.okPressed();
   }
 
   private void createDialogUI(Composite parent) {
@@ -358,7 +316,7 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
   private IDialogSettings getDialogSettings() {
     final String sectionName = "remoteConnectionSettings";
 
-    IDialogSettings settings = DartDebugUIPlugin.getDefault().getDialogSettings();
+    IDialogSettings settings = SDBGDebugUIPlugin.getDefault().getDialogSettings();
 
     if (settings.getSection(sectionName) == null) {
       IDialogSettings section = settings.addNewSection(sectionName);
@@ -385,6 +343,37 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
 
   private String notNull(String str) {
     return str == null ? "" : str;
+  }
+
+  @Override
+  protected void okPressed() {
+    ConnectionType connection = getConnectionType();
+
+    String host = hostText.getText().trim();
+    String port = portText.getText().trim();
+
+    IDialogSettings settings = getDialogSettings();
+
+    settings.put("selected", connection.ordinal());
+    settings.put(connection.name() + ".host", host);
+    settings.put(connection.name() + ".port", port);
+
+    int connectionPort;
+
+    try {
+      connectionPort = Integer.parseInt(port);
+    } catch (NumberFormatException nfe) {
+      ErrorDialog.openError(getShell(), "Invalid Port", null, new Status(
+          IStatus.ERROR,
+          SDBGDebugUIPlugin.PLUGIN_ID,
+          "\"" + port + "\" is an invalid port."));
+
+      return;
+    }
+
+    connection.connection(host, connectionPort);
+
+    super.okPressed();
   }
 
 }

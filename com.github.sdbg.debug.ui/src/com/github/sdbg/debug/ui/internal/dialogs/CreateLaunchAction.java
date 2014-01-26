@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.dialogs;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 import com.github.sdbg.ui.actions.InstrumentedAction;
 import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
@@ -51,8 +51,8 @@ class CreateLaunchAction extends InstrumentedAction implements IWorkbenchWindowA
     this.configType = configType;
 
     setImageDescriptor(new DecorationOverlayIcon(
-        DartDebugUIPlugin.getImage(DebugUITools.getDefaultImageDescriptor(configType)),
-        DartDebugUIPlugin.getImageDescriptor("ovr16/new.png"),
+        SDBGDebugUIPlugin.getImage(DebugUITools.getDefaultImageDescriptor(configType)),
+        SDBGDebugUIPlugin.getImageDescriptor("ovr16/new.png"),
         IDecoration.TOP_RIGHT));
   }
 

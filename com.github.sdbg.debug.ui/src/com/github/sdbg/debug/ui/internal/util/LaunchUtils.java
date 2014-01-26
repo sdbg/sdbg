@@ -13,12 +13,14 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut;
-import com.github.sdbg.debug.ui.internal.dartium.DartiumLaunchShortcut;
-import com.github.sdbg.debug.ui.internal.server.DartServerLaunchShortcut;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -52,14 +54,11 @@ import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.ide.IDE;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut;
+import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut;
 
 /**
  * A utility class for launching and launch configurations.
@@ -75,7 +74,7 @@ public class LaunchUtils {
    * Returns true if the given launch config can be launched w/o waiting on the builder.
    */
   public static boolean canFastLaunch(ILaunchConfiguration config) {
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
     IProject project = wrapper.getProject();
 
     if (project == null) {
@@ -132,7 +131,7 @@ public class LaunchUtils {
     ILaunchConfiguration latestLaunch = null;
 
     for (ILaunchConfiguration launch : launches) {
-      DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(launch);
+      SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(launch);
 
       long time = wrapper.getLastLaunchTime();
 
@@ -242,7 +241,7 @@ public class LaunchUtils {
 
   public static ILaunchShortcut getDartiumLaunchShortcut() {
     for (ILaunchShortcut shortcut : getAllLaunchShortcuts()) {
-      if (shortcut instanceof DartiumLaunchShortcut) {
+      if (shortcut instanceof ChromeLaunchShortcut) {
         return shortcut;
       }
     }
@@ -360,7 +359,7 @@ public class LaunchUtils {
    * @return a user-consumable long name for the launch config, like "foo.html from foo"
    */
   public static String getLongLaunchName(ILaunchConfiguration config) {
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
 
     if (wrapper.getProject() != null) {
       return config.getName() + " from " + wrapper.getProject().getName();
@@ -430,22 +429,13 @@ public class LaunchUtils {
     return null;
   }
 
-  public static ILaunchShortcut getServerLaunchShortcut() {
-    for (ILaunchShortcut shortcut : getAllLaunchShortcuts()) {
-      if (shortcut instanceof DartServerLaunchShortcut) {
-        return shortcut;
-      }
-    }
-    return null;
-  }
-
   /**
    * @param resource
    * @param config
    * @return whether the given launch config could be used to launch the given resource
    */
   public static boolean isLaunchableWith(IResource resource, ILaunchConfiguration config) {
-    DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
 
 //&&&    
 //    IResource appResource = launchWrapper.getApplicationResource();
@@ -481,7 +471,7 @@ public class LaunchUtils {
    */
   public static void launch(final ILaunchConfiguration config, final String mode) {
     // If there are any dirty editors for the given project, save them now.
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
     IProject project = wrapper.getProject();
 
     if (project != null) {
@@ -499,7 +489,7 @@ public class LaunchUtils {
         // user cancelled
 
       } catch (InterruptedException e) {
-        DartDebugCorePlugin.logError(e);
+        SDBGDebugCorePlugin.logError(e);
       }
     }
 

@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 
@@ -240,7 +240,7 @@ class ResourceServerHandler implements Runnable {
       try {
         AGENT_CONTENT = ByteStreams.toByteArray(ResourceServer.class.getResourceAsStream("agent.js"));
       } catch (IOException e) {
-        DartDebugCorePlugin.logError(e);
+        SDBGDebugCorePlugin.logError(e);
 
         AGENT_CONTENT = new byte[0];
       }
@@ -268,7 +268,7 @@ class ResourceServerHandler implements Runnable {
 
       reader.close();
     } catch (IOException ioe) {
-      DartDebugCorePlugin.logError(ioe);
+      SDBGDebugCorePlugin.logError(ioe);
     }
   }
 
@@ -289,7 +289,7 @@ class ResourceServerHandler implements Runnable {
       HttpHeader header = parseHeader(in);
 
       if (header == null) {
-        if (DartDebugCorePlugin.LOGGING) {
+        if (SDBGDebugCorePlugin.LOGGING) {
           System.out.println("resource server: socket closed early");
         }
 
@@ -306,7 +306,7 @@ class ResourceServerHandler implements Runnable {
           response = createErrorResponse("Request type " + header.method + " not supported.");
         }
 
-        if (DartDebugCorePlugin.LOGGING) {
+        if (SDBGDebugCorePlugin.LOGGING) {
           System.out.println("resource server: " + header);
 
           if (response.responseCode != HttpResponse.OK) {
@@ -326,10 +326,10 @@ class ResourceServerHandler implements Runnable {
       // ignore java.net.SocketException: Connection reset
       // ignore java.net.SocketException: Broken pipe
       if (!(ioe instanceof ConnectException) && !isConnectionReset(ioe)) {
-        DartDebugCorePlugin.logError(ioe);
+        SDBGDebugCorePlugin.logError(ioe);
       }
     } catch (Throwable t) {
-      DartDebugCorePlugin.logError(t);
+      SDBGDebugCorePlugin.logError(t);
     }
   }
 
@@ -427,7 +427,7 @@ class ResourceServerHandler implements Runnable {
       // This happens occasionally on Windows. 
 
     } catch (Throwable t) {
-      DartDebugCorePlugin.logError(t);
+      SDBGDebugCorePlugin.logError(t);
     }
 
     // Content-Type: text/html[; charset=UTF-8]
@@ -632,13 +632,13 @@ class ResourceServerHandler implements Runnable {
         if (arr != null) {
           for (int i = 0; i < arr.length(); i++) {
             //&&&DartCore.getConsole().println(stripQuotes(arr.getString(i)));
-            DartDebugCorePlugin.log(stripQuotes(arr.getString(i)));
+            SDBGDebugCorePlugin.log(stripQuotes(arr.getString(i)));
           }
         } else {
           String log = obj.getString("message");
 
           //&&&DartCore.getConsole().println(log);
-          DartDebugCorePlugin.log(log);
+          SDBGDebugCorePlugin.log(log);
         }
       }
     } catch (JSONException ex) {
@@ -669,10 +669,10 @@ class ResourceServerHandler implements Runnable {
     }
 
     // User-Agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/536.8 (KHTML, like Gecko) Chrome/20.0.1110.0 (Dart) Safari/536.8
-    if (DartDebugCorePlugin.getPlugin().getUserAgentManager() != null) {
+    if (SDBGDebugCorePlugin.getPlugin().getUserAgentManager() != null) {
       String userAgent = header.headers.get(USER_AGENT);
 
-      boolean allowed = DartDebugCorePlugin.getPlugin().getUserAgentManager().allowUserAgent(
+      boolean allowed = SDBGDebugCorePlugin.getPlugin().getUserAgentManager().allowUserAgent(
           remoteAddress,
           userAgent);
 

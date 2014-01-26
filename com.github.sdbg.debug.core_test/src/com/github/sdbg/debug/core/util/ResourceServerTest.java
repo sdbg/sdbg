@@ -16,7 +16,6 @@ package com.github.sdbg.debug.core.util;
 
 import com.github.sdbg.core.test.util.TestProject;
 import com.github.sdbg.core.utilities.net.URIUtilities;
-import com.github.sdbg.debug.core.util.ResourceServer;
 import com.google.common.base.Charsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Files;

@@ -14,7 +14,7 @@
 package com.github.sdbg.debug.ui.internal.preferences;
 
 import com.github.sdbg.debug.core.ChromeBrowserConfig;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider;
 import org.eclipse.jface.viewers.ILabelProvider;
@@ -39,7 +39,7 @@ class BrowsersLabelProvider extends DelegatingStyledCellLabelProvider implements
     @Override
     public Image getImage(Object element) {
       if (element instanceof ChromeBrowserConfig) {
-        return DartDebugUIPlugin.getImage("chromium_16.png");
+        return SDBGDebugUIPlugin.getImage("chromium_16.png");
       }
 
       return super.getImage(element);

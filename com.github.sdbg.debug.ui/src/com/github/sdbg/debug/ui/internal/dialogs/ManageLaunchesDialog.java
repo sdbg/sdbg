@@ -15,8 +15,8 @@
 package com.github.sdbg.debug.ui.internal.dialogs;
 
 import com.github.sdbg.core.DartCoreDebug;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
@@ -327,7 +327,7 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
     Composite contents = (Composite) super.createDialogArea(parent);
 
     setTitle(Messages.ManageLaunchesDialog_manageLaunches);
-    setTitleImage(DartDebugUIPlugin.getImage("wiz/run_wiz.png")); //$NON-NLS-1$
+    setTitleImage(SDBGDebugUIPlugin.getImage("wiz/run_wiz.png")); //$NON-NLS-1$
 
     Composite composite = new Composite(contents, SWT.NONE);
     GridDataFactory.fillDefaults().grab(true, true).align(SWT.FILL, SWT.FILL).applyTo(composite);
@@ -353,9 +353,9 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
     IDialogSettings workbenchSettings = WorkbenchPlugin.getDefault().getDialogSettings();
     IDialogSettings section = workbenchSettings.getSection(settingsName);
 
-    if (DartDebugCorePlugin.getPlugin().getClearDialogSettings()) {
+    if (SDBGDebugCorePlugin.getPlugin().getClearDialogSettings()) {
       section = null;
-      DartDebugCorePlugin.getPlugin().setClearLaunchesDialogSettings(false);
+      SDBGDebugCorePlugin.getPlugin().setClearLaunchesDialogSettings(false);
     }
 
     if (section == null) {
@@ -654,7 +654,7 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
       if (currentName.length() < 1) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugUIPlugin.PLUGIN_ID,
+            SDBGDebugUIPlugin.PLUGIN_ID,
             0,
             Messages.ManageLaunchesDialog_Name_required_for_launch_configuration,
             null));
@@ -664,7 +664,7 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
       } catch (IllegalArgumentException iae) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugUIPlugin.PLUGIN_ID,
+            SDBGDebugUIPlugin.PLUGIN_ID,
             0,
             iae.getMessage(),
             null));
@@ -674,7 +674,7 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
         if (mgr.isExistingLaunchConfigurationName(currentName)) {
           throw new CoreException(new Status(
               IStatus.ERROR,
-              DartDebugUIPlugin.PLUGIN_ID,
+              SDBGDebugUIPlugin.PLUGIN_ID,
               0,
               Messages.ManageLaunchesDialog_Launch_configuration_already_exists_with_this_name,
               null));

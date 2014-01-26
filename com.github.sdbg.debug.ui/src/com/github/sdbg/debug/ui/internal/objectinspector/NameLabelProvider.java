@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
-import com.github.sdbg.debug.ui.internal.presentation.DartDebugModelPresentation;
+import com.github.sdbg.debug.ui.internal.presentation.SDBGDebugModelPresentation;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
@@ -25,7 +25,7 @@ import org.eclipse.swt.graphics.Image;
  * The label provider for the 'name' column in the object inspector.
  */
 public class NameLabelProvider extends ColumnLabelProvider {
-  private static DartDebugModelPresentation presentation = new DartDebugModelPresentation();
+  private static SDBGDebugModelPresentation presentation = new SDBGDebugModelPresentation();
 
   public NameLabelProvider() {
 

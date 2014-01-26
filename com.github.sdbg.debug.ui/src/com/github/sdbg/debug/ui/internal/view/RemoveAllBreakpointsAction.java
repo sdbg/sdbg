@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.view;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 
@@ -41,7 +41,7 @@ public class RemoveAllBreakpointsAction extends Action implements IBreakpointLis
   public RemoveAllBreakpointsAction() {
     super("Remove All Breakpoints");
 
-    setImageDescriptor(DartDebugUIPlugin.getImageDescriptor("obj16/rem_all_brk.gif"));
+    setImageDescriptor(SDBGDebugUIPlugin.getImageDescriptor("obj16/rem_all_brk.gif"));
 
     init();
   }

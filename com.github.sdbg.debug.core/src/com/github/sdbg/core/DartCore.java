@@ -9,7 +9,7 @@ import java.util.Properties;
 import org.eclipse.core.runtime.Platform;
 
 import com.github.sdbg.core.utilities.general.StringUtilities;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 /***
  * Just the minimum possible from the original DartCore. Most likely these functions should not be
@@ -48,10 +48,10 @@ public class DartCore {
         properties.load(new FileReader(file));
       } catch (FileNotFoundException e) {
         //&&&logError(e);
-        DartDebugCorePlugin.logError(e);
+        SDBGDebugCorePlugin.logError(e);
       } catch (IOException e) {
         //&&&logError(e);
-        DartDebugCorePlugin.logError(e);
+        SDBGDebugCorePlugin.logError(e);
       }
     }
 

@@ -16,7 +16,7 @@ package com.github.sdbg.debug.ui.internal.util;
 
 import com.github.sdbg.debug.core.util.ResourceServer;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 
 import org.eclipse.jface.action.Action;
@@ -53,10 +53,10 @@ public class ShowWebConsoleAction extends Action implements IWorkbenchWindowActi
       String localAddress = server.getLocalAddress();
 
       if (localAddress == null) {
-        DartDebugUIPlugin.logError("Unable to get local IP address.");
+        SDBGDebugUIPlugin.logError("Unable to get local IP address.");
         //&&&DartCore.getConsole().println("Unable to get local IP address.");
       } else {
-        DartDebugUIPlugin.logError( // TODO XXX FIXME
+        SDBGDebugUIPlugin.logError( // TODO XXX FIXME
         "Connect to the embedded web server at http://" + localAddress + ":" + server.getPort()
             + ".");
 //&&&        

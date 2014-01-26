@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.ui.internal.preferences;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartDebugCorePlugin.BreakOnExceptions;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
 
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
@@ -66,10 +66,10 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
 
   @Override
   public boolean performOk() {
-    DartDebugCorePlugin.getPlugin().setBreakOnExceptions(
+    SDBGDebugCorePlugin.getPlugin().setBreakOnExceptions(
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
 
-    DartDebugCorePlugin.getPlugin().setBrowserPreferences(
+    SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
         defaultBrowserButton.getSelection(),
         browserNameText.getText().trim(),
         browserArgumentText.getText().trim());
@@ -99,7 +99,7 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
         BreakOnExceptions.none.toString(), BreakOnExceptions.uncaught.toString(),
         BreakOnExceptions.all.toString()});
 
-    exceptionsCombo.select(exceptionsCombo.indexOf(DartDebugCorePlugin.getPlugin().getBreakOnExceptions().toString()));
+    exceptionsCombo.select(exceptionsCombo.indexOf(SDBGDebugCorePlugin.getPlugin().getBreakOnExceptions().toString()));
 
     createBrowserConfig(composite, labelWidth);
 
@@ -171,10 +171,10 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
   }
 
   private void initFromPrefs() {
-    boolean useDefaultBrowser = DartDebugCorePlugin.getPlugin().getIsDefaultBrowser();
+    boolean useDefaultBrowser = SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser();
     defaultBrowserButton.setSelection(useDefaultBrowser);
-    browserNameText.setText(DartDebugCorePlugin.getPlugin().getBrowserName());
-    browserArgumentText.setText(DartDebugCorePlugin.getPlugin().getBrowserArgs());
+    browserNameText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserName());
+    browserArgumentText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
     setEnablement(!useDefaultBrowser);
   }
 

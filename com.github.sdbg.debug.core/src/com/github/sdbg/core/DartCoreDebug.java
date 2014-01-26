@@ -17,7 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.Platform;
 
 import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 /**
  * Debug/Tracing options for the {@link DartCore} plugin.
@@ -75,8 +75,7 @@ public class DartCoreDebug {
 
   // User settings
 
-  public static final boolean DISABLE_DARTIUM_DEBUGGER = isOptionTrue("user/disableDartiumDebugger");
-  public static final boolean DISABLE_CLI_DEBUGGER = isOptionTrue("user/disableCommandLineDebugger");
+  public static final boolean DISABLE_BROWSER_DEBUGGER = isOptionTrue("user/disableBrowserDebugger");
 
   /**
    * @return <code>true</code> if option has value "true".
@@ -90,7 +89,7 @@ public class DartCoreDebug {
    */
   private static boolean isOptionValue(String optionSuffix, String expected) {
     //&&&String option = DartCore.PLUGIN_ID + "/" + optionSuffix;
-    String option = DartDebugCorePlugin.PLUGIN_ID + "/" + optionSuffix;
+    String option = SDBGDebugCorePlugin.PLUGIN_ID + "/" + optionSuffix;
     String value = Platform.getDebugOption(option);
     if (value == null) {
       value = DartCore.getUserDefinedProperty(option);
@@ -132,8 +131,7 @@ public class DartCoreDebug {
 
     instrumentation.metric("DISABLE_MARK_OCCURRENCES", DISABLE_MARK_OCCURRENCES);
 
-    instrumentation.metric("DISABLE_DARTIUM_DEBUGGER", DISABLE_DARTIUM_DEBUGGER);
-    instrumentation.metric("DISABLE_CLI_DEBUGGER", DISABLE_CLI_DEBUGGER);
+    instrumentation.metric("DISABLE_BROWSER_DEBUGGER", DISABLE_BROWSER_DEBUGGER);
 
   }
 

@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.dialogs;
 
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
@@ -76,7 +76,7 @@ class LaunchConfigLabelProvider extends LabelProvider implements
   }
 
   private String getAppendText(ILaunchConfiguration config) {
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
 
     if (wrapper.getShouldLaunchFile()) {
       IResource resource = wrapper.getApplicationResource();

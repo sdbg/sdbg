@@ -19,8 +19,7 @@ import junit.framework.TestCase;
 import java.io.IOException;
 import java.io.InputStream;
 
-import com.github.sdbg.debug.core.util.HttpUrlConnector;
-import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.debug.core.internal.util.HttpUrlConnector;
 
 public class HttpUrlConnectorTest extends TestCase {
 

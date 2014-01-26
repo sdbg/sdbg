@@ -4,35 +4,35 @@
     <extension
          point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
-            class="com.github.sdbg.debug.ui.launch.RunPropertyTester"
+            class="com.github.sdbg.debug.ui.internal.launch.RunPropertyTester"
             id="com.github.sdbg.debug.ui.run.propertyTester"
             namespace="com.github.sdbg.debug.ui.launch"
             properties="canLaunch"
             type="org.eclipse.jface.viewers.ISelection">
       </propertyTester>
       <propertyTester
-            class="com.github.sdbg.debug.ui.launch.RunInBrowserPropertyTester"
+            class="com.github.sdbg.debug.ui.internal.launch.RunInBrowserPropertyTester"
             id="com.github.sdbg.debug.ui.run.browserPropertyTester"
             namespace="com.github.sdbg.debug.ui.launch"
             properties="canLaunchBrowser"
             type="org.eclipse.jface.viewers.ISelection">
       </propertyTester>
       <propertyTester
-            class="com.github.sdbg.debug.ui.launch.RunInChromeAppPropertyTester"
+            class="com.github.sdbg.debug.ui.internal.launch.RunInChromeAppPropertyTester"
             id="com.github.sdbg.debug.ui.run.chromeAppPropertyTester"
             namespace="com.github.sdbg.debug.ui.launch"
             properties="canLaunchChromeApp"
             type="org.eclipse.jface.viewers.ISelection">
       </propertyTester>
        <propertyTester
-            class="com.github.sdbg.debug.ui.launch.RunInBrowserPropertyTester"
+            class="com.github.sdbg.debug.ui.internal.launch.RunInBrowserPropertyTester"
             id="com.github.sdbg.debug.ui.run.deployPolymerPropertyTester"
             namespace="com.github.sdbg.debug.ui.launch"
             properties=" canDeployPolymer"
             type="org.eclipse.jface.viewers.ISelection">
       </propertyTester>
        <propertyTester
-             class="com.github.sdbg.debug.ui.launch.RunInDartiumPropertyTester"
+             class="com.github.sdbg.debug.ui.internal.launch.RunInChromePropertyTester"
              id="com.github.sdbg.debug.ui.run.dartiumPropertyTester"
              namespace="com.github.sdbg.debug.ui.launch"
              properties="canLaunchDartium"
@@ -77,7 +77,7 @@
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTabGroups">
       <launchConfigurationTabGroup
-            class="com.github.sdbg.debug.ui.internal.dartium.DartiumTabGroup"
+            class="com.github.sdbg.debug.ui.internal.chrome.ChromeTabGroup"
             id="com.github.sdbg.debug.core.chromeLaunchConfigTabGroup"
             type="com.github.sdbg.debug.core.dartiumLaunchConfig"
             description="Run a Dart web application in Dartium">
@@ -98,7 +98,7 @@
    <extension
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
-            class="com.github.sdbg.debug.ui.internal.dartium.DartiumLaunchShortcut"
+            class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
             icon="icons/chromium_16.png"
             id="com.github.sdbg.debug.ui.dartChromeShortcut"
             label="%dart.dartiumlaunch.shortcut.label"
@@ -310,7 +310,7 @@
          point="org.eclipse.core.runtime.adapters">
       <factory
             adaptableType="org.eclipse.ui.texteditor.ITextEditor"
-            class="com.github.sdbg.debug.ui.internal.breakpoints.DartBreakpointAdapterFactory">
+            class="com.github.sdbg.debug.ui.internal.breakpoints.SDBGBreakpointAdapterFactory">
          <adapter
                type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget">
          </adapter>
@@ -324,7 +324,7 @@
             id="com.github.sdbg.debug.ui.breakpointActions">
          <action
                label="%toggleBreakpoints.label"
-               class="com.github.sdbg.debug.ui.internal.breakpoints.DartToggleBreakpointDelegate"
+               class="com.github.sdbg.debug.ui.internal.breakpoints.SDBGToggleBreakpointDelegate"
                actionID="RulerDoubleClick"
                id="com.github.sdbg.debug.breakpointActions.toggle">
          </action>
@@ -355,7 +355,7 @@
                id="com.github.sdbg.debug.breakpointActions.menuEnableDisable">
          </action>
          <action
-               class="com.github.sdbg.debug.ui.internal.breakpoints.DartToggleBreakpointDelegate"
+               class="com.github.sdbg.debug.ui.internal.breakpoints.SDBGToggleBreakpointDelegate"
                icon="icons/obj16/brkp_obj.gif"
                id="com.github.sdbg.debug.breakpointActions.menuToggle"
                label="%toggleBreakpoints.label"
@@ -368,7 +368,7 @@
 
    <extension point="org.eclipse.debug.ui.debugModelPresentations">
       <debugModelPresentation
-         class="com.github.sdbg.debug.ui.internal.presentation.DartDebugModelPresentation"
+         class="com.github.sdbg.debug.ui.internal.presentation.SDBGDebugModelPresentation"
          id="com.github.sdbg.debug.core">
       </debugModelPresentation>
    </extension>
@@ -377,7 +377,7 @@
          point="org.eclipse.core.runtime.adapters">
       <factory
             adaptableType="com.github.sdbg.core.model.DartElement"
-            class="com.github.sdbg.debug.ui.launch.ActionFilterAdapterFactory">
+            class="com.github.sdbg.debug.ui.internal.launch.ActionFilterAdapterFactory">
          <adapter
                type="org.eclipse.ui.IActionFilter">
          </adapter>
@@ -389,7 +389,7 @@
       <editor
             name="Source not available"
             icon="icons/obj16/dart.png"
-            class="com.github.sdbg.debug.ui.internal.presentation.DartSourceNotFoundEditor"
+            class="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor"
             id="com.github.sdbg.debug.ui.internal.presentation.DartSourceNotFoundEditor">
       </editor>
    </extension>
@@ -398,42 +398,42 @@
       point="org.eclipse.ui.commands">
        <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.DartRunHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunHandler"
             description="Run selection"
             id="com.github.sdbg.debug.ui.run.selection"
             name="%runCommandName">
       </command>
        <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.RunInDartiumHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunInChromeHandler"
             description="Run in Dartium"
             id="com.github.sdbg.debug.ui.run.dartium"
             name="%runDartiumName">
       </command>
        <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.RunInChromeAppHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunInChromeAppHandler"
             description="Run as Chrome App"
             id="com.github.sdbg.debug.ui.run.chromeapp"
             name="Run as Chrome App">
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.RunInBrowserHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunInBrowserHandler"
             description="Run as JavaScript"
             id="com.github.sdbg.debug.ui.run.browser"
             name="%runBrowserName">
       </command>
        <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.RunInServerHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.RunInServerHandler"
             description="Run"
             id="com.github.sdbg.debug.ui.run.server"
             name="%runCommandName">
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.ManageLaunchesHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.ManageLaunchesHandler"
             description="%launchDialogCommandName"
             id="com.github.sdbg.debug.ui.launchDialog"
             name="%launchDialogCommandName">
@@ -461,7 +461,7 @@
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.SetRunLastLaunchHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.SetRunLastLaunchHandler"
             description="Run the last launch"
             id="com.github.sdbg.debug.ui.run.last.launch"
             name="Always Run Last Launch">
@@ -472,7 +472,7 @@
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.launch.DeployPolymerAppHandler"
+            defaultHandler="com.github.sdbg.debug.ui.internal.launch.DeployPolymerAppHandler"
             description="Generate JavaScript for Polymer App"
             id="com.github.sdbg.debug.ui.run.deploypolymer"
             name="Build Polymer App">
@@ -711,7 +711,7 @@
    <extension
          point="org.eclipse.ltk.core.refactoring.deleteParticipants">
       <deleteParticipant
-            class="com.github.sdbg.debug.ui.launch.LaunchesDeleteResourceParticipant"
+            class="com.github.sdbg.debug.ui.internal.launch.LaunchesDeleteResourceParticipant"
             id="com.github.sdbg.debug.ui.launch.DeleteResourceParticipant"
             name="Remove Dart launches">
             <enablement>
@@ -727,7 +727,7 @@
    <extension
          point="org.eclipse.ltk.core.refactoring.renameParticipants">
       <renameParticipant
-            class="com.github.sdbg.debug.ui.launch.LaunchesRenameResourceParticipant"
+            class="com.github.sdbg.debug.ui.internal.launch.LaunchesRenameResourceParticipant"
             id="com.github.sdbg.debug.ui.launch.LaunchesRenameResourceParticipant"
             name="Update HTML file in Dart launches">
             <enablement>

@@ -14,19 +14,12 @@
 
 package com.github.sdbg.debug.core.configs;
 
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
-import com.github.sdbg.core.utilities.net.NetUtils;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
-import com.github.sdbg.debug.core.DartLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.DebugUIHelper;
-import com.github.sdbg.debug.core.dartium.DartiumDebugTarget;
-import com.github.sdbg.debug.core.util.BrowserManager;
-import com.github.sdbg.debug.core.util.IResourceResolver;
-import com.github.sdbg.debug.core.webkit.ChromiumConnector;
-import com.github.sdbg.debug.core.webkit.ChromiumTabInfo;
-import com.github.sdbg.debug.core.webkit.WebkitConnection;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -43,12 +36,19 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IProcess;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
+import com.github.sdbg.core.utilities.net.NetUtils;
+import com.github.sdbg.debug.core.DebugUIHelper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
+import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
+import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
+import com.github.sdbg.debug.core.model.IResourceResolver;
 
 //[ {
 //  "title": "New Tab",
@@ -66,10 +66,10 @@ import java.util.Map;
 
 /**
  * A ILaunchConfigurationDelegate implementation that can launch Chrome applications. We
- * conceptually launch the manifest.json file which specifies a Chrome app. We currently send
- * Dartium the path to the manifest file's parent directory via the --load-extension flag.
+ * conceptually launch the manifest.json file which specifies a Chrome app. We currently send Chrome
+ * the path to the manifest file's parent directory via the --load-extension flag.
  */
-public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfigurationDelegate {
+public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
 
   private static class ChromeAppResourceResolver implements IResourceResolver {
     private IContainer container;
@@ -88,6 +88,27 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
         if (index != -1) {
           prefix = prefix.substring(0, index + 1);
         }
+      }
+    }
+
+    private String calcRelPath(IContainer container, IResource resource) {
+      if (container == null) {
+        return null;
+      }
+
+      String containerPath = container.getFullPath().toString();
+      String resourcePath = resource.getFullPath().toString();
+
+      if (resourcePath.startsWith(containerPath)) {
+        String relPath = resourcePath.substring(containerPath.length());
+
+        if (relPath.startsWith("/")) {
+          return relPath.substring(1);
+        } else {
+          return relPath;
+        }
+      } else {
+        return null;
       }
     }
 
@@ -142,27 +163,6 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
         return null;
       }
     }
-
-    private String calcRelPath(IContainer container, IResource resource) {
-      if (container == null) {
-        return null;
-      }
-
-      String containerPath = container.getFullPath().toString();
-      String resourcePath = resource.getFullPath().toString();
-
-      if (resourcePath.startsWith(containerPath)) {
-        String relPath = resourcePath.substring(containerPath.length());
-
-        if (relPath.startsWith("/")) {
-          return relPath.substring(1);
-        } else {
-          return relPath;
-        }
-      } else {
-        return null;
-      }
-    }
   }
 
   private static final int DEFAULT_DEBUGGER_PORT = 9422;
@@ -180,24 +180,23 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
   public void doLaunch(ILaunchConfiguration configuration, String mode, ILaunch launch,
       IProgressMonitor monitor, InstrumentationBuilder instrumentation) throws CoreException {
     if (!ILaunchManager.RUN_MODE.equals(mode) && !ILaunchManager.DEBUG_MODE.equals(mode)) {
-      throw new CoreException(DartDebugCorePlugin.createErrorStatus("Execution mode '" + mode
+      throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("Execution mode '" + mode
           + "' is not supported."));
     }
 
     boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
 
     //&&&File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
-    File dartium = new File(
-        "/usr/bin/google-chrome");
+    File chrome = new File("/usr/bin/google-chrome");
 
-    if (dartium == null) {
+    if (chrome == null) {
       throw new CoreException(new Status(
           IStatus.ERROR,
-          DartDebugCorePlugin.PLUGIN_ID,
-          "Could not find Dartium"));
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "Could not find Chrome"));
     }
 
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
 
     wrapper.markAsLaunched();
 
@@ -212,7 +211,7 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
 
     List<String> commandsList = new ArrayList<String>();
 
-    commandsList.add(dartium.getAbsolutePath());
+    commandsList.add(chrome.getAbsolutePath());
     commandsList.add("--enable-udd-profiles");
     commandsList.add("--user-data-dir="
         + BrowserManager.getCreateUserDataDirectoryPath("chrome-apps"));
@@ -239,7 +238,7 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
       commandsList.add("--remote-debugging-port=" + devToolsPortNumber);
     }
 
-    monitor.beginTask("Dartium", IProgressMonitor.UNKNOWN);
+    monitor.beginTask("Chrome", IProgressMonitor.UNKNOWN);
 
     terminatePreviousLaunch();
 
@@ -285,8 +284,8 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
               tab.getPort(),
               tab.getWebSocketDebuggerFile());
 
-          final DartiumDebugTarget debugTarget = new DartiumDebugTarget(
-              dartium.getName(),
+          final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
+              chrome.getName(),
               connection,
               launch,
               runtimeProcess,
@@ -303,21 +302,21 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
           try {
             debugTarget.openConnection();
           } catch (IOException ioe) {
-            DartDebugCorePlugin.logError(ioe);
+            SDBGDebugCorePlugin.logError(ioe);
           }
         }
 
         // Give the app a little time to open the main window.
         sleep(500);
 
-        DebugUIHelper.getHelper().activateApplication(dartium, "Chromium");
+        DebugUIHelper.getHelper().activateApplication(chrome, "Chrome");
       } catch (CoreException ce) {
-        DartDebugCorePlugin.logError(ce);
+        SDBGDebugCorePlugin.logError(ce);
       }
     } else {
       Map<String, String> processAttributes = new HashMap<String, String>();
 
-      processAttributes.put(IProcess.ATTR_PROCESS_TYPE, "Dartium");
+      processAttributes.put(IProcess.ATTR_PROCESS_TYPE, "Chrome");
 
       IProcess eclipseProcess = DebugPlugin.newProcess(
           launch,
@@ -326,13 +325,13 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
           processAttributes);
 
       if (eclipseProcess == null) {
-        throw newDebugException("Error starting Dartium");
+        throw newDebugException("Error starting Chrome");
       }
 
       // We need to wait until the process is started before we can try and activate the window.
       sleep(1000);
 
-      DebugUIHelper.getHelper().activateApplication(dartium, "Chromium");
+      DebugUIHelper.getHelper().activateApplication(chrome, "Chrome");
     }
 
     monitor.done();
@@ -367,9 +366,9 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
       if (isProcessTerminated(process)) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugCorePlugin.PLUGIN_ID,
+            SDBGDebugCorePlugin.PLUGIN_ID,
             "Could not launch browser - process terminated while trying to connect. "
-                + "Try closing any running Dartium instances."));
+                + "Try closing any running Chrome instances."));
       }
 
       try {
@@ -384,8 +383,8 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
         if (System.currentTimeMillis() > endTime) {
           throw new CoreException(new Status(
               IStatus.ERROR,
-              DartDebugCorePlugin.PLUGIN_ID,
-              "Could not connect to Dartium",
+              SDBGDebugCorePlugin.PLUGIN_ID,
+              "Could not connect to Chrome",
               exception));
         }
       }
@@ -393,8 +392,8 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
       if (System.currentTimeMillis() > endTime) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugCorePlugin.PLUGIN_ID,
-            "Timed out trying to connect to Dartium"));
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "Timed out trying to connect to Chrome"));
       }
 
       sleep(250);
@@ -429,13 +428,13 @@ public class ChromeAppLaunchConfigurationDelegate extends DartLaunchConfiguratio
   }
 
   private DebugException newDebugException(String message) {
-    return new DebugException(new Status(IStatus.ERROR, DartDebugCorePlugin.PLUGIN_ID, message));
+    return new DebugException(new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID, message));
   }
 
   private DebugException newDebugException(Throwable t) {
     return new DebugException(new Status(
         IStatus.ERROR,
-        DartDebugCorePlugin.PLUGIN_ID,
+        SDBGDebugCorePlugin.PLUGIN_ID,
         t.toString(),
         t));
   }

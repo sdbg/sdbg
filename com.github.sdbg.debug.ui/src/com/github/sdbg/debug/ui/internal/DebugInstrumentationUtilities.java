@@ -1,8 +1,8 @@
 package com.github.sdbg.debug.ui.internal;
 
 import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 
 import org.eclipse.debug.core.ILaunchConfiguration;
 
@@ -11,7 +11,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
  */
 public class DebugInstrumentationUtilities {
 
-  public static void recordLaunchConfiguration(DartLaunchConfigWrapper launch,
+  public static void recordLaunchConfiguration(SDBGLaunchConfigWrapper launch,
       InstrumentationBuilder instrumentation) {
 
     instrumentation.data("LaunchConfig-ApplicationName", launch.getApplicationName());
@@ -22,7 +22,7 @@ public class DebugInstrumentationUtilities {
     instrumentation.metric("LaunchConfig-getArguments", launch.getArguments());
     instrumentation.metric(
         "LaunchConfig-getBrowserName",
-        DartDebugCorePlugin.getPlugin().getBrowserName());
+        SDBGDebugCorePlugin.getPlugin().getBrowserName());
     instrumentation.metric("LaunchConfig-getCheckedMode", String.valueOf(launch.getCheckedMode()));
     instrumentation.metric("LaunchConfig-getLastLaunchTime", launch.getLastLaunchTime());
     instrumentation.metric(
@@ -33,10 +33,10 @@ public class DebugInstrumentationUtilities {
         String.valueOf(launch.getShowLaunchOutput()));
     instrumentation.metric(
         "LaunchConfig-getUseDefaultBrowser",
-        String.valueOf(DartDebugCorePlugin.getPlugin().getIsDefaultBrowser()));
+        String.valueOf(SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser()));
     instrumentation.metric(
         "LaunchConfig-getUseWebComponents",
-        String.valueOf(launch.getUseWebComponents()));
+        String.valueOf(launch.isEnableExperimentalWebkitFeatures()));
     instrumentation.metric("LaunchConfig-getVmArgumentsAsArray", launch.getVmArgumentsAsArray());
 
   }

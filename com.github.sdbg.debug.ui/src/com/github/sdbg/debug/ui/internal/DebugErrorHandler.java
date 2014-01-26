@@ -68,7 +68,7 @@ public class DebugErrorHandler {
     } else {
       status = new Status(
           IStatus.ERROR,
-          DartDebugUIPlugin.PLUGIN_ID,
+          SDBGDebugUIPlugin.PLUGIN_ID,
           IDebugUIConstants.INTERNAL_ERROR,
           "Error within Debug UI: ", exception); //$NON-NLS-1$
     }

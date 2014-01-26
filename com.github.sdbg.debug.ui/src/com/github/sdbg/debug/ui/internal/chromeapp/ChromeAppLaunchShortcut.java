@@ -14,8 +14,8 @@
 
 package com.github.sdbg.debug.ui.internal.chromeapp;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
 import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
@@ -71,7 +71,7 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
   @Override
   protected ILaunchConfigurationType getConfigurationType() {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type = manager.getLaunchConfigurationType(DartDebugCorePlugin.CHROMEAPP_LAUNCH_CONFIG_ID);
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROMEAPP_LAUNCH_CONFIG_ID);
 
     return type;
   }
@@ -104,14 +104,14 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
     if (config == null) {
       // Create and launch a new configuration
       ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-      ILaunchConfigurationType type = manager.getLaunchConfigurationType(DartDebugCorePlugin.CHROMEAPP_LAUNCH_CONFIG_ID);
+      ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROMEAPP_LAUNCH_CONFIG_ID);
 
       try {
         ILaunchConfigurationWorkingCopy launchConfig = type.newInstance(
             null,
             manager.generateLaunchConfigurationName(getLaunchName(resource)));
 
-        DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(launchConfig);
+        SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(launchConfig);
 
         launchWrapper.setApplicationName(resource.getFullPath().toString());
         launchWrapper.setProjectName(resource.getProject().getName());
@@ -126,14 +126,14 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
 
     LaunchUtils.clearDartiumConsoles();
 
-    DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
     launchWrapper.markAsLaunched();
     LaunchUtils.launch(config, mode);
   }
 
   @Override
   protected boolean testSimilar(IResource resource, ILaunchConfiguration config) {
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
 
     IResource configResource = wrapper.getApplicationResource();
 

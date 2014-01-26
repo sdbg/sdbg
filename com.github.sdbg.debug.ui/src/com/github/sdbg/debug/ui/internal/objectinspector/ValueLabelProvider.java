@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
-import com.github.sdbg.debug.core.util.IDartDebugValue;
+import com.github.sdbg.debug.core.model.ISDBGValue;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
@@ -49,8 +49,8 @@ class ValueLabelProvider extends DelegatingStyledCellLabelProvider {
 
         str.append(value.getValueString());
 
-        if (value instanceof IDartDebugValue) {
-          IDartDebugValue debugValue = (IDartDebugValue) value;
+        if (value instanceof ISDBGValue) {
+          ISDBGValue debugValue = (ISDBGValue) value;
 
           if (debugValue.getId() != null) {
             str.append(' ');

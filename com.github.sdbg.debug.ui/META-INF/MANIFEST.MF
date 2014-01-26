@@ -4,7 +4,7 @@ Bundle-Localization: plugin
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.github.sdbg.debug.ui;singleton:=true
 Bundle-Version: 0.0.0.qualifier
-Bundle-Activator: com.github.sdbg.debug.ui.internal.DartDebugUIPlugin
+Bundle-Activator: com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui,
  org.eclipse.debug.ui,
@@ -19,11 +19,11 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.forms,
  org.eclipse.jdt.ui
 Export-Package: com.github.sdbg.debug.ui.internal,
- com.github.sdbg.debug.ui.internal.dartium,
+ com.github.sdbg.debug.ui.internal.chrome,
+ com.github.sdbg.debug.ui.internal.launch,
  com.github.sdbg.debug.ui.internal.preferences,
  com.github.sdbg.debug.ui.internal.util,
- com.github.sdbg.debug.ui.internal.view,
- com.github.sdbg.debug.ui.launch
+ com.github.sdbg.debug.ui.internal.view
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .

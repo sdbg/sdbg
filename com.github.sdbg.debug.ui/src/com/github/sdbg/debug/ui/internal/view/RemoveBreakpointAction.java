@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.view;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -32,7 +32,7 @@ public class RemoveBreakpointAction extends SelectionProviderAction {
   protected RemoveBreakpointAction(ISelectionProvider provider) {
     super(provider, "Remove Breakpoint");
 
-    setImageDescriptor(DartDebugUIPlugin.getImageDescriptor("obj16/rem_co.gif"));
+    setImageDescriptor(SDBGDebugUIPlugin.getImageDescriptor("obj16/rem_co.gif"));
     setEnabled(false);
   }
 
@@ -42,7 +42,7 @@ public class RemoveBreakpointAction extends SelectionProviderAction {
       try {
         breakpoint.delete();
       } catch (CoreException e) {
-        DartDebugUIPlugin.logError(e);
+        SDBGDebugUIPlugin.logError(e);
       }
     }
   }

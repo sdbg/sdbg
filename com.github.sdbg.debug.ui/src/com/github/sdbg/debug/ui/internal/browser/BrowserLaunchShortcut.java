@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.ui.internal.browser;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
 import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
@@ -57,7 +57,7 @@ public class BrowserLaunchShortcut extends AbstractLaunchShortcut implements ILa
   @Override
   protected ILaunchConfigurationType getConfigurationType() {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type = manager.getLaunchConfigurationType(DartDebugCorePlugin.BROWSER_LAUNCH_CONFIG_ID);
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.BROWSER_LAUNCH_CONFIG_ID);
 
     return type;
   }
@@ -86,7 +86,7 @@ public class BrowserLaunchShortcut extends AbstractLaunchShortcut implements ILa
 
     // Create and launch a new configuration
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type = manager.getLaunchConfigurationType(DartDebugCorePlugin.BROWSER_LAUNCH_CONFIG_ID);
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.BROWSER_LAUNCH_CONFIG_ID);
     ILaunchConfigurationWorkingCopy launchConfig = null;
     try {
       launchConfig = type.newInstance(
@@ -97,7 +97,7 @@ public class BrowserLaunchShortcut extends AbstractLaunchShortcut implements ILa
       return;
     }
 
-    DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(launchConfig);
+    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(launchConfig);
 
     launchWrapper.setProjectName(resource.getProject().getName());
     launchWrapper.setApplicationName(resource.getFullPath().toPortableString());

@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.ui.internal.browser;
 
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
 
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -134,7 +134,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
    */
   @Override
   public Image getImage() {
-    return DartDebugUIPlugin.getImage("obj16/globe_dark.png"); //$NON-NLS-1$
+    return SDBGDebugUIPlugin.getImage("obj16/globe_dark.png"); //$NON-NLS-1$
   }
 
   @Override
@@ -156,7 +156,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
   @Override
   public void initializeFrom(ILaunchConfiguration config) {
 
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
     launchTargetGroup.setHtmlTextValue(wrapper.appendQueryParams(wrapper.getApplicationName()));
     launchTargetGroup.setUrlTextValue(wrapper.getUrl());
 
@@ -179,7 +179,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy config) {
 
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(config);
     wrapper.setShouldLaunchFile(launchTargetGroup.getHtmlButtonSelection());
 
     String fileUrl = launchTargetGroup.getHtmlFileName();
@@ -204,7 +204,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
     wrapper.setShouldLaunchFile(true);
     wrapper.setApplicationName(""); //$NON-NLS-1$
     wrapper.setRunDart2js(true);

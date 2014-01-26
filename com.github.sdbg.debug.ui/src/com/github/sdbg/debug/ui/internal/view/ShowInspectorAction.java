@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.view;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 
 import org.eclipse.debug.core.DebugException;
@@ -34,7 +34,7 @@ public class ShowInspectorAction extends Action {
   private IDetailPaneContainer selectionProvider;
 
   public ShowInspectorAction() {
-    super("Show Object Inspector", DartDebugUIPlugin.getImageDescriptor("obj16/value_show.gif"));
+    super("Show Object Inspector", SDBGDebugUIPlugin.getImageDescriptor("obj16/value_show.gif"));
   }
 
   @Override

@@ -31,7 +31,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 /**
  * Utilities for mapping {@link Source} to {@link File} to {@link IFile}.
@@ -195,7 +195,7 @@ public class ResourceUtil {
           }, 0);
         } catch (CoreException exception) {
           //&&&DartCore.logError("Could not visit resources", exception);
-          DartDebugCorePlugin.logError("Could not visit resources", exception);
+          SDBGDebugCorePlugin.logError("Could not visit resources", exception);
         }
       }
       return resourceMap;
@@ -236,7 +236,7 @@ public class ResourceUtil {
 //      DartCore.logError(
 //          "Cannot get resource associated with non-absolute URI: " + uri,
 //          new Exception());
-      DartDebugCorePlugin.logError(
+      SDBGDebugCorePlugin.logError(
           "Cannot get resource associated with non-absolute URI: " + uri,
           new Exception());
       return null;

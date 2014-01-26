@@ -4,7 +4,7 @@ Bundle-Localization: plugin
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.github.sdbg.debug.core;singleton:=true
 Bundle-Version: 0.0.0.qualifier
-Bundle-Activator: com.github.sdbg.debug.core.DartDebugCorePlugin
+Bundle-Activator: com.github.sdbg.debug.core.SDBGDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.debug.core,
@@ -17,12 +17,7 @@ Export-Package: com.github.sdbg.core,
  com.github.sdbg.debug.core,
  com.github.sdbg.debug.core.breakpoints,
  com.github.sdbg.debug.core.configs,
- com.github.sdbg.debug.core.dartium;x-friends:="com.github.sdbg.debug.ui,com.github.sdbg.debug.core_test",
- com.github.sdbg.debug.core.expr,
- com.github.sdbg.debug.core.server,
- com.github.sdbg.debug.core.source,
- com.github.sdbg.debug.core.sourcemaps,
- com.github.sdbg.debug.core.util,
- com.github.sdbg.debug.core.webkit
+ com.github.sdbg.debug.core.model,
+ com.github.sdbg.debug.core.util
 Bundle-ClassPath: .,
  lib/weberknecht-0.1.4.jar

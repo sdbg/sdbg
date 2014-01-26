@@ -13,7 +13,7 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.debug.ui.internal.dartium.DartiumLaunchMessages;
+import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchMessages;
 import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog.HtmlResourceFilter;
 
 import org.eclipse.core.resources.IFile;
@@ -75,7 +75,7 @@ public class LaunchTargetComposite extends Composite {
     GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(this);
 
     Group group = new Group(this, SWT.NONE);
-    group.setText(DartiumLaunchMessages.DartiumMainTab_LaunchTarget);
+    group.setText(ChromeLaunchMessages.DartiumMainTab_LaunchTarget);
     GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
 
@@ -94,22 +94,22 @@ public class LaunchTargetComposite extends Composite {
   public String getErrorMessage() {
 
     if (htmlButton.getSelection() && htmlText.getText().length() == 0) {
-      return DartiumLaunchMessages.DartiumMainTab_NoHtmlFile;
+      return ChromeLaunchMessages.DartiumMainTab_NoHtmlFile;
     }
 
     if (urlButton.getSelection()) {
       String url = urlText.getText();
 
       if (url.length() == 0) {
-        return DartiumLaunchMessages.DartiumMainTab_NoUrl;
+        return ChromeLaunchMessages.DartiumMainTab_NoUrl;
       }
 
       if (!isValidUrl(url)) {
-        return DartiumLaunchMessages.DartiumMainTab_InvalidURL;
+        return ChromeLaunchMessages.DartiumMainTab_InvalidURL;
       }
 
       if (sourceDirectoryText.getText().length() == 0) {
-        return DartiumLaunchMessages.DartiumMainTab_NoProject;
+        return ChromeLaunchMessages.DartiumMainTab_NoProject;
       }
     }
 
@@ -159,7 +159,7 @@ public class LaunchTargetComposite extends Composite {
 
   protected void createHtmlField(Composite composite) {
     htmlButton = new Button(composite, SWT.RADIO);
-    htmlButton.setText(DartiumLaunchMessages.DartiumMainTab_HtmlFileLabel);
+    htmlButton.setText(ChromeLaunchMessages.DartiumMainTab_HtmlFileLabel);
     htmlButton.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(SelectionEvent e) {
@@ -175,7 +175,7 @@ public class LaunchTargetComposite extends Composite {
         false).applyTo(htmlText);
 
     htmlBrowseButton = new Button(composite, SWT.PUSH);
-    htmlBrowseButton.setText(DartiumLaunchMessages.DartiumMainTab_Browse);
+    htmlBrowseButton.setText(ChromeLaunchMessages.DartiumMainTab_Browse);
     PixelConverter converter = new PixelConverter(htmlBrowseButton);
     int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
@@ -190,7 +190,7 @@ public class LaunchTargetComposite extends Composite {
 
   protected void createUrlField(Composite composite) {
     urlButton = new Button(composite, SWT.RADIO);
-    urlButton.setText(DartiumLaunchMessages.DartiumMainTab_UrlLabel);
+    urlButton.setText(ChromeLaunchMessages.DartiumMainTab_UrlLabel);
     urlButton.addSelectionListener(new SelectionAdapter() {
       @Override
       public void widgetSelected(SelectionEvent e) {
@@ -207,7 +207,7 @@ public class LaunchTargetComposite extends Composite {
     new Label(composite, SWT.NONE);
 
     projectLabel = new Label(composite, SWT.NONE);
-    projectLabel.setText(DartiumLaunchMessages.DartiumMainTab_SourceDirectoryLabel);
+    projectLabel.setText(ChromeLaunchMessages.DartiumMainTab_SourceDirectoryLabel);
     GridDataFactory.swtDefaults().indent(20, 0).applyTo(projectLabel);
 
     sourceDirectoryText = new Text(composite, SWT.BORDER | SWT.SINGLE);
@@ -217,7 +217,7 @@ public class LaunchTargetComposite extends Composite {
         sourceDirectoryText);
 
     projectBrowseButton = new Button(composite, SWT.PUSH);
-    projectBrowseButton.setText(DartiumLaunchMessages.DartiumMainTab_Browse);
+    projectBrowseButton.setText(ChromeLaunchMessages.DartiumMainTab_Browse);
     PixelConverter converter = new PixelConverter(htmlBrowseButton);
     widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
@@ -236,7 +236,7 @@ public class LaunchTargetComposite extends Composite {
         getShell(),
         workspace.getRoot(),
         new HtmlResourceFilter());
-    dialog.setTitle(DartiumLaunchMessages.DartiumMainTab_SelectHtml);
+    dialog.setTitle(ChromeLaunchMessages.DartiumMainTab_SelectHtml);
     dialog.setInitialPattern(".", FilteredItemsSelectionDialog.FULL_SELECTION); //$NON-NLS-1$
     IPath path = new Path(htmlText.getText());
     if (workspace.validatePath(path.toString(), IResource.FILE).isOK()) {
@@ -265,7 +265,7 @@ public class LaunchTargetComposite extends Composite {
         getShell(),
         null,
         false,
-        DartiumLaunchMessages.DartiumMainTab_SelectProject);
+        ChromeLaunchMessages.DartiumMainTab_SelectProject);
 
     dialog.open();
 

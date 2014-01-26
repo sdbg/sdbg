@@ -14,9 +14,9 @@
 
 package com.github.sdbg.debug.ui.internal.chromeapp;
 
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.dartium.DartiumLaunchMessages;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchMessages;
 import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog;
 import com.github.sdbg.debug.ui.internal.util.IResourceFilter;
 
@@ -83,7 +83,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
     // main group
     Group group = new Group(composite, SWT.NONE);
-    group.setText(DartiumLaunchMessages.DartiumMainTab_LaunchTarget);
+    group.setText(ChromeLaunchMessages.DartiumMainTab_LaunchTarget);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(2).applyTo(group);
 
@@ -96,7 +96,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(fileText);
 
     Button browseButton = new Button(group, SWT.PUSH);
-    browseButton.setText(DartiumLaunchMessages.DartiumMainTab_Browse);
+    browseButton.setText(ChromeLaunchMessages.DartiumMainTab_Browse);
     PixelConverter converter = new PixelConverter(browseButton);
     int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
@@ -161,7 +161,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public Image getImage() {
-    return DartDebugUIPlugin.getImage("chrome_app.png");
+    return SDBGDebugUIPlugin.getImage("chrome_app.png");
   }
 
   @Override
@@ -171,7 +171,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void initializeFrom(ILaunchConfiguration configuration) {
-    DartLaunchConfigWrapper dartLauncher = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
 
     fileText.setText(dartLauncher.getApplicationName());
     argumentText.setText(dartLauncher.getArguments());
@@ -186,7 +186,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    DartLaunchConfigWrapper dartLauncher = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
     dartLauncher.setApplicationName(fileText.getText());
     dartLauncher.setArguments(argumentText.getText().trim());
     dartLauncher.setEnvironmentString(envText.getText().trim());
@@ -195,7 +195,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    DartLaunchConfigWrapper dartLauncher = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
     dartLauncher.setApplicationName("");
     dartLauncher.setEnvironmentString("");
   }

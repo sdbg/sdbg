@@ -14,12 +14,12 @@
       </launchConfigurationType>
 
       <launchConfigurationType
-            delegate="com.github.sdbg.debug.core.configs.DartiumLaunchConfigurationDelegate"
-            id="com.github.sdbg.debug.core.dartiumLaunchConfig"
+            delegate="com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.chromeLaunchConfig"
             modes="run,debug"
-            name="%launchconfig.dartium.name"
+            name="%launchconfig.chrome.name"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
-            sourcePathComputerId="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+            sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
       
       <launchConfigurationType
@@ -28,7 +28,7 @@
             modes="run,debug"
             name="%launchconfig.chromeApp.name"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
-            sourcePathComputerId="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+            sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
       <!--&&&launchConfigurationType
             delegate="com.github.sdbg.debug.core.pubserve.PubServeLaunchConfigurationDelegate"
@@ -52,7 +52,7 @@
 
    <extension point="org.eclipse.debug.core.breakpoints">
       <breakpoint
-            class="com.github.sdbg.debug.core.breakpoints.DartBreakpoint"
+            class="com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint"
             id="com.github.sdbg.debug.core.lineBreakpoint"
             markerType="com.github.sdbg.debug.core.breakpointMarker"
             name="Dart breakpoint">
@@ -64,7 +64,7 @@
    <extension point="org.eclipse.debug.core.sourceLocators">
       <sourceLocator
          name="Dart Source Lookup Director"
-         class="com.github.sdbg.debug.core.source.DartSourceLookupDirector"
+         class="com.github.sdbg.debug.core.internal.source.SDBGSourceLookupDirector"
          id="com.github.sdbg.debug.core.sourceLookupDirector">
       </sourceLocator>
    </extension>
@@ -75,8 +75,8 @@
          id="com.github.sdbg.debug.core.serverSourcePathComputer">
        </sourcePathComputer>
       <sourcePathComputer
-         class="com.github.sdbg.debug.core.dartium.DartiumSourcePathComputerDelegate"
-         id="com.github.sdbg.debug.core.dartiumSourcePathComputer">
+         class="com.github.sdbg.debug.core.internal.webkit.model.WebkitSourcePathComputerDelegate"
+         id="com.github.sdbg.debug.core.chromeSourcePathComputer">
        </sourcePathComputer>
    </extension>
    
@@ -84,13 +84,13 @@
    <extension point="org.eclipse.debug.core.watchExpressionDelegates">
       <watchExpressionDelegate
          debugModel="com.github.sdbg.debug.core"
-         delegateClass="com.github.sdbg.debug.core.expr.WatchExpressionDelegate"/>
+         delegateClass="com.github.sdbg.debug.core.internal.expr.WatchExpressionDelegate"/>
    </extension>
 
    <extension point="org.eclipse.debug.core.logicalStructureTypes">
       <logicalStructureType
          id="com.github.sdbg.debug.core.logical.mapStructureType"
-         class="com.github.sdbg.debug.core.logical.MapStructureType"
+         class="com.github.sdbg.debug.core.internal.logical.MapStructureType"
          description="Dart Maps"
          modelIdentifier="com.github.sdbg.debug.core">
       </logicalStructureType>

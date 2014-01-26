@@ -14,9 +14,6 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.util.IDartDebugVariable;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
@@ -24,11 +21,14 @@ import org.eclipse.debug.core.model.DebugElement;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
+
 /**
  * An IVariable implementation used specifically for the object inspector. It is used to display the
  * root node in the inspector's variable view.
  */
-public class InspectorVariable extends DebugElement implements IDartDebugVariable, IVariable {
+public class InspectorVariable extends DebugElement implements ISDBGVariable, IVariable {
   private String typeName;
   private IValue value;
 
@@ -37,6 +37,11 @@ public class InspectorVariable extends DebugElement implements IDartDebugVariabl
 
     this.typeName = typeName;
     this.value = value;
+  }
+
+  @Override
+  public String getDisplayName() throws DebugException {
+    return getName();
   }
 
   @Override
@@ -92,7 +97,7 @@ public class InspectorVariable extends DebugElement implements IDartDebugVariabl
   public void setValue(IValue value) throws DebugException {
     throw new DebugException(new Status(
         IStatus.ERROR,
-        DartDebugCorePlugin.PLUGIN_ID,
+        SDBGDebugCorePlugin.PLUGIN_ID,
         DebugException.NOT_SUPPORTED,
         null,
         null));
@@ -102,7 +107,7 @@ public class InspectorVariable extends DebugElement implements IDartDebugVariabl
   public void setValue(String expression) throws DebugException {
     throw new DebugException(new Status(
         IStatus.ERROR,
-        DartDebugCorePlugin.PLUGIN_ID,
+        SDBGDebugCorePlugin.PLUGIN_ID,
         DebugException.NOT_SUPPORTED,
         null,
         null));

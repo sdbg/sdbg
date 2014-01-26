@@ -23,7 +23,7 @@ import java.io.UnsupportedEncodingException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 /**
  * Execute the process created by the given process builder; collect the results and the exit code.
@@ -105,7 +105,7 @@ public class ProcessRunner {
       }
     } catch (UnsupportedEncodingException e) {
       //&&&DartCore.logError(e);
-      DartDebugUIPlugin.logError(e);
+      SDBGDebugUIPlugin.logError(e);
     } catch (IOException e) {
       // This exception is expected.
 

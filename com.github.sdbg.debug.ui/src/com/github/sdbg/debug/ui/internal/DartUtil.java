@@ -46,7 +46,7 @@ public class DartUtil {
    * @param message the error messsage
    */
   public static void logError(String message) {
-    logError(new CoreException(new Status(IStatus.ERROR, DartDebugUIPlugin.PLUGIN_ID, message)));
+    logError(new CoreException(new Status(IStatus.ERROR, SDBGDebugUIPlugin.PLUGIN_ID, message)));
   }
 
   /**
@@ -55,8 +55,8 @@ public class DartUtil {
    * @param e the exception
    */
   public static void logError(Throwable e) {
-    DartDebugUIPlugin.getDefault().getLog().log(
-        new Status(IStatus.ERROR, DartDebugUIPlugin.PLUGIN_ID, e.toString(), e));
+    SDBGDebugUIPlugin.getDefault().getLog().log(
+        new Status(IStatus.ERROR, SDBGDebugUIPlugin.PLUGIN_ID, e.toString(), e));
   }
 
 }

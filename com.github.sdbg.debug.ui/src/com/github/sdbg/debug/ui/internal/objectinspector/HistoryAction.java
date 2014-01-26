@@ -16,7 +16,7 @@ package com.github.sdbg.debug.ui.internal.objectinspector;
 
 import com.github.sdbg.debug.core.util.HistoryList;
 import com.github.sdbg.debug.core.util.HistoryListListener;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.jface.action.Action;
 
@@ -38,8 +38,8 @@ class HistoryAction<T> extends Action implements HistoryListListener<T> {
 
   private HistoryAction(HistoryList<T> historyList, boolean isForwardAction) {
     super(isForwardAction ? "Forward" : "Back", isForwardAction
-        ? DartDebugUIPlugin.getImageDescriptor("obj16/forward_nav.gif")
-        : DartDebugUIPlugin.getImageDescriptor("obj16/backward_nav.gif"));
+        ? SDBGDebugUIPlugin.getImageDescriptor("obj16/forward_nav.gif")
+        : SDBGDebugUIPlugin.getImageDescriptor("obj16/backward_nav.gif"));
 
     this.historyList = historyList;
     this.isForwardAction = isForwardAction;

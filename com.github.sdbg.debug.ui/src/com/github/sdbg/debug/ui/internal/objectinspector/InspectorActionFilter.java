@@ -14,17 +14,15 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
-import com.github.sdbg.debug.core.dartium.DartiumDebugValue;
-import com.github.sdbg.debug.core.dartium.DartiumDebugVariable;
-import com.github.sdbg.debug.core.server.ServerDebugValue;
-import com.github.sdbg.debug.core.server.ServerDebugVariable;
-
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.ui.IActionFilter;
+
+import com.github.sdbg.debug.core.model.ISDBGValue;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 /**
  * An IActionFilter implementation used to determine whether inspect actions apply to certain
@@ -37,28 +35,12 @@ public class InspectorActionFilter implements IActionFilter {
 
     IAdapterFactory factory = new InspectorAdapterFactory();
 
-    manager.registerAdapters(factory, ServerDebugVariable.class);
-    manager.registerAdapters(factory, DartiumDebugVariable.class);
+    manager.registerAdapters(factory, ISDBGVariable.class);
     manager.registerAdapters(factory, InspectorVariable.class);
   }
 
   public InspectorActionFilter() {
 
-  }
-
-  @Override
-  public boolean testAttribute(Object object, String name, String value) {
-    if ("isInspectableObject".equals(name)) {
-      return Boolean.toString(isInspectableObject(object)).equals(value);
-    } else if ("canInspectObject".equals(name)) {
-      return Boolean.toString(canInspectObject(object)).equals(value);
-    } else if ("canInspectClass".equals(name)) {
-      return Boolean.toString(canInspectClass(object)).equals(value);
-    } else if ("canInspectLibrary".equals(name)) {
-      return Boolean.toString(canInspectLibrary(object)).equals(value);
-    } else {
-      return false;
-    }
   }
 
   private boolean canInspectClass(Object object) {
@@ -118,19 +100,12 @@ public class InspectorActionFilter implements IActionFilter {
   }
 
   private boolean isInspectableObject(Object object) {
-    return object instanceof ServerDebugVariable || object instanceof DartiumDebugVariable
-        || object instanceof InspectorVariable;
+    return object instanceof ISDBGVariable || object instanceof InspectorVariable;
   }
 
   private boolean isPrimitive(Object object) {
-    if (object instanceof DartiumDebugValue) {
-      DartiumDebugValue val = (DartiumDebugValue) object;
-
-      if (val.isPrimitive()) {
-        return true;
-      }
-    } else if (object instanceof ServerDebugValue) {
-      ServerDebugValue val = (ServerDebugValue) object;
+    if (object instanceof ISDBGValue) {
+      ISDBGValue val = (ISDBGValue) object;
 
       if (val.isPrimitive()) {
         return true;
@@ -138,6 +113,21 @@ public class InspectorActionFilter implements IActionFilter {
     }
 
     return false;
+  }
+
+  @Override
+  public boolean testAttribute(Object object, String name, String value) {
+    if ("isInspectableObject".equals(name)) {
+      return Boolean.toString(isInspectableObject(object)).equals(value);
+    } else if ("canInspectObject".equals(name)) {
+      return Boolean.toString(canInspectObject(object)).equals(value);
+    } else if ("canInspectClass".equals(name)) {
+      return Boolean.toString(canInspectClass(object)).equals(value);
+    } else if ("canInspectLibrary".equals(name)) {
+      return Boolean.toString(canInspectLibrary(object)).equals(value);
+    } else {
+      return false;
+    }
   }
 }
 

@@ -21,9 +21,9 @@ public class TestAll {
   public static Test suite() {
     TestSuite suite = new TestSuite("Tests in " + TestAll.class.getPackage().getName());
     //suite.addTest(com.github.sdbg.debug.core.configs.TestAll.suite());
-    suite.addTest(com.github.sdbg.debug.core.dartium.TestAll.suite());
+    suite.addTest(com.github.sdbg.debug.core.internal.webkit.model.TestAll.suite());
     //suite.addTest(com.github.sdbg.debug.core.server.TestAll.suite());
-    suite.addTest(com.github.sdbg.debug.core.sourcemaps.TestAll.suite());
+    suite.addTest(com.github.sdbg.debug.core.internal.sourcemaps.TestAll.suite());
     suite.addTest(com.github.sdbg.debug.core.util.TestAll.suite());
     return suite;
   }

@@ -14,14 +14,14 @@
 
 package com.github.sdbg.debug.core;
 
-import com.github.sdbg.debug.core.dartium.DartiumDebugTarget;
+import java.io.File;
 
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 
-import java.io.File;
+import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 /**
  * A helper class to allow core classes to communicate with the UI.
@@ -35,7 +35,7 @@ public abstract class DebugUIHelper {
     }
 
     @Override
-    public void showDevtoolsDisconnectError(String title, DartiumDebugTarget target) {
+    public void showDevtoolsDisconnectError(String title, ISDBGDebugTarget target) {
       // no-op
 
     }
@@ -53,7 +53,7 @@ public abstract class DebugUIHelper {
     }
   }
 
-  private static final String EXTENSION_POINT_ID = DartDebugCorePlugin.SDBG_PLUGIN_ID + ".debugUIHelper";
+  private static final String EXTENSION_POINT_ID = SDBGDebugCorePlugin.SDBG_PLUGIN_ID + ".debugUIHelper";
   private static boolean initialized;
 
   private static DebugUIHelper helper;
@@ -81,7 +81,7 @@ public abstract class DebugUIHelper {
     if (elements.length > 0) {
       if (elements.length > 1) {
         //&&&DartCore.logError("Error, more then one debug UI helper contributed", null);
-        DartDebugCorePlugin.logError("Error, more then one debug UI helper contributed", null);
+        SDBGDebugCorePlugin.logError("Error, more then one debug UI helper contributed", null);
       }
 
       IConfigurationElement element = elements[0];
@@ -91,7 +91,7 @@ public abstract class DebugUIHelper {
 
         helper = workingCopy;
       } catch (Throwable t) {
-        DartDebugCorePlugin.logError(t);
+        SDBGDebugCorePlugin.logError(t);
       }
     } else {
       helper = new DefaultDebugUIHelper();
@@ -104,7 +104,7 @@ public abstract class DebugUIHelper {
 
   public abstract void activateApplication(File application, String name);
 
-  public abstract void showDevtoolsDisconnectError(String title, DartiumDebugTarget target);
+  public abstract void showDevtoolsDisconnectError(String title, ISDBGDebugTarget target);
 
   public abstract void showError(String title, String message);
 

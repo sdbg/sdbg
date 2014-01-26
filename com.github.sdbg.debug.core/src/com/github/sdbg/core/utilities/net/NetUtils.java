@@ -19,7 +19,7 @@ import java.net.ServerSocket;
 import java.net.URI;
 import java.net.UnknownHostException;
 
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 /**
  * A collection of static networking utilities.
@@ -100,7 +100,7 @@ public class NetUtils {
         loopbackAddress = address.getHostAddress();
       } catch (UnknownHostException e) {
         //&&&DartCore.logError(e);
-        DartDebugCorePlugin.logError(e);
+        SDBGDebugCorePlugin.logError(e);
 
         // Fallback to the "localhost" address.
         return "localhost";

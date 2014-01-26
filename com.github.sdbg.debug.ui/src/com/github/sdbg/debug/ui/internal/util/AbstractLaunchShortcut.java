@@ -14,7 +14,7 @@
 package com.github.sdbg.debug.ui.internal.util;
 
 import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 
@@ -303,7 +303,7 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
    * @return whether the launch configuration is used to launch the given resource
    */
   protected boolean testSimilar(IResource resource, ILaunchConfiguration config) {
-    DartLaunchConfigWrapper launchWrapper = new DartLaunchConfigWrapper(config);
+    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
 
     IResource appResource = launchWrapper.getApplicationResource();
 

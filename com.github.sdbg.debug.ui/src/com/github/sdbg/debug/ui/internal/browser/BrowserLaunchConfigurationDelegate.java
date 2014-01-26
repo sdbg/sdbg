@@ -15,12 +15,12 @@ package com.github.sdbg.debug.ui.internal.browser;
 
 import com.github.sdbg.core.DartCore;
 import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
-import com.github.sdbg.debug.core.DartDebugCorePlugin;
-import com.github.sdbg.debug.core.DartLaunchConfigWrapper;
-import com.github.sdbg.debug.core.DartLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.util.ResourceServer;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
-import com.github.sdbg.debug.ui.internal.DartDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.util.io.ProcessRunner;
 
 import org.eclipse.core.resources.IResource;
@@ -51,7 +51,7 @@ import java.util.List;
 /**
  * Launches the Dart application (compiled to js) in the browser.
  */
-public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationDelegate {
+public class BrowserLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
 
   public static void openBrowser(String url) throws CoreException {
     IWebBrowser browser = null;
@@ -72,7 +72,7 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
             try {
               defaultBrowser.openURL(urlToOpen);
             } catch (PartInitException e) {
-              DartDebugCorePlugin.logError(
+              SDBGDebugCorePlugin.logError(
                   Messages.BrowserLaunchConfigurationDelegate_DefaultBrowserNotFound,
                   e);
             }
@@ -81,13 +81,13 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
       } else {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugCorePlugin.PLUGIN_ID,
+            SDBGDebugCorePlugin.PLUGIN_ID,
             Messages.BrowserLaunchConfigurationDelegate_DefaultBrowserNotFound));
       }
     } catch (MalformedURLException e) {
       throw new CoreException(new Status(
           IStatus.ERROR,
-          DartDebugCorePlugin.PLUGIN_ID,
+          SDBGDebugCorePlugin.PLUGIN_ID,
           Messages.BrowserLaunchConfigurationDelegate_UrlError));
     }
   }
@@ -101,7 +101,7 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
 
     mode = ILaunchManager.RUN_MODE;
 
-    DartLaunchConfigWrapper wrapper = new DartLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
     wrapper.markAsLaunched();
 
     String url;
@@ -112,7 +112,7 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
       if (resource == null) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugCorePlugin.PLUGIN_ID,
+            SDBGDebugCorePlugin.PLUGIN_ID,
             Messages.BrowserLaunchConfigurationDelegate_HtmlFileNotFound));
       }
 
@@ -130,7 +130,7 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
       } catch (IOException ioe) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugCorePlugin.PLUGIN_ID,
+            SDBGDebugCorePlugin.PLUGIN_ID,
             "Could not launch browser - unable to start embedded server",
             ioe));
       }
@@ -146,12 +146,12 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
       } catch (URISyntaxException e) {
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugCorePlugin.PLUGIN_ID,
+            SDBGDebugCorePlugin.PLUGIN_ID,
             Messages.BrowserLaunchConfigurationDelegate_UrlError));
       }
     }
 
-    if (DartDebugCorePlugin.getPlugin().getIsDefaultBrowser()) {
+    if (SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser()) {
       openBrowser(url);
     } else {
       launchInExternalBrowser(url);
@@ -214,11 +214,11 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
 
   private void launchInExternalBrowser(final String url) throws CoreException {
 
-    String browserName = DartDebugCorePlugin.getPlugin().getBrowserName();
+    String browserName = SDBGDebugCorePlugin.getPlugin().getBrowserName();
     if (browserName.length() == 0) {
       throw new CoreException(new Status(
           IStatus.ERROR,
-          DartDebugUIPlugin.PLUGIN_ID,
+          SDBGDebugUIPlugin.PLUGIN_ID,
           "Specify browser to launch in Preferences > Run and Debug"));
     }
 
@@ -232,12 +232,12 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
     cmd.add(browserName);
     cmd.add(url);
 
-    if (DartDebugCorePlugin.getPlugin().getBrowserArgs().length() != 0) {
+    if (SDBGDebugCorePlugin.getPlugin().getBrowserArgs().length() != 0) {
       if (DartCore.isMac()) {
         cmd.add("--args");
-        cmd.add(DartDebugCorePlugin.getPlugin().getBrowserArgs());
+        cmd.add(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
       } else {
-        cmd.addAll(Arrays.asList(DartDebugCorePlugin.getPlugin().getBrowserArgsAsArray()));
+        cmd.addAll(Arrays.asList(SDBGDebugCorePlugin.getPlugin().getBrowserArgsAsArray()));
       }
     }
 
@@ -262,13 +262,13 @@ public class BrowserLaunchConfigurationDelegate extends DartLaunchConfigurationD
 
         throw new CoreException(new Status(
             IStatus.ERROR,
-            DartDebugUIPlugin.PLUGIN_ID,
+            SDBGDebugUIPlugin.PLUGIN_ID,
             "Could not launch browser \"" + browserName + "\" : \n\n" + runner.getStdErr()));
       }
     } catch (IOException e) {
       throw new CoreException(new Status(
           IStatus.ERROR,
-          DartDebugCorePlugin.PLUGIN_ID,
+          SDBGDebugCorePlugin.PLUGIN_ID,
           Messages.BrowserLaunchConfigurationDelegate_BrowserNotFound,
           e));
     }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.github.sdbg</groupId>
+    <version>0.0.0.qualifier</version>
+    <artifactId>com.github.sdbg.parent</artifactId>
+  </parent>
+
+  <artifactId>com.github.sdbg.releng.install</artifactId>
+  <properties>
+    <eclipse.destination>${project.basedir}/target/eclipse</eclipse.destination>
+    <features>org.eclipse.sdk.ide,org.eclipse.platform,org.eclipse.equinox.p2.core.feature.feature.group,org.eclipse.jdt,org.eclipse.m2e.feature.feature.group,org.jboss.tools.m2e.jdt.feature.feature.group,org.eclipse.m2e.logback.feature.feature.group,com.github.sdbg.debug.ui</features>
+    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.p2/target/repository</sites>
+  </properties>
+  <build>
+    <plugins>
+        <plugin>
+            <groupId>org.eclipse.tycho.extras</groupId>
+            <artifactId>tycho-eclipserun-plugin</artifactId>
+            <version>${tycho-version}</version>
+            <configuration>
+                <argLine>-Declipse.p2.mirrors=false</argLine>
+          <appArgLine>-consoleLog -application org.eclipse.equinox.p2.director -nosplash -destination ${eclipse.destination} -bundlePool ${eclipse.destination} -repository ${sites} -installIUs ${features} -profileProperties org.eclipse.update.install.features=true -profile SDKProfile -roaming</appArgLine>
+                <dependencies>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.transport.ecf</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.repository</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.touchpoint.eclipse</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.extras.feature</artifactId>
+                        <type>eclipse-feature</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.core.feature</artifactId>
+                        <type>eclipse-feature</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.touchpoint.natives</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.artifact.repository</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.p2.director.app</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+                    <dependency>
+                        <artifactId>org.eclipse.equinox.ds</artifactId>
+                        <type>eclipse-plugin</type>
+                    </dependency>
+		    <dependency>
+			<artifactId>org.eclipse.core.net</artifactId>
+			<type>eclipse-plugin</type>
+		    </dependency>
+                </dependencies>
+    <repositories>
+      <repository>
+        <id>kepler</id>
+        <url>${eclipse.repo.url}</url>
+        <layout>p2</layout>
+     </repository>
+    </repositories>
+            </configuration>
+            <executions>
+                <execution>
+                    <goals>
+                        <goal>eclipse-run</goal>
+                    </goals>
+                    <phase>compile</phase>
+                </execution>
+            </executions>
+        </plugin>
+    </plugins>
+</build>
+
+</project>

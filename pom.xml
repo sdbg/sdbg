@@ -16,6 +16,7 @@
     <eclipse.version.number>4.3</eclipse.version.number>
     <eclipse.version.text>e43</eclipse.version.text>
     <eclipse.repo.url>${eclipse.url}/releases/${eclipse.version}</eclipse.repo.url>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <!--
@@ -33,7 +34,6 @@
   </repositories>
 
   <modules>
-    <module>com.github.sdbg.releng.maven</module>
     <module>com.github.sdbg.thirdparty</module>
     <module>com.github.sdbg.thirdparty_test</module>
     <module>com.github.sdbg.debug.core_test</module>

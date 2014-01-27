@@ -49,11 +49,6 @@ public class SDBGDebugCorePlugin extends Plugin {
   public static final String PLUGIN_ID = "com.github.sdbg.debug.core"; //$NON-NLS-1$
 
   /**
-   * The SDBG Debug Core plug-in ID.
-   */
-  public static final String SDBG_PLUGIN_ID = "com.github.sdbg.debug.core"; //$NON-NLS-1$
-
-  /**
    * The Dart debug marker ID.
    */
   public static final String DEBUG_MARKER_ID = "com.github.sdbg.debug.core.breakpointMarker"; //$NON-NLS-1$

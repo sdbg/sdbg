@@ -57,11 +57,34 @@ public class BrowserManager {
 
   private static final int DEVTOOLS_PORT_NUMBER = 9322;
 
+  private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location";
+
   private static BrowserManager manager = new BrowserManager();
 
   private static Process browserProcess = null;
 
   private static IResourceResolver resourceResolver;
+
+  private static File chromeExe;
+
+  public static File findChrome() {
+    if (chromeExe == null) {
+      chromeExe = manager.searchForChrome();
+    }
+    return chromeExe;
+  }
+
+  private static File findChromeInDirectory(File f) {
+    File exe = new File(f, "google-chrome");
+    if (exe.exists()) {
+      return exe;
+    }
+    exe = new File(f, "chrome");
+    if (exe.exists()) {
+      return exe;
+    }
+    return new File(f, "chrome.exe");
+  }
 
   /**
    * Create a Chrome user data directory, and return the path to that directory.
@@ -76,7 +99,8 @@ public class BrowserManager {
     if (!dataDir.exists()) {
       dataDir.mkdir();
     } else {
-      // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can cause old tabs to
+      // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can
+      // cause old tabs to
       // restore themselves when we launch the browser.
       File defaultDir = new File(dataDir, "Default");
 
@@ -201,7 +225,8 @@ public class BrowserManager {
             "Unable to connect to Chromium"));
       }
 
-      // Even when Dartium has reported all the debuggable tabs to us, the debug server
+      // Even when Dartium has reported all the debuggable tabs to us, the debug
+      // server
       // may not yet have started up. Delay a small fixed amount of time.
       sleep(100);
 
@@ -313,7 +338,7 @@ public class BrowserManager {
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
             "Could not launch browser - process terminated while trying to connect. "
-                + "Try closing any running Dartium instances."
+                + "Try closing any running Chrome instances."
                 + getProcessStreamMessage(dartiumOutput.toString())));
       }
 
@@ -402,22 +427,11 @@ public class BrowserManager {
 
     monitor.beginTask("Launching Dartium...", enableDebugging ? 7 : 2);
 
-//&&&    File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
-//    
-//    if (dartium == null) {
-//      throw new CoreException(new Status(
-//          IStatus.ERROR,
-//          DartDebugCorePlugin.PLUGIN_ID,
-//          "Could not find Dartium executable in "
-//              + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory()
-//              + ". Download and install Dartium from http://www.dartlang.org/tools/dartium/."));
-//    }
+    File chromeExe = findChrome();
 
-    File dartium = new File("/usr/bin/google-chrome");
+    IPath browserLocation = new Path(chromeExe.getAbsolutePath());
 
-    IPath browserLocation = new Path(dartium.getAbsolutePath());
-
-    String browserName = dartium.getName();
+    String browserName = chromeExe.getName();
 
     // avg: 0.434 sec (old: 0.597)
     LogTimer timer = new LogTimer("Dartium debug startup");
@@ -502,7 +516,7 @@ public class BrowserManager {
           resolver);
     }
 
-    DebugUIHelper.getHelper().activateApplication(dartium, "Chromium");
+    DebugUIHelper.getHelper().activateApplication(chromeExe, "Chromium");
 
     timer.stopTask();
     timer.stopTimer();
@@ -632,6 +646,37 @@ public class BrowserManager {
     return url;
   }
 
+  private File searchForChrome() {
+    // First, try the system property, as user-specified value is preferred
+    String location = System.getProperty(
+        CHROME_EXECUTABLE_PROPERTY,
+        System.getenv(CHROME_EXECUTABLE_PROPERTY));
+    if (location != null) {
+      File f = new File(location);
+      if (f.isDirectory()) {
+        f = findChromeInDirectory(f);
+      }
+      if (f.exists()) {
+        return f;
+      }
+    }
+    // No luck on explicitly set chrome exe; search $PATH
+    String path = System.getenv("PATH");
+    if (path != null) {
+      for (String dir : path.split(File.pathSeparator)) {
+        File f = new File(dir);
+        if (f.isDirectory()) {
+          f = findChromeInDirectory(f);
+          if (f.exists()) {
+            return f;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
   private void sleep(int millis) {
     try {
       Thread.sleep(millis);
@@ -658,7 +703,8 @@ public class BrowserManager {
 
     ProcessBuilder builder = new ProcessBuilder();
     Map<String, String> env = builder.environment();
-    // Due to differences in 32bit and 64 bit environments, dartium 32bit launch does not work on
+    // Due to differences in 32bit and 64 bit environments, dartium 32bit launch
+    // does not work on
     // linux with this property.
     env.remove("LD_LIBRARY_PATH");
 
@@ -711,14 +757,16 @@ public class BrowserManager {
   private void terminateExistingBrowserProcess() {
     if (browserProcess != null) {
       if (!isProcessTerminated(browserProcess)) {
-        // TODO(devoncarew): try and use an OS mechanism to send it a graceful shutdown request?
-        // This could avoid the problem w/ Chrome displaying the crashed message on the next run.
+        // TODO(devoncarew): try and use an OS mechanism to send it a graceful
+        // shutdown request?
+        // This could avoid the problem w/ Chrome displaying the crashed message
+        // on the next run.
 
         browserProcess.destroy();
 
         // The process needs time to exit.
         waitForProcessToTerminate(browserProcess, 200);
-        //sleep(100);
+        // sleep(100);
       }
 
       browserProcess = null;

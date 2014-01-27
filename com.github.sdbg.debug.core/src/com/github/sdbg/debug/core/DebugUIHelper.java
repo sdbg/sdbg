@@ -53,7 +53,7 @@ public abstract class DebugUIHelper {
     }
   }
 
-  private static final String EXTENSION_POINT_ID = SDBGDebugCorePlugin.SDBG_PLUGIN_ID + ".debugUIHelper";
+  private static final String EXTENSION_POINT_ID = SDBGDebugCorePlugin.PLUGIN_ID + ".debugUIHelper";
   private static boolean initialized;
 
   private static DebugUIHelper helper;

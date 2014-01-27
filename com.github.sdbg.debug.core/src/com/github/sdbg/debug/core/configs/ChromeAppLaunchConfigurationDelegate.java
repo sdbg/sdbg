@@ -186,10 +186,9 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
     boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
 
-    //&&&File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
-    File chrome = new File("/usr/bin/google-chrome");
+    File chromeExe = BrowserManager.findChrome();
 
-    if (chrome == null) {
+    if (chromeExe == null) {
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
@@ -211,7 +210,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
     List<String> commandsList = new ArrayList<String>();
 
-    commandsList.add(chrome.getAbsolutePath());
+    commandsList.add(chromeExe.getAbsolutePath());
     commandsList.add("--enable-udd-profiles");
     commandsList.add("--user-data-dir="
         + BrowserManager.getCreateUserDataDirectoryPath("chrome-apps"));
@@ -285,7 +284,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
               tab.getWebSocketDebuggerFile());
 
           final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
-              chrome.getName(),
+              chromeExe.getName(),
               connection,
               launch,
               runtimeProcess,
@@ -309,7 +308,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
         // Give the app a little time to open the main window.
         sleep(500);
 
-        DebugUIHelper.getHelper().activateApplication(chrome, "Chrome");
+        DebugUIHelper.getHelper().activateApplication(chromeExe, "Chrome");
       } catch (CoreException ce) {
         SDBGDebugCorePlugin.logError(ce);
       }
@@ -331,7 +330,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
       // We need to wait until the process is started before we can try and activate the window.
       sleep(1000);
 
-      DebugUIHelper.getHelper().activateApplication(chrome, "Chrome");
+      DebugUIHelper.getHelper().activateApplication(chromeExe, "Chrome");
     }
 
     monitor.done();

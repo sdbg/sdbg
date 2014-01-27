@@ -33,12 +33,13 @@
   </repositories>
 
   <modules>
-    <module>com.github.sdbg.feature</module>
+    <module>com.github.sdbg.releng.maven</module>
     <module>com.github.sdbg.thirdparty</module>
     <module>com.github.sdbg.thirdparty_test</module>
     <module>com.github.sdbg.debug.core_test</module>
     <module>com.github.sdbg.debug.core</module>
     <module>com.github.sdbg.debug.ui</module>
+    <module>com.github.sdbg.feature</module>
     <module>com.github.sdbg.p2</module>
   </modules>
 

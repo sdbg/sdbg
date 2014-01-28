@@ -7,17 +7,18 @@ Bundle-Version: 0.0.0.qualifier
 Bundle-Activator: com.github.sdbg.debug.core.SDBGDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
- org.eclipse.debug.core,
- com.github.sdbg.thirdparty;visibility:=reexport
+ org.eclipse.debug.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Export-Package: com.github.sdbg.core,
- com.github.sdbg.core.util.instrumentation,
- com.github.sdbg.core.utilities.net,
  com.github.sdbg.debug.core,
  com.github.sdbg.debug.core.breakpoints,
  com.github.sdbg.debug.core.configs,
  com.github.sdbg.debug.core.model,
- com.github.sdbg.debug.core.util
+ com.github.sdbg.debug.core.util,
+ com.github.sdbg.utilities,
+ com.github.sdbg.utilities.instrumentation,
+ org.json
 Bundle-ClassPath: .,
+ lib/json.jar,
  lib/weberknecht-0.1.4.jar

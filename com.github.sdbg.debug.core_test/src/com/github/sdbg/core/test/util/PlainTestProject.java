@@ -17,10 +17,8 @@ package com.github.sdbg.core.test.util;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.concurrent.CountDownLatch;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -33,7 +31,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 
-import com.google.common.io.CharStreams;
+import com.github.sdbg.utilities.Streams;
 
 /**
  * Helper for creating, manipulating and disposing temporary {@link IProject}s. This creates plain
@@ -85,7 +83,7 @@ public class PlainTestProject {
   }
 
   public IFolder createFolder(String path) throws Exception {
-    String[] parts = StringUtils.split(path, "/");
+    String[] parts = Path.fromPortableString(path).segments();
     IContainer container = project;
     for (String part : parts) {
       IFolder folder = container.getFolder(new Path(part));
@@ -133,12 +131,7 @@ public class PlainTestProject {
    */
   public String getFileString(String path) throws Exception {
     IFile file = getFile(path);
-    Reader reader = new InputStreamReader(file.getContents(), file.getCharset());
-    try {
-      return CharStreams.toString(reader);
-    } finally {
-      reader.close();
-    }
+    return Streams.loadAndClose(new InputStreamReader(file.getContents(), file.getCharset()));
   }
 
   /**

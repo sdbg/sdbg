@@ -13,7 +13,7 @@
  */
 package com.github.sdbg.debug.core;
 
-import com.github.sdbg.core.utilities.general.StringUtilities;
+import com.github.sdbg.utilities.StringUtilities;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;

@@ -14,9 +14,15 @@
 
 package com.github.sdbg.debug.core.internal.sourcemaps;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -29,14 +35,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import com.github.sdbg.utilities.Streams;
 
 // //@ sourceMappingURL=/path/to/file.js.map
 
@@ -51,7 +50,7 @@ public class SourceMap {
   public static final String SOURCE_MAP_EXT = ".map";
 
   public static SourceMap createFrom(File file) throws IOException {
-    String contents = Files.toString(file, Charsets.UTF_8);
+    String contents = Streams.loadAndClose(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 
     try {
       return createFrom(Path.fromOSString(file.getAbsolutePath()), contents);
@@ -69,7 +68,7 @@ public class SourceMap {
     }
 
     try {
-      String contents = CharStreams.toString(reader);
+      String contents = Streams.loadAndClose(reader);
 
       return createFrom(storage.getFullPath(), contents);
     } catch (JSONException e) {

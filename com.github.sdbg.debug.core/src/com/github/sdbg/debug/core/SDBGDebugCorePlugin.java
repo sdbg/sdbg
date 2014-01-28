@@ -27,10 +27,10 @@ import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
 
 import com.github.sdbg.core.DartCoreDebug;
-import com.github.sdbg.core.utilities.general.StringUtilities;
 import com.github.sdbg.debug.core.internal.util.BrowserManager;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.utilities.StringUtilities;
 
 /**
  * The plugin activator for the com.github.sdbg.debug.core plugin.

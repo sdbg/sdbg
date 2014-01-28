@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.expr;
 
-import com.github.sdbg.core.utilities.general.AdapterUtilities;
+import com.github.sdbg.utilities.AdapterUtilities;
 
 import org.eclipse.debug.core.model.IDebugElement;
 import org.eclipse.debug.core.model.IWatchExpressionDelegate;

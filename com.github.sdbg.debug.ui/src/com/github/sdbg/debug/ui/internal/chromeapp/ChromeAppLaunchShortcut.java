@@ -14,14 +14,8 @@
 
 package com.github.sdbg.debug.ui.internal.chromeapp;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
-import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
-import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -36,8 +30,13 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
+import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
+import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+import com.github.sdbg.utilities.Streams;
 
 /**
  * A launch shortcut to run Chrome packaged applications. This will launch a Chrome app pointed to
@@ -195,7 +194,7 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
 
     try {
       IFile file = (IFile) resource;
-      String text = CharStreams.toString(new InputStreamReader(file.getContents(), Charsets.UTF_8));
+      String text = Streams.loadAndClose(new InputStreamReader(file.getContents(), "UTF-8"));
       JSONObject obj = new JSONObject(text);
       return obj.optString("name", null);
     } catch (IOException ioe) {

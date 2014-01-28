@@ -14,18 +14,17 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.zip.GZIPInputStream;
 
 import junit.framework.TestCase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.zip.GZIPInputStream;
+import com.github.sdbg.utilities.Streams;
 
 /**
  * These tests exits to speed test the json parser we use.
@@ -35,7 +34,7 @@ public class JsonTests extends TestCase {
   public void test_parse1() throws IOException, JSONException {
     InputStream in = JsonTests.class.getResourceAsStream("test1.json.gz");
     GZIPInputStream gzipIn = new GZIPInputStream(in);
-    String string = CharStreams.toString(new InputStreamReader(gzipIn, Charsets.UTF_8));
+    String string = Streams.loadAndClose(new InputStreamReader(gzipIn, "UTF-8"));
 
     int iterations = 1;
 
@@ -48,7 +47,7 @@ public class JsonTests extends TestCase {
   public void xxx_test_parse100() throws IOException, JSONException {
     InputStream in = JsonTests.class.getResourceAsStream("test1.json.gz");
     GZIPInputStream gzipIn = new GZIPInputStream(in);
-    String string = CharStreams.toString(new InputStreamReader(gzipIn, Charsets.UTF_8));
+    String string = Streams.loadAndClose(new InputStreamReader(gzipIn, "UTF-8"));
 
     long start = System.nanoTime();
 

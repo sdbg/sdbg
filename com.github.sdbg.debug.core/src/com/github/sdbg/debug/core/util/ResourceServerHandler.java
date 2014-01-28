@@ -14,20 +14,6 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
-
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -55,6 +42,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.Streams;
 
 // GET /index.html HTTP/1.1
 // Host: www.example.com
@@ -238,7 +238,7 @@ class ResourceServerHandler implements Runnable {
   private static byte[] getJSAgentContent() {
     if (AGENT_CONTENT == null) {
       try {
-        AGENT_CONTENT = ByteStreams.toByteArray(ResourceServer.class.getResourceAsStream("agent.js"));
+        AGENT_CONTENT = Streams.loadAndClose(ResourceServer.class.getResourceAsStream("agent.js"));
       } catch (IOException e) {
         SDBGDebugCorePlugin.logError(e);
 
@@ -564,7 +564,11 @@ class ResourceServerHandler implements Runnable {
       }
     }
 
-    return new String(out.toByteArray(), Charsets.UTF_8);
+    try {
+      return new String(out.toByteArray(), "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /**

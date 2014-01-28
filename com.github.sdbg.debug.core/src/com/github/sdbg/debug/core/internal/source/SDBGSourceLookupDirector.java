@@ -17,8 +17,8 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant;
 
-import com.github.sdbg.core.utilities.general.AdapterUtilities;
 import com.github.sdbg.debug.core.util.SDBGNoSourceFoundElement;
+import com.github.sdbg.utilities.AdapterUtilities;
 
 /**
  * A collection of Dart specific source lookup participants.

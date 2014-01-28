@@ -13,11 +13,11 @@
  */
 package com.github.sdbg.core;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.runtime.Platform;
 
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.StringUtilities;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 /**
  * Debug/Tracing options for the {@link DartCore} plugin.
@@ -78,26 +78,6 @@ public class DartCoreDebug {
   public static final boolean DISABLE_BROWSER_DEBUGGER = isOptionTrue("user/disableBrowserDebugger");
 
   /**
-   * @return <code>true</code> if option has value "true".
-   */
-  private static boolean isOptionTrue(String optionSuffix) {
-    return isOptionValue(optionSuffix, "true");
-  }
-
-  /**
-   * @return <code>true</code> if option has "expected" value.
-   */
-  private static boolean isOptionValue(String optionSuffix, String expected) {
-    //&&&String option = DartCore.PLUGIN_ID + "/" + optionSuffix;
-    String option = SDBGDebugCorePlugin.PLUGIN_ID + "/" + optionSuffix;
-    String value = Platform.getDebugOption(option);
-    if (value == null) {
-      value = DartCore.getUserDefinedProperty(option);
-    }
-    return StringUtils.equalsIgnoreCase(value, expected);
-  }
-
-  /**
    * Report each of these parameters to the provided instrumentation builder
    */
   public static void record(InstrumentationBuilder instrumentation) {
@@ -133,6 +113,26 @@ public class DartCoreDebug {
 
     instrumentation.metric("DISABLE_BROWSER_DEBUGGER", DISABLE_BROWSER_DEBUGGER);
 
+  }
+
+  /**
+   * @return <code>true</code> if option has value "true".
+   */
+  private static boolean isOptionTrue(String optionSuffix) {
+    return isOptionValue(optionSuffix, "true");
+  }
+
+  /**
+   * @return <code>true</code> if option has "expected" value.
+   */
+  private static boolean isOptionValue(String optionSuffix, String expected) {
+    //&&&String option = DartCore.PLUGIN_ID + "/" + optionSuffix;
+    String option = SDBGDebugCorePlugin.PLUGIN_ID + "/" + optionSuffix;
+    String value = Platform.getDebugOption(option);
+    if (value == null) {
+      value = DartCore.getUserDefinedProperty(option);
+    }
+    return StringUtilities.equalsIgnoreCase(value, expected);
   }
 
 }

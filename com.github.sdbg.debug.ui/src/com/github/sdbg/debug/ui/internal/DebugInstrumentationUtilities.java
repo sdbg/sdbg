@@ -1,8 +1,8 @@
 package com.github.sdbg.debug.ui.internal;
 
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 import org.eclipse.debug.core.ILaunchConfiguration;
 

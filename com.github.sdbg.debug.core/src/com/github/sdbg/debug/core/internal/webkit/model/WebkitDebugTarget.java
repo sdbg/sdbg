@@ -42,7 +42,6 @@ import org.eclipse.debug.core.model.IMemoryBlock;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IThread;
 
-import com.github.sdbg.core.NotYetImplementedException;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
@@ -130,10 +129,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       return script.getScriptId();
     }
 
-    private WebkitDebugTarget getOuterType() {
-      return WebkitDebugTarget.this;
-    }
-
     @Override
     public int hashCode() {
       final int prime = 31;
@@ -151,6 +146,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     @Override
     public String toString() {
       return script.toString();
+    }
+
+    private WebkitDebugTarget getOuterType() {
+      return WebkitDebugTarget.this;
     }
   }
 
@@ -241,17 +240,17 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
 
   @Override
   public void breakpointAdded(IBreakpoint breakpoint) {
-    throw new NotYetImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
-    throw new NotYetImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
   public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
-    throw new NotYetImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -272,45 +271,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
   @Override
   public boolean canTerminate() {
     return connection.isConnected();
-  }
-
-  /**
-   * Check for the presence of Chrome extensions content scripts. It seems like many (all?) of these
-   * prevent debugging from working.
-   * 
-   * @param script the Debugger.scriptParsed event
-   * @see dartbug.com/10298
-   */
-  private void checkForDebuggerExtension(WebkitScript script) {
-    // {"method":"Debugger.scriptParsed","params":{"startLine":0,"libraryId":0,"endLine":154,
-    //   "startColumn":0,"scriptId":"26","url":"chrome-extension://ognampngfcbddbfemdapefohjiobgbdl/data_loader.js",
-    //   "isContentScript":true,"endColumn":1}}
-
-    if (script.isContentScript() && script.isChromeExtensionUrl()) {
-      SDBGDebugCorePlugin.logWarning("Chrome extension content script detected: " + script);
-
-      writeToStdout("WARNING: Chrome content script extension detected. Many of these extensions "
-          + "interfere with the debug\nexperience, including preventing breakpoints from working. "
-          + "These extensions include but are not limited\nto SpeedTracer and the WebGL inspector. "
-          + "You can disable them in Webkit via Tools > Extensions.");
-      writeToStdout("(content script extension: " + script.getUrl() + ")");
-    }
-  }
-
-  protected WebkitCallback<Boolean> createNavigateWebkitCallback(final String url) {
-    return new WebkitCallback<Boolean>() {
-      @Override
-      public void handleResult(WebkitResult<Boolean> result) {
-        // Once all other requests have been processed, then navigate to the given url.
-        try {
-          if (connection.isConnected()) {
-            connection.getPage().navigate(url);
-          }
-        } catch (IOException e) {
-          SDBGDebugCorePlugin.logError(e);
-        }
-      }
-    };
   }
 
   @Override
@@ -344,10 +304,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     }
   }
 
-  protected BreakpointManager getBreakpointManager() {
-    return breakpointManager;
-  }
-
   /**
    * @return the connection
    */
@@ -376,55 +332,9 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     return debugTargetName;
   }
 
-  private PauseOnExceptionsType getPauseType() {
-    final BreakOnExceptions boe = SDBGDebugCorePlugin.getPlugin().getBreakOnExceptions();
-    PauseOnExceptionsType pauseType = PauseOnExceptionsType.none;
-
-    if (boe == BreakOnExceptions.uncaught) {
-      pauseType = PauseOnExceptionsType.uncaught;
-    } else if (boe == BreakOnExceptions.all) {
-      pauseType = PauseOnExceptionsType.all;
-    }
-
-    return pauseType;
-  }
-
   @Override
   public IProcess getProcess() {
     return process;
-  }
-
-  protected IResourceResolver getResourceResolver() {
-    return resourceResolver;
-  }
-
-  //&&&!!!
-  protected IStorage getScriptStorage(WebkitScript script) {
-    if (script != null) {
-      String url = script.getUrl();
-
-      if (script.isSystemScript() || script.isDataUrl() || script.isChromeExtensionUrl()) {
-        return new WebkitScriptStorage(script, null);
-      }
-
-      if (url.startsWith("package:")) {
-        return new WebkitScriptStorage(script, null);
-      }
-
-      IResource resource = getResourceResolver().resolveUrl(url);
-
-      if (resource != null && resource instanceof IStorage) {
-        return (IStorage) resource;
-      }
-
-      return new WebkitScriptStorage(script, null);
-    }
-
-    return null;
-  }
-
-  protected SourceMapManager getSourceMapManager() {
-    return sourceMapManager;
   }
 
   @Override
@@ -433,26 +343,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       return new IThread[] {debugThread};
     } else {
       return new IThread[0];
-    }
-  }
-
-  protected WebkitConnection getWebkitConnection() {
-    return connection;
-  }
-
-  protected void handleInspectorDetached(String reason) {
-    // "replaced_with_devtools", "target_closed", ...
-
-    final String replacedWithDevTools = "replaced_with_devtools";
-
-    if (replacedWithDevTools.equalsIgnoreCase(reason)) {
-      // When the user opens the Webkit inspector our debug connection is closed.
-      // We warn the user when this happens, since it otherwise isn't apparent to them
-      // when the debugger connection is closing.
-//      DebugUIHelper.getHelper().showError(
-//          "Debugger Connection Closed",
-//          "The debugger connection has been closed by the remote host.");
-      DebugUIHelper.getHelper().showDevtoolsDisconnectError("Debugger Connection Closed", this);
     }
   }
 
@@ -641,31 +531,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     }
   }
 
-  protected void printExceptionToStdout(WebkitRemoteObject exception) {
-    try {
-      getConnection().getRuntime().callToString(
-          exception.getObjectId(),
-          new WebkitCallback<String>() {
-            @Override
-            public void handleResult(WebkitResult<String> result) {
-              if (!result.isError()) {
-                String text = result.getResult();
-
-                int index = text.indexOf('\n');
-
-                if (index != -1) {
-                  text = text.substring(0, index).trim();
-                }
-
-                process.getStreamMonitor().messageAdded("Breaking on exception: " + text + "\n");
-              }
-            }
-          });
-    } catch (IOException e) {
-      SDBGDebugCorePlugin.logError(e);
-    }
-  }
-
   /**
    * Attempt to re-connect to a debug target. If successful, it will return a new WebkitDebugTarget.
    * 
@@ -697,10 +562,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
   @Override
   public void resume() throws DebugException {
     debugThread.resume();
-  }
-
-  protected boolean shouldUseSourceMapping() {
-    return SDBGDebugCorePlugin.getPlugin().getUseSourceMaps();
   }
 
   @Override
@@ -742,5 +603,143 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
 
   public void writeToStdout(String message) {
     process.getStreamMonitor().messageAdded(message);
+  }
+
+  protected WebkitCallback<Boolean> createNavigateWebkitCallback(final String url) {
+    return new WebkitCallback<Boolean>() {
+      @Override
+      public void handleResult(WebkitResult<Boolean> result) {
+        // Once all other requests have been processed, then navigate to the given url.
+        try {
+          if (connection.isConnected()) {
+            connection.getPage().navigate(url);
+          }
+        } catch (IOException e) {
+          SDBGDebugCorePlugin.logError(e);
+        }
+      }
+    };
+  }
+
+  protected BreakpointManager getBreakpointManager() {
+    return breakpointManager;
+  }
+
+  protected IResourceResolver getResourceResolver() {
+    return resourceResolver;
+  }
+
+  //&&&!!!
+  protected IStorage getScriptStorage(WebkitScript script) {
+    if (script != null) {
+      String url = script.getUrl();
+
+      if (script.isSystemScript() || script.isDataUrl() || script.isChromeExtensionUrl()) {
+        return new WebkitScriptStorage(script, null);
+      }
+
+      if (url.startsWith("package:")) {
+        return new WebkitScriptStorage(script, null);
+      }
+
+      IResource resource = getResourceResolver().resolveUrl(url);
+
+      if (resource != null && resource instanceof IStorage) {
+        return (IStorage) resource;
+      }
+
+      return new WebkitScriptStorage(script, null);
+    }
+
+    return null;
+  }
+
+  protected SourceMapManager getSourceMapManager() {
+    return sourceMapManager;
+  }
+
+  protected WebkitConnection getWebkitConnection() {
+    return connection;
+  }
+
+  protected void handleInspectorDetached(String reason) {
+    // "replaced_with_devtools", "target_closed", ...
+
+    final String replacedWithDevTools = "replaced_with_devtools";
+
+    if (replacedWithDevTools.equalsIgnoreCase(reason)) {
+      // When the user opens the Webkit inspector our debug connection is closed.
+      // We warn the user when this happens, since it otherwise isn't apparent to them
+      // when the debugger connection is closing.
+//      DebugUIHelper.getHelper().showError(
+//          "Debugger Connection Closed",
+//          "The debugger connection has been closed by the remote host.");
+      DebugUIHelper.getHelper().showDevtoolsDisconnectError("Debugger Connection Closed", this);
+    }
+  }
+
+  protected void printExceptionToStdout(WebkitRemoteObject exception) {
+    try {
+      getConnection().getRuntime().callToString(
+          exception.getObjectId(),
+          new WebkitCallback<String>() {
+            @Override
+            public void handleResult(WebkitResult<String> result) {
+              if (!result.isError()) {
+                String text = result.getResult();
+
+                int index = text.indexOf('\n');
+
+                if (index != -1) {
+                  text = text.substring(0, index).trim();
+                }
+
+                process.getStreamMonitor().messageAdded("Breaking on exception: " + text + "\n");
+              }
+            }
+          });
+    } catch (IOException e) {
+      SDBGDebugCorePlugin.logError(e);
+    }
+  }
+
+  protected boolean shouldUseSourceMapping() {
+    return SDBGDebugCorePlugin.getPlugin().getUseSourceMaps();
+  }
+
+  /**
+   * Check for the presence of Chrome extensions content scripts. It seems like many (all?) of these
+   * prevent debugging from working.
+   * 
+   * @param script the Debugger.scriptParsed event
+   * @see dartbug.com/10298
+   */
+  private void checkForDebuggerExtension(WebkitScript script) {
+    // {"method":"Debugger.scriptParsed","params":{"startLine":0,"libraryId":0,"endLine":154,
+    //   "startColumn":0,"scriptId":"26","url":"chrome-extension://ognampngfcbddbfemdapefohjiobgbdl/data_loader.js",
+    //   "isContentScript":true,"endColumn":1}}
+
+    if (script.isContentScript() && script.isChromeExtensionUrl()) {
+      SDBGDebugCorePlugin.logWarning("Chrome extension content script detected: " + script);
+
+      writeToStdout("WARNING: Chrome content script extension detected. Many of these extensions "
+          + "interfere with the debug\nexperience, including preventing breakpoints from working. "
+          + "These extensions include but are not limited\nto SpeedTracer and the WebGL inspector. "
+          + "You can disable them in Webkit via Tools > Extensions.");
+      writeToStdout("(content script extension: " + script.getUrl() + ")");
+    }
+  }
+
+  private PauseOnExceptionsType getPauseType() {
+    final BreakOnExceptions boe = SDBGDebugCorePlugin.getPlugin().getBreakOnExceptions();
+    PauseOnExceptionsType pauseType = PauseOnExceptionsType.none;
+
+    if (boe == BreakOnExceptions.uncaught) {
+      pauseType = PauseOnExceptionsType.uncaught;
+    } else if (boe == BreakOnExceptions.all) {
+      pauseType = PauseOnExceptionsType.all;
+    }
+
+    return pauseType;
   }
 }

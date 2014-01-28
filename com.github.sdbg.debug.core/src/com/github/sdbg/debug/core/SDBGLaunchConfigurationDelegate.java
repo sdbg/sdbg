@@ -13,9 +13,9 @@
  */
 package com.github.sdbg.debug.core;
 
-import com.github.sdbg.core.util.instrumentation.Instrumentation;
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
 import com.github.sdbg.debug.core.internal.util.CoreLaunchUtils;
+import com.github.sdbg.utilities.instrumentation.Instrumentation;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;

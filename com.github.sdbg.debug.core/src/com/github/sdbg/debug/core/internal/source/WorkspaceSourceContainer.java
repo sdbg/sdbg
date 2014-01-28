@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.source;
 
-import com.github.sdbg.core.internal.util.ResourceUtil2;
+import com.github.sdbg.utilities.ResourceUtil2;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;

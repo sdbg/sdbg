@@ -14,8 +14,6 @@
 
 package com.github.sdbg.debug.core.internal.sourcemaps;
 
-import com.google.common.primitives.Ints;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -83,7 +81,12 @@ public class VlqDecoder {
       results.add(fromVLQSigned(result));
     }
 
-    return Ints.toArray(results);
+    int[] array = new int[results.size()];
+    for (i = 0; i < results.size(); i++) {
+      array[i] = results.get(i);
+    }
+
+    return array;
   }
 
   /**

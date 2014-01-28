@@ -8,8 +8,8 @@ import java.util.Properties;
 
 import org.eclipse.core.runtime.Platform;
 
-import com.github.sdbg.core.utilities.general.StringUtilities;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.StringUtilities;
 
 /***
  * &&& Just the minimum possible from the original DartCore. Most likely these functions should not

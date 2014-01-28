@@ -14,11 +14,11 @@
 
 package com.github.sdbg.debug.core.internal.webkit.model;
 
-import com.github.sdbg.core.utilities.resource.IFileUtilities;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeParticipant;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
+import com.github.sdbg.utilities.IFileUtilities;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;

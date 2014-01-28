@@ -37,8 +37,6 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IProcess;
 
 import com.github.sdbg.core.DartCore;
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
-import com.github.sdbg.core.utilities.net.NetUtils;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
@@ -49,6 +47,8 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
 import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
 import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.utilities.NetUtils;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 //[ {
 //  "title": "New Tab",
@@ -88,27 +88,6 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
         if (index != -1) {
           prefix = prefix.substring(0, index + 1);
         }
-      }
-    }
-
-    private String calcRelPath(IContainer container, IResource resource) {
-      if (container == null) {
-        return null;
-      }
-
-      String containerPath = container.getFullPath().toString();
-      String resourcePath = resource.getFullPath().toString();
-
-      if (resourcePath.startsWith(containerPath)) {
-        String relPath = resourcePath.substring(containerPath.length());
-
-        if (relPath.startsWith("/")) {
-          return relPath.substring(1);
-        } else {
-          return relPath;
-        }
-      } else {
-        return null;
       }
     }
 
@@ -159,6 +138,27 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     public IResource resolveUrl(String url) {
       if (url.startsWith(prefix)) {
         return container.findMember(url.substring(prefix.length()));
+      } else {
+        return null;
+      }
+    }
+
+    private String calcRelPath(IContainer container, IResource resource) {
+      if (container == null) {
+        return null;
+      }
+
+      String containerPath = container.getFullPath().toString();
+      String resourcePath = resource.getFullPath().toString();
+
+      if (resourcePath.startsWith(containerPath)) {
+        String relPath = resourcePath.substring(containerPath.length());
+
+        if (relPath.startsWith("/")) {
+          return relPath.substring(1);
+        } else {
+          return relPath;
+        }
       } else {
         return null;
       }

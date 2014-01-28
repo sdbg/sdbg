@@ -8,8 +8,8 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 
-import com.github.sdbg.core.util.instrumentation.Instrumentation;
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
+import com.github.sdbg.utilities.instrumentation.Instrumentation;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 /**
  * Instances of {@code UIInstrumentationBuilder} are a drop in replacement for

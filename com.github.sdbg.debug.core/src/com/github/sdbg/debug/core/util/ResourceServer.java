@@ -14,22 +14,8 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.core.utilities.net.NetUtils;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.google.common.io.CharStreams;
-
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceVisitor;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -43,6 +29,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.utilities.NetUtils;
+import com.github.sdbg.utilities.Streams;
 
 /**
  * A web server that serves up workspace resources.
@@ -144,9 +143,8 @@ public class ResourceServer implements IResourceResolver {
   }
 
   protected String getAvailableAppsContent() throws IOException {
-    InputStream in = ResourceServer.class.getResourceAsStream("template.html");
-
-    String template = CharStreams.toString(new InputStreamReader(in));
+    String template = Streams.loadAndClose(new InputStreamReader(
+        ResourceServer.class.getResourceAsStream("template.html")));
 
     List<IFile> files = getAllExecutableFiles();
 

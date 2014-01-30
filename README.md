@@ -37,4 +37,4 @@ or can at help you get caught up quickly.
 
 ## License
 
-This project is released under the [Dart License](https://code.google.com/p/dart/source/browse/trunk/LICENSE), which is a New BSD License.
+This project is released under the [Eclipse Public License v1.0](http://www.eclipse.org/legal/epl-v10.html), with copyright attribution to the Dart project authors.

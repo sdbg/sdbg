@@ -2,7 +2,7 @@
 
 This is an eclipse plugin designed to expose IDE debugging support for compiled javascript applications using sourcemaps.
 
-It has been adapted from the [Dart](http://dartlang.org) project, and modified for use in the [Gwt](http://gwtproject.org) project.
+It has been adapted from the [Dart](http://dartlang.org) project, and modified for use in the [GWT](http://gwtproject.org) project.
 
 The current implementation is a proof of concept;  
 you can set a breakpoint in java, launch an instance of chrome, and hit that breakpoint in Eclipse.
@@ -37,4 +37,4 @@ or can at help you get caught up quickly.
 
 ## License
 
-This project is released under the [Dart License](https://code.google.com/p/dart/source/browse/trunk/LICENSE), which is a New BSD License.
+This project is released under the [Eclipse Public License v1.0](http://www.eclipse.org/legal/epl-v10.html), with copyright attribution to the Dart project authors.

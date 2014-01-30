@@ -27,10 +27,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.github.sdbg.core.utilities.net.URIUtilities;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
+import com.github.sdbg.utilities.URIUtilities;
 
 /**
  * A WIP debugger domain object.

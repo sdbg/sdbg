@@ -14,21 +14,21 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.core.test.util.TestProject;
-import com.github.sdbg.core.utilities.net.URIUtilities;
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 import junit.framework.TestCase;
 
 import org.eclipse.core.resources.IFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.github.sdbg.core.test.util.TestProject;
+import com.github.sdbg.utilities.Streams;
+import com.github.sdbg.utilities.URIUtilities;
 
 public class ResourceServerTest extends TestCase {
   private ResourceServer server;
@@ -56,7 +56,7 @@ public class ResourceServerTest extends TestCase {
     assertEquals("text/plain", connection.getContentType());
     assertEquals(
         "foo",
-        CharStreams.toString(new InputStreamReader(connection.getInputStream(), "UTF-8")));
+        Streams.loadAndClose(new InputStreamReader(connection.getInputStream(), "UTF-8")));
 
     connection.disconnect();
     connection.getInputStream().close();
@@ -64,7 +64,7 @@ public class ResourceServerTest extends TestCase {
 
   public void test_onlyServeWorkspaceFiles() throws Exception {
     File file = File.createTempFile("foo", ".txt");
-    Files.write("foo", file, Charsets.UTF_8);
+    Streams.storeAndClose("foo", new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
     file.deleteOnExit();
 
     String filePath = file.getAbsolutePath().replaceAll("\\\\", "/");
@@ -83,7 +83,7 @@ public class ResourceServerTest extends TestCase {
 
   public void test_onlyServeWorkspaceFilesBadPath() throws Exception {
     File file = File.createTempFile("foo", ".txt");
-    Files.write("foo", file, Charsets.UTF_8);
+    Streams.storeAndClose("foo", new OutputStreamWriter(new FileOutputStream(file), "UTF-8"));
     file.deleteOnExit();
 
     String filePath = file.getAbsolutePath();

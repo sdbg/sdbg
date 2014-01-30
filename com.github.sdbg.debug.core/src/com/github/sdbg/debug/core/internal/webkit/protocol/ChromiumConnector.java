@@ -14,21 +14,19 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.internal.util.HttpUrlConnector;
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.github.sdbg.debug.core.internal.util.HttpUrlConnector;
+import com.github.sdbg.utilities.Streams;
 
 //GET /json 1.0
 //
@@ -142,13 +140,7 @@ public class ChromiumConnector {
 //  }
 
   private static String readText(HttpUrlConnector connection, InputStream in) throws IOException {
-    Reader reader = new InputStreamReader(in, Charsets.UTF_8);
-
-    String data = CharStreams.toString(reader);
-
-    reader.close();
-
-    return data;
+    return Streams.loadAndClose(new InputStreamReader(in, "UTF-8"));
   }
 
   private ChromiumConnector() {

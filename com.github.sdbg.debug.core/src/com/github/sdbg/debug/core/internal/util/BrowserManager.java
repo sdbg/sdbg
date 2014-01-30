@@ -34,7 +34,6 @@ import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IProcess;
 
 import com.github.sdbg.core.DartCore;
-import com.github.sdbg.core.utilities.net.NetUtils;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
@@ -47,6 +46,7 @@ import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.utilities.NetUtils;
 
 /**
  * A manager that launches and manages configured browsers.
@@ -150,49 +150,207 @@ public class BrowserManager {
     this.tabChooser = new DefaultBrowserTabChooser();
   }
 
-  private List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig,
-      IPath browserLocation, String url, boolean enableDebugging, int devToolsPortNumber) {
-    List<String> arguments = new ArrayList<String>();
+  public void dispose() {
+    if (!isProcessTerminated(browserProcess)) {
+      browserProcess.destroy();
+    }
+  }
 
-    arguments.add(browserLocation.toOSString());
+  /**
+   * Launch the browser and open the given file. If debug mode also connect to browser.
+   */
+  public void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, IFile file,
+      IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
+    launchBrowser(launch, launchConfig, file, null, monitor, enableDebugging);
+  }
 
-    // Enable remote debug over HTTP on the specified port.
-    arguments.add("--remote-debugging-port=" + devToolsPortNumber);
+  /**
+   * Launch the browser and open the given url. If debug mode also connect to browser.
+   */
+  public void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, String url,
+      IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
+    launchBrowser(launch, launchConfig, null, url, monitor, enableDebugging);
+  }
 
-    // In order to start up multiple Chrome processes, we need to specify a different user dir.
-    arguments.add("--user-data-dir=" + getCreateUserDataDirectoryPath("dartium"));
+  public IDebugTarget performRemoteConnection(IBrowserTabChooser tabChooser, String host, int port,
+      IProgressMonitor monitor) throws CoreException {
 
-    if (launchConfig.isEnableExperimentalWebkitFeatures()) {
-      arguments.add("--enable-experimental-webkit-features");
-      arguments.add("--enable-devtools-experiments");
+    ILaunch launch = null;
+
+    monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
+
+    try {
+      List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
+
+      ChromiumTabInfo tab = findTargetTab(tabChooser, tabs);
+
+      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
+        throw new DebugException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "Unable to connect to Chromium"));
+      }
+
+      monitor.worked(1);
+
+      launch = CoreLaunchUtils.createTemporaryLaunch(
+          SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID,
+          host + "[" + port + "]");
+
+      CoreLaunchUtils.addLaunch(launch);
+
+      WebkitConnection connection = new WebkitConnection(
+          tab.getHost(),
+          tab.getPort(),
+          tab.getWebSocketDebuggerFile());
+
+      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
+          "Remote",
+          connection,
+          launch,
+          null,
+          getResourceServer(),
+          true,
+          true);
+
+      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+      launch.addDebugTarget(debugTarget);
+      launch.addProcess(debugTarget.getProcess());
+
+      debugTarget.openConnection();
+
+      monitor.worked(1);
+
+      return debugTarget;
+    } catch (IOException e) {
+      if (launch != null) {
+        CoreLaunchUtils.removeLaunch(launch);
+      }
+
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          e.toString(),
+          e));
+    } finally {
+      monitor.done();
+    }
+  }
+
+  protected void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, IFile file,
+      String url, IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
+
+    // For now, we always start a debugging connection, even when we're not really debugging.
+    boolean enableBreakpoints = enableDebugging;
+
+    monitor.beginTask("Launching Dartium...", enableDebugging ? 7 : 2);
+
+//&&&    File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
+//    
+//    if (dartium == null) {
+//      throw new CoreException(new Status(
+//          IStatus.ERROR,
+//          DartDebugCorePlugin.PLUGIN_ID,
+//          "Could not find Dartium executable in "
+//              + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory()
+//              + ". Download and install Dartium from http://www.dartlang.org/tools/dartium/."));
+//    }
+
+    File dartium = new File(
+        "C:\\Users\\ivan\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe");
+
+    IPath browserLocation = new Path(dartium.getAbsolutePath());
+
+    String browserName = dartium.getName();
+
+    // avg: 0.434 sec (old: 0.597)
+    LogTimer timer = new LogTimer("Dartium debug startup");
+
+    // avg: 55ms
+    timer.startTask(browserName + " startup");
+
+    url = resolveLaunchUrl(file, url);
+
+    url = launchConfig.appendQueryParams(url);
+
+    IResourceResolver resolver = launchConfig.getShouldLaunchFile() ? getResourceServer()
+        : new LaunchConfigResourceResolver(launchConfig);
+
+    // for now, check if browser is open, and connection is alive
+    boolean restart = browserProcess == null || isProcessTerminated(browserProcess)
+        || WebkitDebugTarget.getActiveTarget() == null
+        || !WebkitDebugTarget.getActiveTarget().canTerminate();
+
+    // we only re-cycle the debug connection if we're launching the same launch configuration
+    if (!restart) {
+      if (!WebkitDebugTarget.getActiveTarget().getLaunch().getLaunchConfiguration().equals(
+          launch.getLaunchConfiguration())) {
+        restart = true;
+      }
     }
 
-    // Whether or not it's actually the first run.
-    arguments.add("--no-first-run");
+    CoreLaunchUtils.removeTerminatedLaunches();
 
-    // Disables the default browser check.
-    arguments.add("--no-default-browser-check");
+    if (!restart) {
+      DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
 
-    // Bypass the error dialog when the profile lock couldn't be attained.
-    arguments.add("--no-process-singleton-dialog");
-
-    // TODO(devoncarew): speculative work for redirecting the devtools connection
-    //arguments.add("--remote-debugging-frontend=\"http://localhost:3030/devtools/devtools.html\"");
-    //arguments.add("--remote-debugging-frontend=\"http://localhost:3030/front-end/inspector.html\"");
-    //arguments.add("--debug-devtools-frontend=\"http://localhost:3030/devtools/devtools.html\"");
-
-    for (String arg : launchConfig.getArgumentsAsArray()) {
-      arguments.add(arg);
-    }
-
-    if (enableDebugging) {
-      // Start up with a blank page.
-      arguments.add(INITIAL_PAGE);
+      try {
+        WebkitDebugTarget.getActiveTarget().navigateToUrl(
+            launch.getLaunchConfiguration(),
+            url,
+            enableBreakpoints,
+            resolver);
+      } catch (IOException e) {
+        SDBGDebugCorePlugin.logError(e);
+      }
     } else {
-      arguments.add(url);
+      terminateExistingBrowserProcess();
+
+      StringBuilder processDescription = new StringBuilder();
+
+      ListeningStream dartiumOutput = startNewBrowserProcess(
+          launchConfig,
+          url,
+          monitor,
+          enableDebugging,
+          browserLocation,
+          browserName,
+          processDescription);
+
+      sleep(100);
+
+      monitor.worked(1);
+
+      if (isProcessTerminated(browserProcess)) {
+        SDBGDebugCorePlugin.logError("Dartium output: " + dartiumOutput.toString());
+
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "Could not launch browser - process terminated on startup"
+                + getProcessStreamMessage(dartiumOutput.toString())));
+      }
+
+      connectToChromiumDebug(
+          browserName,
+          launch,
+          launchConfig,
+          url,
+          monitor,
+          browserProcess,
+          timer,
+          enableBreakpoints,
+          devToolsPortNumber,
+          dartiumOutput,
+          processDescription.toString(),
+          resolver);
     }
 
-    return arguments;
+    DebugUIHelper.getHelper().activateApplication(dartium, "Chromium");
+
+    timer.stopTask();
+    timer.stopTimer();
+    monitor.done();
   }
 
   /**
@@ -291,18 +449,57 @@ public class BrowserManager {
     monitor.worked(1);
   }
 
+  private List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig,
+      IPath browserLocation, String url, boolean enableDebugging, int devToolsPortNumber) {
+    List<String> arguments = new ArrayList<String>();
+
+    arguments.add(browserLocation.toOSString());
+
+    // Enable remote debug over HTTP on the specified port.
+    arguments.add("--remote-debugging-port=" + devToolsPortNumber);
+
+    // In order to start up multiple Chrome processes, we need to specify a different user dir.
+    arguments.add("--user-data-dir=" + getCreateUserDataDirectoryPath("dartium"));
+
+    if (launchConfig.isEnableExperimentalWebkitFeatures()) {
+      arguments.add("--enable-experimental-webkit-features");
+      arguments.add("--enable-devtools-experiments");
+    }
+
+    // Whether or not it's actually the first run.
+    arguments.add("--no-first-run");
+
+    // Disables the default browser check.
+    arguments.add("--no-default-browser-check");
+
+    // Bypass the error dialog when the profile lock couldn't be attained.
+    arguments.add("--no-process-singleton-dialog");
+
+    // TODO(devoncarew): speculative work for redirecting the devtools connection
+    //arguments.add("--remote-debugging-frontend=\"http://localhost:3030/devtools/devtools.html\"");
+    //arguments.add("--remote-debugging-frontend=\"http://localhost:3030/front-end/inspector.html\"");
+    //arguments.add("--debug-devtools-frontend=\"http://localhost:3030/devtools/devtools.html\"");
+
+    for (String arg : launchConfig.getArgumentsAsArray()) {
+      arguments.add(arg);
+    }
+
+    if (enableDebugging) {
+      // Start up with a blank page.
+      arguments.add(INITIAL_PAGE);
+    } else {
+      arguments.add(url);
+    }
+
+    return arguments;
+  }
+
   private void describe(List<String> arguments, StringBuilder builder) {
     for (int i = 0; i < arguments.size(); i++) {
       if (i > 0) {
         builder.append(" ");
       }
       builder.append(arguments.get(i));
-    }
-  }
-
-  public void dispose() {
-    if (!isProcessTerminated(browserProcess)) {
-      browserProcess.destroy();
     }
   }
 
@@ -408,191 +605,6 @@ public class BrowserManager {
       return true;
     } catch (IllegalThreadStateException ex) {
       return false;
-    }
-  }
-
-  /**
-   * Launch the browser and open the given file. If debug mode also connect to browser.
-   */
-  public void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, IFile file,
-      IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
-    launchBrowser(launch, launchConfig, file, null, monitor, enableDebugging);
-  }
-
-  protected void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, IFile file,
-      String url, IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
-
-    // For now, we always start a debugging connection, even when we're not really debugging.
-    boolean enableBreakpoints = enableDebugging;
-
-    monitor.beginTask("Launching Dartium...", enableDebugging ? 7 : 2);
-
-    File chromeExe = findChrome();
-
-    IPath browserLocation = new Path(chromeExe.getAbsolutePath());
-
-    String browserName = chromeExe.getName();
-
-    // avg: 0.434 sec (old: 0.597)
-    LogTimer timer = new LogTimer("Dartium debug startup");
-
-    // avg: 55ms
-    timer.startTask(browserName + " startup");
-
-    url = resolveLaunchUrl(file, url);
-
-    url = launchConfig.appendQueryParams(url);
-
-    IResourceResolver resolver = launchConfig.getShouldLaunchFile() ? getResourceServer()
-        : new LaunchConfigResourceResolver(launchConfig);
-
-    // for now, check if browser is open, and connection is alive
-    boolean restart = browserProcess == null || isProcessTerminated(browserProcess)
-        || WebkitDebugTarget.getActiveTarget() == null
-        || !WebkitDebugTarget.getActiveTarget().canTerminate();
-
-    // we only re-cycle the debug connection if we're launching the same launch configuration
-    if (!restart) {
-      if (!WebkitDebugTarget.getActiveTarget().getLaunch().getLaunchConfiguration().equals(
-          launch.getLaunchConfiguration())) {
-        restart = true;
-      }
-    }
-
-    CoreLaunchUtils.removeTerminatedLaunches();
-
-    if (!restart) {
-      DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
-
-      try {
-        WebkitDebugTarget.getActiveTarget().navigateToUrl(
-            launch.getLaunchConfiguration(),
-            url,
-            enableBreakpoints,
-            resolver);
-      } catch (IOException e) {
-        SDBGDebugCorePlugin.logError(e);
-      }
-    } else {
-      terminateExistingBrowserProcess();
-
-      StringBuilder processDescription = new StringBuilder();
-
-      ListeningStream dartiumOutput = startNewBrowserProcess(
-          launchConfig,
-          url,
-          monitor,
-          enableDebugging,
-          browserLocation,
-          browserName,
-          processDescription);
-
-      sleep(100);
-
-      monitor.worked(1);
-
-      if (isProcessTerminated(browserProcess)) {
-        SDBGDebugCorePlugin.logError("Dartium output: " + dartiumOutput.toString());
-
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Could not launch browser - process terminated on startup"
-                + getProcessStreamMessage(dartiumOutput.toString())));
-      }
-
-      connectToChromiumDebug(
-          browserName,
-          launch,
-          launchConfig,
-          url,
-          monitor,
-          browserProcess,
-          timer,
-          enableBreakpoints,
-          devToolsPortNumber,
-          dartiumOutput,
-          processDescription.toString(),
-          resolver);
-    }
-
-    DebugUIHelper.getHelper().activateApplication(chromeExe, "Chromium");
-
-    timer.stopTask();
-    timer.stopTimer();
-    monitor.done();
-  }
-
-  /**
-   * Launch the browser and open the given url. If debug mode also connect to browser.
-   */
-  public void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, String url,
-      IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
-    launchBrowser(launch, launchConfig, null, url, monitor, enableDebugging);
-  }
-
-  public IDebugTarget performRemoteConnection(IBrowserTabChooser tabChooser, String host, int port,
-      IProgressMonitor monitor) throws CoreException {
-
-    ILaunch launch = null;
-
-    monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
-
-    try {
-      List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
-
-      ChromiumTabInfo tab = findTargetTab(tabChooser, tabs);
-
-      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
-        throw new DebugException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chromium"));
-      }
-
-      monitor.worked(1);
-
-      launch = CoreLaunchUtils.createTemporaryLaunch(
-          SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID,
-          host + "[" + port + "]");
-
-      CoreLaunchUtils.addLaunch(launch);
-
-      WebkitConnection connection = new WebkitConnection(
-          tab.getHost(),
-          tab.getPort(),
-          tab.getWebSocketDebuggerFile());
-
-      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
-          "Remote",
-          connection,
-          launch,
-          null,
-          getResourceServer(),
-          true,
-          true);
-
-      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
-      launch.addDebugTarget(debugTarget);
-      launch.addProcess(debugTarget.getProcess());
-
-      debugTarget.openConnection();
-
-      monitor.worked(1);
-
-      return debugTarget;
-    } catch (IOException e) {
-      if (launch != null) {
-        CoreLaunchUtils.removeLaunch(launch);
-      }
-
-      throw new CoreException(new Status(
-          IStatus.ERROR,
-          SDBGDebugCorePlugin.PLUGIN_ID,
-          e.toString(),
-          e));
-    } finally {
-      monitor.done();
     }
   }
 

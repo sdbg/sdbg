@@ -27,7 +27,6 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IDebugTarget;
 
 import com.github.sdbg.core.DartCoreDebug;
-import com.github.sdbg.core.util.instrumentation.InstrumentationBuilder;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
@@ -35,6 +34,7 @@ import com.github.sdbg.debug.core.internal.util.BrowserManager;
 import com.github.sdbg.debug.core.model.IRemoteConnectionDelegate;
 import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 /**
  * The launch configuration delegate for the com.github.sdbg.debug.core.chromeLaunchConfig launch

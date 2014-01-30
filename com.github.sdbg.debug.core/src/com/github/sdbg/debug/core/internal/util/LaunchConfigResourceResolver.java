@@ -14,9 +14,9 @@
 
 package com.github.sdbg.debug.core.internal.util;
 
-import com.github.sdbg.core.utilities.net.URIUtilities;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.utilities.URIUtilities;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;

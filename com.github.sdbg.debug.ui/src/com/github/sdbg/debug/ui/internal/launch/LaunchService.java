@@ -13,6 +13,7 @@
  */
 package com.github.sdbg.debug.ui.internal.launch;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -25,7 +26,6 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.StructuredSelection;
 
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
-import com.google.common.collect.Lists;
 
 /**
  * Launching service.
@@ -42,7 +42,7 @@ public class LaunchService {
     void launchTerminated(ILaunch launch);
   }
 
-  private final List<LaunchListener> listeners = Lists.newArrayList();
+  private final List<LaunchListener> listeners = new ArrayList<LaunchListener>();
 
   private final ILaunchesListener2 debugLaunchListener = new ILaunchesListener2() {
 
@@ -84,13 +84,17 @@ public class LaunchService {
     listeners.add(listener);
   }
 
+  public void launchInChrome(IResource resource) {
+    launch(resource, LaunchUtils.getChromeLaunchShortcut());
+  }
+
+  public void removeListener(LaunchListener listener) {
+    listeners.remove(listener);
+  }
+
   private void launch(IResource resource, ILaunchShortcut launchShortcut) {
     ISelection launchedSelection = new StructuredSelection(resource);
     launchShortcut.launch(launchedSelection, ILaunchManager.DEBUG_MODE);
-  }
-
-  public void launchInChrome(IResource resource) {
-    launch(resource, LaunchUtils.getChromeLaunchShortcut());
   }
 
   private void notifyLaunchStarted(ILaunch[] launches) {
@@ -107,10 +111,6 @@ public class LaunchService {
         listener.launchStarted(launch);
       }
     }
-  }
-
-  public void removeListener(LaunchListener listener) {
-    listeners.remove(listener);
   }
 
 }

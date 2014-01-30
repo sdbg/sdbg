@@ -13,12 +13,10 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
@@ -36,9 +34,10 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 
 /**
  * An abstract parent of Dart launch shortcuts.
@@ -307,10 +306,7 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
 
     IResource appResource = launchWrapper.getApplicationResource();
 
-    if (ObjectUtils.equals(appResource, resource)) {
-      return true;
-    }
-    return false;
+    return appResource == resource || appResource != null && appResource.equals(resource);
   }
 
   private IResource getPrimaryLaunchTarget(IResource resource) {

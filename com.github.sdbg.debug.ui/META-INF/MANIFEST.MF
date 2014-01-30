@@ -6,18 +6,17 @@ Bundle-SymbolicName: com.github.sdbg.debug.ui;singleton:=true
 Bundle-Version: 0.0.0.qualifier
 Bundle-Activator: com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin
 Require-Bundle: org.eclipse.core.runtime,
- org.eclipse.ui,
- org.eclipse.debug.ui,
- org.eclipse.ui.ide,
- com.github.sdbg.debug.core,
- org.eclipse.ui.editors,
- org.eclipse.jface.text,
  org.eclipse.core.expressions,
  org.eclipse.core.filesystem,
- org.eclipse.ui.console,
- org.eclipse.ltk.core.refactoring,
+ org.eclipse.jface.text,
+ org.eclipse.ui,
  org.eclipse.ui.forms,
- org.eclipse.jdt.ui
+ org.eclipse.ui.editors,
+ org.eclipse.ui.ide,
+ org.eclipse.ui.console,
+ org.eclipse.debug.ui,
+ com.github.sdbg.debug.core,
+ org.eclipse.ltk.core.refactoring
 Export-Package: com.github.sdbg.debug.ui.internal,
  com.github.sdbg.debug.ui.internal.chrome,
  com.github.sdbg.debug.ui.internal.launch,

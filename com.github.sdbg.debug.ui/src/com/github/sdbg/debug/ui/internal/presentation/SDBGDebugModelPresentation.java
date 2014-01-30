@@ -37,7 +37,6 @@ import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.debug.ui.IDebugModelPresentation;
 import org.eclipse.debug.ui.IInstructionPointerPresentation;
 import org.eclipse.debug.ui.IValueDetailListener;
-import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.viewers.DecorationOverlayIcon;
 import org.eclipse.jface.viewers.IDecoration;
@@ -50,14 +49,14 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 
 import com.github.sdbg.debug.core.model.IExceptionStackFrame;
+import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
-import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.util.SDBGNoSourceFoundElement;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.DebuggerEditorInput;
-import com.google.common.io.CharStreams;
+import com.github.sdbg.utilities.Streams;
 
 /**
  * A debug model presentation is responsible for providing labels, images, and editors associated
@@ -112,47 +111,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
   }
 
-  private Image getBreakpointImage(IBreakpoint bp) {
-    try {
-      if (bp.isEnabled()) {
-        return SDBGDebugUIPlugin.getImage("obj16/brkp_obj.png");
-      } else {
-        return SDBGDebugUIPlugin.getImage("obj16/brkpd_obj.png");
-      }
-    } catch (CoreException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * Return a textual description of the breakpoint. It looks something like:
-   * <p>
-   * <code>project-name, path/to/file.dart, line 123, 'text.of.line();'</code>
-   * 
-   * @param bp
-   * @return
-   */
-  protected String getBreakpointText(IBreakpoint bp) {
-    try {
-      String text = bp.getMarker().getResource().getProject().getName() + ", "
-          + bp.getMarker().getResource().getProjectRelativePath().toPortableString();
-
-      if (bp instanceof ILineBreakpoint) {
-        text += ", line "
-            + NumberFormat.getNumberInstance().format(((ILineBreakpoint) bp).getLineNumber());
-
-        String lineInfo = getLineExtract((ILineBreakpoint) bp);
-        if (lineInfo != null) {
-          text = text + ", '" + lineInfo + "'";
-        }
-      }
-
-      return text;
-    } catch (CoreException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   @Override
   public String getEditorId(IEditorInput input, Object element) {
     IFile file = null;
@@ -184,8 +142,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
       } catch (PartInitException e) {
 
       }
-
-      return JavaUI.ID_CU_EDITOR;
     }
 
     if (input instanceof SDBGSourceNotFoundEditorInput) {
@@ -354,30 +310,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     return null;
   }
 
-  private String getLineExtract(ILineBreakpoint bp) {
-    try {
-      Reader r = new InputStreamReader(
-          ((IFile) bp.getMarker().getResource()).getContents(),
-          ((IFile) bp.getMarker().getResource()).getCharset());
-
-      List<String> lines = CharStreams.readLines(r);
-
-      int line = bp.getLineNumber() - 1;
-
-      if (line > 0 && line < lines.size()) {
-        String lineStr = lines.get(line).trim();
-
-        return lineStr.length() == 0 ? null : lineStr;
-      }
-    } catch (IOException ioe) {
-      return null;
-    } catch (CoreException ce) {
-      return null;
-    }
-
-    return null;
-  }
-
   @Override
   public String getText(Object element) {
     if (element instanceof IBreakpoint) {
@@ -387,43 +319,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     }
 
     return null;
-  }
-
-  /**
-   * Build the text for an {@link ISDBGValue}. This can be a long running call since we wait
-   * for the toString call to get back with the value.
-   */
-  protected String getValueText(ISDBGValue value) throws DebugException {
-    boolean isPrimitive = value.isPrimitive();
-    boolean isArray = value.isListValue();
-
-    final String valueString[] = new String[1];
-
-    if (!isPrimitive) {
-      final CountDownLatch latch = new CountDownLatch(1);
-
-      computeDetail(value, new IValueDetailListener() {
-        @Override
-        public void detailComputed(IValue value, String result) {
-          valueString[0] = result;
-          latch.countDown();
-        }
-      });
-
-      try {
-        latch.await(3, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        return null;
-      }
-
-      if (isArray) {
-        valueString[0] = "[" + valueString[0] + "]";
-      }
-
-      return valueString[0];
-    } else {
-      return value.getDisplayString();
-    }
   }
 
   public String getVariableText(IVariable var) {
@@ -460,5 +355,107 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
   @Override
   public void setAttribute(String attribute, Object value) {
 
+  }
+
+  /**
+   * Return a textual description of the breakpoint. It looks something like:
+   * <p>
+   * <code>project-name, path/to/file.dart, line 123, 'text.of.line();'</code>
+   * 
+   * @param bp
+   * @return
+   */
+  protected String getBreakpointText(IBreakpoint bp) {
+    try {
+      String text = bp.getMarker().getResource().getProject().getName() + ", "
+          + bp.getMarker().getResource().getProjectRelativePath().toPortableString();
+
+      if (bp instanceof ILineBreakpoint) {
+        text += ", line "
+            + NumberFormat.getNumberInstance().format(((ILineBreakpoint) bp).getLineNumber());
+
+        String lineInfo = getLineExtract((ILineBreakpoint) bp);
+        if (lineInfo != null) {
+          text = text + ", '" + lineInfo + "'";
+        }
+      }
+
+      return text;
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Build the text for an {@link ISDBGValue}. This can be a long running call since we wait for the
+   * toString call to get back with the value.
+   */
+  protected String getValueText(ISDBGValue value) throws DebugException {
+    boolean isPrimitive = value.isPrimitive();
+    boolean isArray = value.isListValue();
+
+    final String valueString[] = new String[1];
+
+    if (!isPrimitive) {
+      final CountDownLatch latch = new CountDownLatch(1);
+
+      computeDetail(value, new IValueDetailListener() {
+        @Override
+        public void detailComputed(IValue value, String result) {
+          valueString[0] = result;
+          latch.countDown();
+        }
+      });
+
+      try {
+        latch.await(3, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        return null;
+      }
+
+      if (isArray) {
+        valueString[0] = "[" + valueString[0] + "]";
+      }
+
+      return valueString[0];
+    } else {
+      return value.getDisplayString();
+    }
+  }
+
+  private Image getBreakpointImage(IBreakpoint bp) {
+    try {
+      if (bp.isEnabled()) {
+        return SDBGDebugUIPlugin.getImage("obj16/brkp_obj.png");
+      } else {
+        return SDBGDebugUIPlugin.getImage("obj16/brkpd_obj.png");
+      }
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private String getLineExtract(ILineBreakpoint bp) {
+    try {
+      Reader r = new InputStreamReader(
+          ((IFile) bp.getMarker().getResource()).getContents(),
+          ((IFile) bp.getMarker().getResource()).getCharset());
+
+      List<String> lines = Streams.loadLinesAndClose(r);
+
+      int line = bp.getLineNumber() - 1;
+
+      if (line > 0 && line < lines.size()) {
+        String lineStr = lines.get(line).trim();
+
+        return lineStr.length() == 0 ? null : lineStr;
+      }
+    } catch (IOException ioe) {
+      return null;
+    } catch (CoreException ce) {
+      return null;
+    }
+
+    return null;
   }
 }

@@ -17,9 +17,7 @@ package com.github.sdbg.core.test.util;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -35,7 +33,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 
-import com.google.common.io.CharStreams;
+import com.github.sdbg.utilities.Streams;
 
 /**
  * Helper for creating, manipulating and disposing temporary {@link DartProject}.
@@ -109,7 +107,7 @@ public class TestProject {
   }
 
   public IFolder createFolder(String path) throws Exception {
-    String[] parts = StringUtils.split(path, "/");
+    String[] parts = Path.fromPortableString(path).segments();
     IContainer container = project;
     for (String part : parts) {
       IFolder folder = container.getFolder(new Path(part));
@@ -150,12 +148,7 @@ public class TestProject {
    * @return the {@link String} content of the {@link IFile}.
    */
   public String getFileString(IFile file) throws Exception {
-    Reader reader = new InputStreamReader(file.getContents(), file.getCharset());
-    try {
-      return CharStreams.toString(reader);
-    } finally {
-      reader.close();
-    }
+    return Streams.loadAndClose(new InputStreamReader(file.getContents(), file.getCharset()));
   }
 
   /**

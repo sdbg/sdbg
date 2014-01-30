@@ -5,15 +5,6 @@
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
-            delegate="com.github.sdbg.debug.core.configs.DartServerLaunchConfigurationDelegate"
-            id="com.github.sdbg.debug.core.serverLaunchConfig"
-            modes="run,debug"
-            name="%launchconfig.server.name"
-            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
-            sourcePathComputerId="com.github.sdbg.debug.core.serverSourcePathComputer">
-      </launchConfigurationType>
-
-      <launchConfigurationType
             delegate="com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate"
             id="com.github.sdbg.debug.core.chromeLaunchConfig"
             modes="run,debug"
@@ -70,10 +61,6 @@
    </extension>
 
    <extension point="org.eclipse.debug.core.sourcePathComputers">
-      <sourcePathComputer
-         class="com.github.sdbg.debug.core.server.ServerSourcePathComputerDelegate"
-         id="com.github.sdbg.debug.core.serverSourcePathComputer">
-       </sourcePathComputer>
       <sourcePathComputer
          class="com.github.sdbg.debug.core.internal.webkit.model.WebkitSourcePathComputerDelegate"
          id="com.github.sdbg.debug.core.chromeSourcePathComputer">

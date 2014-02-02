@@ -13,6 +13,22 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
+import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
+import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScope;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
+import com.github.sdbg.debug.core.model.IExceptionStackFrame;
+import com.github.sdbg.debug.core.model.ISDBGStackFrame;
+import com.github.sdbg.debug.core.model.ISDBGValue.IValueCallback;
+import com.github.sdbg.debug.core.model.IVariableResolver;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,22 +46,6 @@ import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.core.model.IWatchExpressionListener;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
-import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
-import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScope;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
-import com.github.sdbg.debug.core.model.IExceptionStackFrame;
-import com.github.sdbg.debug.core.model.ISDBGStackFrame;
-import com.github.sdbg.debug.core.model.ISDBGValue.IValueCallback;
-import com.github.sdbg.debug.core.model.IVariableResolver;
 
 /**
  * The IStackFrame implementation for the Webkit debug elements. This stack frame element represents
@@ -149,36 +149,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     }
   }
 
-  /**
-   * Fill in the IVariables from the Webkit variables.
-   * 
-   * @param exception can be null
-   */
-  private void fillInWebkitVariables(WebkitRemoteObject exception) {
-    isExceptionStackFrame = (exception != null);
-
-    List<WebkitRemoteObject> remoteObjects = new ArrayList<WebkitRemoteObject>();
-
-    WebkitRemoteObject thisObject = null;
-
-    if (!webkitFrame.isStaticMethod()) {
-      thisObject = webkitFrame.getThisObject();
-    }
-
-    for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (!scope.isGlobalLike()) {
-        remoteObjects.add(scope.getObject());
-      }
-    }
-
-    variableCollector = VariableCollector.createCollector(
-        getTarget(),
-        thisObject,
-        remoteObjects,
-        null,
-        exception);
-  }
-
   @Override
   public IVariable findVariable(String varName) throws DebugException {
     // search in locals
@@ -222,14 +192,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     return null;
   }
 
-  protected IStorage getActualLocationStorage() {
-    String scriptId = webkitFrame.getLocation().getScriptId();
-
-    WebkitScript script = getConnection().getDebugger().getScript(scriptId);
-
-    return getTarget().getScriptStorage(script);
-  }
-
   @SuppressWarnings("rawtypes")
   @Override
   public Object getAdapter(Class adapterClass) {
@@ -248,21 +210,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   @Override
   public int getCharStart() throws DebugException {
     return -1;
-  }
-
-  protected IValue getClassValue() throws DebugException {
-    if (classValue != null) {
-      return classValue;
-    }
-
-    for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (scope.isClass()) {
-        classValue = new WebkitDebugValue(getTarget(), null, scope.getObject());
-        break;
-      }
-    }
-
-    return classValue;
   }
 
   @Override
@@ -291,37 +238,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     return "Exception: " + result[0];
   }
 
-  private String getFileOrLibraryName() {
-    String path = getSourceLocationPath();
-
-    if (path != null) {
-      int index = path.lastIndexOf('/');
-
-      if (index != -1) {
-        return path.substring(index + 1);
-      } else {
-        return path;
-      }
-    }
-
-    return null;
-  }
-
-  protected IValue getGlobalsScope() throws DebugException {
-    if (globalScopeValue != null) {
-      return globalScopeValue;
-    }
-
-    for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (scope.isGlobal()) {
-        globalScopeValue = new WebkitDebugValue(getTarget(), null, scope.getObject());
-        break;
-      }
-    }
-
-    return globalScopeValue;
-  }
-
   @Override
   public int getLineNumber() throws DebugException {
     try {
@@ -344,38 +260,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     String file = getFileOrLibraryName();
 
     return getShortName() + (file == null ? "" : " - " + file);
-  }
-
-  private SourceMapManager.SourceLocation getMappedLocation() {
-    SourceMapManager sourceMapManager = getTarget().getSourceMapManager();
-
-    IStorage storage = getActualLocationStorage();
-
-    if (sourceMapManager.isMapSource(storage)) {
-      WebkitLocation location = webkitFrame.getLocation();
-
-      return sourceMapManager.getMappingFor(
-          storage,
-          location.getLineNumber(),
-          location.getColumnNumber());
-    } else {
-      return null;
-    }
-  }
-
-  protected String getMappedLocationPath() {
-    SourceMapManager.SourceLocation targetLocation = getMappedLocation();
-
-    if (SDBGDebugCorePlugin.LOGGING) {
-      WebkitLocation sourceLocation = webkitFrame.getLocation();
-      WebkitScript script = getConnection().getDebugger().getScript(sourceLocation.getScriptId());
-      String scriptPath = script == null ? "null" : script.getUrl();
-
-      System.out.println("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","
-          + sourceLocation.getColumnNumber() + "] ==> mapped to " + targetLocation);
-    }
-
-    return targetLocation.getStorage().getFullPath().toPortableString();
   }
 
   @Override
@@ -426,18 +310,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     }
   }
 
-  protected IVariable getThisVariable() throws DebugException {
-    for (IVariable var : getVariables()) {
-      if (var instanceof WebkitDebugVariable) {
-        if (((WebkitDebugVariable) var).isThisObject()) {
-          return var;
-        }
-      }
-    }
-
-    return null;
-  }
-
   @Override
   public IThread getThread() {
     return thread;
@@ -454,10 +326,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
           e.toString(),
           e));
     }
-  }
-
-  protected WebkitCallFrame getWebkitFrame() {
-    return webkitFrame;
   }
 
   @Override
@@ -537,6 +405,142 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   @Override
   public String toString() {
     return getShortName();
+  }
+
+  protected IStorage getActualLocationStorage() {
+    String scriptId = webkitFrame.getLocation().getScriptId();
+
+    WebkitScript script = getConnection().getDebugger().getScript(scriptId);
+
+    return getTarget().getScriptStorage(script);
+  }
+
+  protected IValue getClassValue() throws DebugException {
+    if (classValue != null) {
+      return classValue;
+    }
+
+    for (WebkitScope scope : webkitFrame.getScopeChain()) {
+      if (scope.isClass()) {
+        classValue = new WebkitDebugValue(getTarget(), null, scope.getObject());
+        break;
+      }
+    }
+
+    return classValue;
+  }
+
+  protected IValue getGlobalsScope() throws DebugException {
+    if (globalScopeValue != null) {
+      return globalScopeValue;
+    }
+
+    for (WebkitScope scope : webkitFrame.getScopeChain()) {
+      if (scope.isGlobal()) {
+        globalScopeValue = new WebkitDebugValue(getTarget(), null, scope.getObject());
+        break;
+      }
+    }
+
+    return globalScopeValue;
+  }
+
+  protected String getMappedLocationPath() {
+    SourceMapManager.SourceLocation targetLocation = getMappedLocation();
+
+    if (SDBGDebugCorePlugin.LOGGING) {
+      WebkitLocation sourceLocation = webkitFrame.getLocation();
+      WebkitScript script = getConnection().getDebugger().getScript(sourceLocation.getScriptId());
+      String scriptPath = script == null ? "null" : script.getUrl();
+
+      System.out.println("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","
+          + sourceLocation.getColumnNumber() + "] ==> mapped to " + targetLocation);
+    }
+
+    if (targetLocation.getStorage() != null) {
+      return targetLocation.getStorage().getFullPath().toPortableString();
+    } else {
+      return targetLocation.getPath();
+    }
+  }
+
+  protected IVariable getThisVariable() throws DebugException {
+    for (IVariable var : getVariables()) {
+      if (var instanceof WebkitDebugVariable) {
+        if (((WebkitDebugVariable) var).isThisObject()) {
+          return var;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  protected WebkitCallFrame getWebkitFrame() {
+    return webkitFrame;
+  }
+
+  /**
+   * Fill in the IVariables from the Webkit variables.
+   * 
+   * @param exception can be null
+   */
+  private void fillInWebkitVariables(WebkitRemoteObject exception) {
+    isExceptionStackFrame = (exception != null);
+
+    List<WebkitRemoteObject> remoteObjects = new ArrayList<WebkitRemoteObject>();
+
+    WebkitRemoteObject thisObject = null;
+
+    if (!webkitFrame.isStaticMethod()) {
+      thisObject = webkitFrame.getThisObject();
+    }
+
+    for (WebkitScope scope : webkitFrame.getScopeChain()) {
+      if (!scope.isGlobalLike()) {
+        remoteObjects.add(scope.getObject());
+      }
+    }
+
+    variableCollector = VariableCollector.createCollector(
+        getTarget(),
+        thisObject,
+        remoteObjects,
+        null,
+        exception);
+  }
+
+  private String getFileOrLibraryName() {
+    String path = getSourceLocationPath();
+
+    if (path != null) {
+      int index = path.lastIndexOf('/');
+
+      if (index != -1) {
+        return path.substring(index + 1);
+      } else {
+        return path;
+      }
+    }
+
+    return null;
+  }
+
+  private SourceMapManager.SourceLocation getMappedLocation() {
+    SourceMapManager sourceMapManager = getTarget().getSourceMapManager();
+
+    IStorage storage = getActualLocationStorage();
+
+    if (sourceMapManager.isMapSource(storage)) {
+      WebkitLocation location = webkitFrame.getLocation();
+
+      return sourceMapManager.getMappingFor(
+          storage,
+          location.getLineNumber(),
+          location.getColumnNumber());
+    } else {
+      return null;
+    }
   }
 
 }

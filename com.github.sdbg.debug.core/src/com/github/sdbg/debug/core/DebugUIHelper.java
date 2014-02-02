@@ -14,14 +14,14 @@
 
 package com.github.sdbg.debug.core;
 
+import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
+
 import java.io.File;
 
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
-
-import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 /**
  * A helper class to allow core classes to communicate with the UI.

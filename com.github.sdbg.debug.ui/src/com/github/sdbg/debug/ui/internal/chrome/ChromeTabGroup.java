@@ -14,16 +14,19 @@
 package com.github.sdbg.debug.ui.internal.chrome;
 
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTabGroup;
+import org.eclipse.debug.ui.CommonTab;
+import org.eclipse.debug.ui.EnvironmentTab;
 import org.eclipse.debug.ui.ILaunchConfigurationDialog;
 import org.eclipse.debug.ui.ILaunchConfigurationTab;
+import org.eclipse.debug.ui.sourcelookup.SourceLookupTab;
 
 /**
- * The tab group for the Dart Chrome launch config. See {@link ChromeMainTab}.
+ * The tab group for the Chrome launch config. See {@link ChromeMainTab}.
  */
 public class ChromeTabGroup extends AbstractLaunchConfigurationTabGroup {
 
   /**
-   * Create a new DartChromeTabGroup.
+   * Create a new ChromeTabGroup.
    */
   public ChromeTabGroup() {
 
@@ -31,8 +34,7 @@ public class ChromeTabGroup extends AbstractLaunchConfigurationTabGroup {
 
   @Override
   public void createTabs(ILaunchConfigurationDialog dialog, String mode) {
-    setTabs(new ILaunchConfigurationTab[] {new ChromeMainTab()});
-    //new DartChromeMainTab(), new SourceLookupTab(), new CommonTab()});
+    setTabs(new ILaunchConfigurationTab[] {
+        new ChromeMainTab(), new SourceLookupTab(), new EnvironmentTab(), new CommonTab()});
   }
-
 }

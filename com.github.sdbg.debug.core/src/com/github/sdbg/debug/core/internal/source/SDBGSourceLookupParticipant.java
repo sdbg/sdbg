@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupParticipant;
 
 /**
- * Converts from a Dart debug object to the path of the source Dart file.
+ * Converts from an SDBG debug object to the path of the source file.
  * <p>
  * The returned source path will either be workspace relative or be relative to a bundled library
  * identifier.

@@ -13,6 +13,17 @@
  */
 package com.github.sdbg.debug.ui.internal.presentation;
 
+import com.github.sdbg.debug.core.model.IExceptionStackFrame;
+import com.github.sdbg.debug.core.model.ISDBGStackFrame;
+import com.github.sdbg.debug.core.model.ISDBGValue;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
+import com.github.sdbg.debug.core.util.SDBGNoSourceFoundElement;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.DebuggerEditorInput;
+import com.github.sdbg.debug.ui.internal.util.StorageEditorInput;
+import com.github.sdbg.utilities.Streams;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -26,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -34,6 +46,7 @@ import org.eclipse.debug.core.model.IStackFrame;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
+import org.eclipse.debug.core.sourcelookup.containers.ZipEntryStorage;
 import org.eclipse.debug.ui.IDebugModelPresentation;
 import org.eclipse.debug.ui.IInstructionPointerPresentation;
 import org.eclipse.debug.ui.IValueDetailListener;
@@ -47,16 +60,6 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
-
-import com.github.sdbg.debug.core.model.IExceptionStackFrame;
-import com.github.sdbg.debug.core.model.ISDBGStackFrame;
-import com.github.sdbg.debug.core.model.ISDBGValue;
-import com.github.sdbg.debug.core.model.ISDBGVariable;
-import com.github.sdbg.debug.core.util.SDBGNoSourceFoundElement;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.util.DebuggerEditorInput;
-import com.github.sdbg.utilities.Streams;
 
 /**
  * A debug model presentation is responsible for providing labels, images, and editors associated
@@ -144,6 +147,15 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
       }
     }
 
+    if (element instanceof IStorage) {
+      //&&&!!!
+      try {
+        return IDE.getEditorDescriptor(((IStorage) element).getFullPath().toOSString()).getId();
+      } catch (PartInitException e) {
+
+      }
+    }
+
     if (input instanceof SDBGSourceNotFoundEditorInput) {
       return SDBGSourceNotFoundEditor.EDITOR_ID;
     }
@@ -169,6 +181,15 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
       } catch (CoreException e) {
         DartUtil.logError(e);
       }
+    }
+
+    if (element instanceof ZipEntryStorage) {
+      return new StorageEditorInput((IStorage) element) {
+        @Override
+        public boolean exists() {
+          return true;
+        }
+      };
     }
 
     if (element instanceof SDBGNoSourceFoundElement) {

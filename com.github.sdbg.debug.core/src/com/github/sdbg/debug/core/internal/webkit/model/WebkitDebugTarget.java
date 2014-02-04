@@ -570,11 +570,12 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       return false;
     }
 
-    if (currentProject == null) {
-      return true;
-    } else {
-      return currentProject.equals(breakpoint.getMarker().getResource().getProject());
-    }
+//&&&    
+//    if (currentProject == null) {
+    return true;
+//    } else {
+//      return currentProject.equals(breakpoint.getMarker().getResource().getProject());
+//    }
   }
 
   public boolean supportsSetScriptSource() {

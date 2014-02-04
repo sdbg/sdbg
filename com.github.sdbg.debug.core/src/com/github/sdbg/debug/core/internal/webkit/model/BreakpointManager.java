@@ -14,6 +14,14 @@
 
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
+import com.github.sdbg.debug.core.model.IResourceResolver;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,14 +37,6 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointListener;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
-import com.github.sdbg.debug.core.model.IResourceResolver;
 
 /**
  * Handle adding a removing breakpoints to the WebKit connection for the WebkitDebugTarget class.
@@ -56,6 +56,213 @@ public class BreakpointManager implements IBreakpointListener {
 
   public BreakpointManager(WebkitDebugTarget debugTarget) {
     this.debugTarget = debugTarget;
+  }
+
+  @Override
+  public void breakpointAdded(IBreakpoint breakpoint) {
+    if (debugTarget.supportsBreakpoint(breakpoint)) {
+      try {
+        addBreakpoint(breakpoint);
+      } catch (IOException exception) {
+        if (!debugTarget.isTerminated()) {
+          SDBGDebugCorePlugin.logError(exception);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
+    // We generate this change event in the handleBreakpointResolved() method - ignore one
+    // instance of the event.
+    if (ignoredBreakpoints.contains(breakpoint)) {
+      ignoredBreakpoints.remove(breakpoint);
+      return;
+    }
+
+    if (debugTarget.supportsBreakpoint(breakpoint)) {
+      breakpointRemoved(breakpoint, delta);
+      breakpointAdded(breakpoint);
+    }
+  }
+
+  @Override
+  public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
+    if (debugTarget.supportsBreakpoint(breakpoint)) {
+      List<String> breakpointIds = breakpointToIdMap.remove(breakpoint);
+
+      if (breakpointIds != null) {
+        for (String breakpointId : breakpointIds) {
+          breakpointsToUpdateMap.remove(breakpointId);
+
+          try {
+            debugTarget.getWebkitConnection().getDebugger().removeBreakpoint(breakpointId);
+          } catch (IOException exception) {
+            if (!debugTarget.isTerminated()) {
+              SDBGDebugCorePlugin.logError(exception);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public void connect() throws IOException {
+    IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
+    // &&&!!! DartDebugCorePlugin.DEBUG_MODEL_ID);
+
+    for (IBreakpoint breakpoint : breakpoints) {
+      if (debugTarget.supportsBreakpoint(breakpoint)) {
+        addBreakpoint(breakpoint);
+      }
+    }
+
+    DebugPlugin.getDefault().getBreakpointManager().addBreakpointListener(this);
+  }
+
+  public void dispose(boolean deleteAll) {
+    // Null check for when the editor is shutting down.
+    if (DebugPlugin.getDefault() != null) {
+      if (deleteAll) {
+        try {
+          for (List<String> ids : breakpointToIdMap.values()) {
+            if (ids != null) {
+              for (String id : ids) {
+                debugTarget.getWebkitConnection().getDebugger().removeBreakpoint(id);
+              }
+            }
+          }
+        } catch (IOException exception) {
+          if (!debugTarget.isTerminated()) {
+            SDBGDebugCorePlugin.logError(exception);
+          }
+        }
+      }
+
+      DebugPlugin.getDefault().getBreakpointManager().removeBreakpointListener(this);
+    }
+  }
+
+  public IBreakpoint getBreakpointFor(WebkitLocation location) {
+    try {
+      IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
+          SDBGDebugCorePlugin.DEBUG_MODEL_ID);
+
+      WebkitScript script = debugTarget.getWebkitConnection().getDebugger().getScript(
+          location.getScriptId());
+
+      if (script == null) {
+        return null;
+      }
+
+      String url = script.getUrl();
+      int line = WebkitLocation.webkitToElipseLine(location.getLineNumber());
+
+      for (IBreakpoint bp : breakpoints) {
+        if (debugTarget.supportsBreakpoint(bp) && bp instanceof ILineBreakpoint) {
+          ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
+
+          if (breakpoint.getLineNumber() == line) {
+            String bpUrl = getResourceResolver().getUrlForResource(
+                breakpoint.getMarker().getResource());
+
+            if (bpUrl != null && bpUrl.equals(url)) {
+              return breakpoint;
+            }
+          }
+        }
+      }
+
+      return null;
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+//&&&  
+//  @VisibleForTesting
+//  public String getPackagePath(String regex, IFile resource) {
+//    Path path = new Path(regex);
+//    int i = 0;
+//    if (regex.indexOf(LIB_DIRECTORY_PATH) != -1) {
+//      // remove all segments after "lib", they show path in the package
+//      while (i < path.segmentCount() && !path.segment(i).equals("lib")) {
+//        i++;
+//      }
+//    } else {
+//      i = 1;
+//    }
+//    String filePath = regex;
+//    if (path.segmentCount() > i + 1) {
+//      filePath = new Path(regex).removeLastSegments(path.segmentCount() - (i + 1)).toString();
+//    }
+//
+//    String packagePath = resolvePathToPackage(resource, filePath);
+//    if (packagePath != null) {
+//      packagePath += "/" + path.removeFirstSegments(i + 1);
+//    }
+//    return packagePath;
+//  }
+
+//&&&  
+//  @VisibleForTesting
+//  protected String resolvePathToPackage(IFile resource, String filePath) {
+//    return DartCore.getProjectManager().resolvePathToPackage(resource, filePath);
+//  }
+
+  void addToBreakpointMap(IBreakpoint breakpoint, String id, boolean trackChanges) {
+    synchronized (breakpointToIdMap) {
+      if (breakpointToIdMap.get(breakpoint) == null) {
+        breakpointToIdMap.put(breakpoint, new ArrayList<String>());
+      }
+
+      breakpointToIdMap.get(breakpoint).add(id);
+
+      if (trackChanges) {
+        breakpointsToUpdateMap.put(id, breakpoint);
+      }
+    }
+  }
+
+  void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
+    try {
+      IBreakpoint bp = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
+
+      if (bp != null && bp instanceof ILineBreakpoint) {
+        ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
+
+        int eclipseLine = WebkitLocation.webkitToElipseLine(webkitBreakpoint.getLocation().getLineNumber());
+
+        if (breakpoint.getLineNumber() != eclipseLine) {
+          ignoredBreakpoints.add(breakpoint);
+
+          String message = "[breakpoint in " + breakpoint.getMarker().getResource().getName()
+              + " moved from line " + breakpoint.getLineNumber() + " to " + eclipseLine + "]";
+          debugTarget.writeToStdout(message);
+
+          breakpoint.getMarker().setAttribute(IMarker.LINE_NUMBER, eclipseLine);
+        }
+      }
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  void handleGlobalObjectCleared() {
+    //&&&!!! Breakpoints' cleanup code should be present here?!
+    System.out.println("!!!");
+  }
+
+  void updateBreakpointsConcerningScript(IStorage script) {
+    SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+    for (IStorage source : sourceMapManager.getSources(script)) {
+      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+        if (source.equals(breakpoint.getMarker().getResource())) {
+          breakpointRemoved(breakpoint, null/*delta*/);
+          breakpointAdded(breakpoint);
+        }
+      }
+    }
   }
 
   private void addBreakpoint(final IBreakpoint bp) throws IOException {
@@ -134,8 +341,10 @@ public class BreakpointManager implements IBreakpointListener {
             if (location.getStorage() instanceof IFile) {
               mappedRegex = getResourceResolver().getUrlRegexForResource(
                   (IFile) location.getStorage());
-            } else {
+            } else if (location.getStorage() != null) {
               mappedRegex = location.getStorage().getFullPath().toPortableString();
+            } else {
+              mappedRegex = location.getPath();
             }
 
             if (mappedRegex != null) {
@@ -168,215 +377,8 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-  void addToBreakpointMap(IBreakpoint breakpoint, String id, boolean trackChanges) {
-    synchronized (breakpointToIdMap) {
-      if (breakpointToIdMap.get(breakpoint) == null) {
-        breakpointToIdMap.put(breakpoint, new ArrayList<String>());
-      }
-
-      breakpointToIdMap.get(breakpoint).add(id);
-
-      if (trackChanges) {
-        breakpointsToUpdateMap.put(id, breakpoint);
-      }
-    }
-  }
-
-  @Override
-  public void breakpointAdded(IBreakpoint breakpoint) {
-    if (debugTarget.supportsBreakpoint(breakpoint)) {
-      try {
-        addBreakpoint(breakpoint);
-      } catch (IOException exception) {
-        if (!debugTarget.isTerminated()) {
-          SDBGDebugCorePlugin.logError(exception);
-        }
-      }
-    }
-  }
-
-  @Override
-  public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
-    // We generate this change event in the handleBreakpointResolved() method - ignore one
-    // instance of the event.
-    if (ignoredBreakpoints.contains(breakpoint)) {
-      ignoredBreakpoints.remove(breakpoint);
-      return;
-    }
-
-    if (debugTarget.supportsBreakpoint(breakpoint)) {
-      breakpointRemoved(breakpoint, delta);
-      breakpointAdded(breakpoint);
-    }
-  }
-
-  @Override
-  public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta) {
-    if (debugTarget.supportsBreakpoint(breakpoint)) {
-      List<String> breakpointIds = breakpointToIdMap.remove(breakpoint);
-
-      if (breakpointIds != null) {
-        for (String breakpointId : breakpointIds) {
-          breakpointsToUpdateMap.remove(breakpointId);
-
-          try {
-            debugTarget.getWebkitConnection().getDebugger().removeBreakpoint(breakpointId);
-          } catch (IOException exception) {
-            if (!debugTarget.isTerminated()) {
-              SDBGDebugCorePlugin.logError(exception);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  public void connect() throws IOException {
-    IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
-    // &&&!!! DartDebugCorePlugin.DEBUG_MODEL_ID);
-
-    for (IBreakpoint breakpoint : breakpoints) {
-      if (debugTarget.supportsBreakpoint(breakpoint)) {
-        addBreakpoint(breakpoint);
-      }
-    }
-
-    DebugPlugin.getDefault().getBreakpointManager().addBreakpointListener(this);
-  }
-
-//&&&  
-//  @VisibleForTesting
-//  public String getPackagePath(String regex, IFile resource) {
-//    Path path = new Path(regex);
-//    int i = 0;
-//    if (regex.indexOf(LIB_DIRECTORY_PATH) != -1) {
-//      // remove all segments after "lib", they show path in the package
-//      while (i < path.segmentCount() && !path.segment(i).equals("lib")) {
-//        i++;
-//      }
-//    } else {
-//      i = 1;
-//    }
-//    String filePath = regex;
-//    if (path.segmentCount() > i + 1) {
-//      filePath = new Path(regex).removeLastSegments(path.segmentCount() - (i + 1)).toString();
-//    }
-//
-//    String packagePath = resolvePathToPackage(resource, filePath);
-//    if (packagePath != null) {
-//      packagePath += "/" + path.removeFirstSegments(i + 1);
-//    }
-//    return packagePath;
-//  }
-
-//&&&  
-//  @VisibleForTesting
-//  protected String resolvePathToPackage(IFile resource, String filePath) {
-//    return DartCore.getProjectManager().resolvePathToPackage(resource, filePath);
-//  }
-
-  public void dispose(boolean deleteAll) {
-    // Null check for when the editor is shutting down.
-    if (DebugPlugin.getDefault() != null) {
-      if (deleteAll) {
-        try {
-          for (List<String> ids : breakpointToIdMap.values()) {
-            if (ids != null) {
-              for (String id : ids) {
-                debugTarget.getWebkitConnection().getDebugger().removeBreakpoint(id);
-              }
-            }
-          }
-        } catch (IOException exception) {
-          if (!debugTarget.isTerminated()) {
-            SDBGDebugCorePlugin.logError(exception);
-          }
-        }
-      }
-
-      DebugPlugin.getDefault().getBreakpointManager().removeBreakpointListener(this);
-    }
-  }
-
-  public IBreakpoint getBreakpointFor(WebkitLocation location) {
-    try {
-      IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
-          SDBGDebugCorePlugin.DEBUG_MODEL_ID);
-
-      WebkitScript script = debugTarget.getWebkitConnection().getDebugger().getScript(
-          location.getScriptId());
-
-      if (script == null) {
-        return null;
-      }
-
-      String url = script.getUrl();
-      int line = WebkitLocation.webkitToElipseLine(location.getLineNumber());
-
-      for (IBreakpoint bp : breakpoints) {
-        if (debugTarget.supportsBreakpoint(bp) && bp instanceof ILineBreakpoint) {
-          ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
-
-          if (breakpoint.getLineNumber() == line) {
-            String bpUrl = getResourceResolver().getUrlForResource(
-                breakpoint.getMarker().getResource());
-
-            if (bpUrl != null && bpUrl.equals(url)) {
-              return breakpoint;
-            }
-          }
-        }
-      }
-
-      return null;
-    } catch (CoreException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private IResourceResolver getResourceResolver() {
     return debugTarget.getResourceResolver();
-  }
-
-  void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
-    try {
-      IBreakpoint bp = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
-
-      if (bp != null && bp instanceof ILineBreakpoint) {
-        ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
-
-        int eclipseLine = WebkitLocation.webkitToElipseLine(webkitBreakpoint.getLocation().getLineNumber());
-
-        if (breakpoint.getLineNumber() != eclipseLine) {
-          ignoredBreakpoints.add(breakpoint);
-
-          String message = "[breakpoint in " + breakpoint.getMarker().getResource().getName()
-              + " moved from line " + breakpoint.getLineNumber() + " to " + eclipseLine + "]";
-          debugTarget.writeToStdout(message);
-
-          breakpoint.getMarker().setAttribute(IMarker.LINE_NUMBER, eclipseLine);
-        }
-      }
-    } catch (CoreException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  void handleGlobalObjectCleared() {
-    //&&&!!! Breakpoints' cleanup code should be present here?!
-    System.out.println("!!!");
-  }
-
-  void updateBreakpointsConcerningScript(IStorage script) {
-    SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-    for (IStorage source : sourceMapManager.getSources(script)) {
-      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
-        if (source.equals(breakpoint.getMarker().getResource())) {
-          breakpointRemoved(breakpoint, null/*delta*/);
-          breakpointAdded(breakpoint);
-        }
-      }
-    }
   }
 
 //&&&  

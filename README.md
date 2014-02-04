@@ -2,7 +2,7 @@
 
 This is an eclipse plugin designed to expose IDE debugging support for compiled javascript applications using sourcemaps.
 
-It has been adapted from the [Dart](http://dartlang.org) project, and modified for use in the [Gwt](http://gwtproject.org) project.
+It has been adapted from the [Dart](http://dartlang.org) project, and modified for use in the [GWT](http://gwtproject.org) project.
 
 The current implementation is a proof of concept;  
 you can set a breakpoint in java, launch an instance of chrome, and hit that breakpoint in Eclipse.

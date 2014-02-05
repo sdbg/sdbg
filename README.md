@@ -11,7 +11,7 @@ Eclipse will display the Variables tab with your javascript objects in them (not
 the stack trace will be the same stack as javascript (not yet translated back to java),  
 and stepping into or over code will, you guessed it, be the same as if you'd pressed the button in chrome debugger.
 
-## Instructions
+## Install Instructions
 
 git clone git@github.com:sdbg/sdbg.git
 (forgive the large download; we have retained all Dart history for posterity and access via eGit)
@@ -27,6 +27,17 @@ and you can have tycho maven plugin create a fresh install of eclipse, with sdbg
 cd $SDBG_DIRECTORY/com.github.sdbg.releng.install; mvn install
 
 You can run new eclipse installation with ./target/eclipse/eclipse from the installer directory.
+
+## Usage Instructions
+
+Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository.  
+Simply unzip this project into your workspace, and import it.  
+Next, create a new "Chrome launch" configuration with project = gwtproject and URL = http://gwtproject.org;  
+Put a breakpoint in the method called "toggleMenu", in the (only) Java file in the gwtproject project - GWTProjectEntryPoint.java;  
+Click on "Articles" or "Documentation" in the "Table of contents" tree at http://gwtproject.org;  
+Observe the breakpoint being hit
+
+Any comments, bugs or issues should be directed to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg).
 
 ## Contributions
 

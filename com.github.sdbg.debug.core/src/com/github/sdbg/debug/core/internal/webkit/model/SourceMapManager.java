@@ -20,15 +20,6 @@ import com.github.sdbg.debug.core.internal.sourcemaps.SourceMap;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMapInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.PlatformObject;
-import org.eclipse.core.runtime.URIUtil;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +35,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.PlatformObject;
+import org.eclipse.core.runtime.URIUtil;
+
 // TODO(devoncarew): use the symbol name information in the maps?
 // it's possible this will help us de-mangle the method names for frames
 
@@ -58,15 +58,16 @@ import java.util.Properties;
  */
 //&&&!!!
 public class SourceMapManager {
-
   public static class SourceLocation {
     private IStorage storage; // TODO: Besides this, an IPath member is needed, because the storage may not always get resolved
+    private String path;
     private int line;
     private int column;
     private String name;
 
-    public SourceLocation(IStorage storage, int line, int column, String name) {
+    public SourceLocation(IStorage storage, String path, int line, int column, String name) {
       this.storage = storage;
+      this.path = path;
       this.line = line;
       this.column = column;
       this.name = name;
@@ -84,13 +85,18 @@ public class SourceMapManager {
       return name;
     }
 
+    public String getPath() {
+      return path;
+    }
+
     public IStorage getStorage() {
       return storage;
     }
 
     @Override
     public String toString() {
-      return "[" + storage + "," + line + "," + column + "," + name + "]";
+      return "[" + (storage != null ? storage : path) + "," + line + "," + column + "," + name
+          + "]";
     }
   }
 
@@ -190,15 +196,12 @@ public class SourceMapManager {
           SourceMapInfo mapping = map.getMappingFor(line, column);
 
           if (mapping != null) {
-            IStorage resolvedStorage = resolveStorage(mapStorage, mapping.getFile());
-
-            if (resolvedStorage != null) {
-              return new SourceLocation(
-                  resolvedStorage,
-                  mapping.getLine(),
-                  mapping.getColumn(),
-                  mapping.getName());
-            }
+            return new SourceLocation(
+                resolveStorage(mapStorage, mapping.getFile()),
+                mapping.getFile(),
+                mapping.getLine(),
+                mapping.getColumn(),
+                mapping.getName());
           }
         }
       }
@@ -237,6 +240,7 @@ public class SourceMapManager {
                 if (mapSource != null) {
                   mappings.add(new SourceLocation(
                       mapSource,
+                      mapSource.getFullPath().toPortableString(),
                       reverseMapping.getLine(),
                       reverseMapping.getColumn(),
                       reverseMapping.getName()));

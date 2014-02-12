@@ -13,6 +13,21 @@
  */
 package com.github.sdbg.debug.core.internal.util;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.DebugUIHelper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
+import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
+import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
+import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
+import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.utilities.NetUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,21 +47,6 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IProcess;
-
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.DebugUIHelper;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
-import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
-import com.github.sdbg.debug.core.util.IBrowserTabChooser;
-import com.github.sdbg.debug.core.util.ResourceServerManager;
-import com.github.sdbg.utilities.NetUtils;
 
 /**
  * A manager that launches and manages configured browsers.
@@ -72,18 +72,6 @@ public class BrowserManager {
       chromeExe = manager.searchForChrome();
     }
     return chromeExe;
-  }
-
-  private static File findChromeInDirectory(File f) {
-    File exe = new File(f, "google-chrome");
-    if (exe.exists()) {
-      return exe;
-    }
-    exe = new File(f, "chrome");
-    if (exe.exists()) {
-      return exe;
-    }
-    return new File(f, "chrome.exe");
   }
 
   /**
@@ -124,6 +112,18 @@ public class BrowserManager {
 
   public static BrowserManager getManager() {
     return manager;
+  }
+
+  private static File findChromeInDirectory(File f) {
+    File exe = new File(f, "google-chrome");
+    if (exe.exists()) {
+      return exe;
+    }
+    exe = new File(f, "chrome");
+    if (exe.exists()) {
+      return exe;
+    }
+    return new File(f, "chrome.exe");
   }
 
   private static IResourceResolver getResourceServer() throws CoreException {
@@ -245,23 +245,11 @@ public class BrowserManager {
 
     monitor.beginTask("Launching Dartium...", enableDebugging ? 7 : 2);
 
-//&&&    File dartium = DartSdkManager.getManager().getSdk().getDartiumExecutable();
-//    
-//    if (dartium == null) {
-//      throw new CoreException(new Status(
-//          IStatus.ERROR,
-//          DartDebugCorePlugin.PLUGIN_ID,
-//          "Could not find Dartium executable in "
-//              + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory()
-//              + ". Download and install Dartium from http://www.dartlang.org/tools/dartium/."));
-//    }
+    File chromeExe = findChrome();
 
-    File dartium = new File(
-        "C:\\Users\\ivan\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe");
+    IPath browserLocation = new Path(chromeExe.getAbsolutePath());
 
-    IPath browserLocation = new Path(dartium.getAbsolutePath());
-
-    String browserName = dartium.getName();
+    String browserName = chromeExe.getName();
 
     // avg: 0.434 sec (old: 0.597)
     LogTimer timer = new LogTimer("Dartium debug startup");
@@ -346,7 +334,7 @@ public class BrowserManager {
           resolver);
     }
 
-    DebugUIHelper.getHelper().activateApplication(dartium, "Chromium");
+    DebugUIHelper.getHelper().activateApplication(chromeExe, "Chromium");
 
     timer.stopTask();
     timer.stopTimer();
@@ -672,6 +660,7 @@ public class BrowserManager {
         return f;
       }
     }
+
     // No luck on explicitly set chrome exe; search $PATH
     String path = System.getenv("PATH");
     if (path != null) {
@@ -686,7 +675,36 @@ public class BrowserManager {
       }
     }
 
-    return null;
+    // On Windows, try to locate Chrome inside the user's home directory
+    // TODO: Also handle the case when the Chrome executable is installed in Program Files
+    // TODO: Use the registry for finding the installation directory
+    if (DartCore.isWindows()) {
+      File userHome = new File(System.getProperty("user.home"));
+
+      // Windows 7
+      File chromeAppData = new File(userHome, "AppData\\Local\\Google\\Chrome\\Application");
+      if (chromeAppData.exists()) {
+        File f = findChromeInDirectory(chromeAppData);
+        if (f.exists()) {
+          return f;
+        }
+      }
+
+      // XP
+      File xpChromeAppData = new File(
+          userHome,
+          "Local Settings\\Application Data\\Google\\Chrome\\Application");
+      if (xpChromeAppData.exists()) {
+        File f = findChromeInDirectory(xpChromeAppData);
+        if (f.exists()) {
+          return f;
+        }
+      }
+    }
+
+    throw new RuntimeException(
+        "Uable to locate the Chrome executable at the usual locations.\nPlease append at the end of your eclipse.ini file the following property:\n-D"
+            + CHROME_EXECUTABLE_PROPERTY + "=<path-to-chrome-executable>");
   }
 
   private void sleep(int millis) {

@@ -218,7 +218,7 @@ public class SourceMapManager {
    * @param line
    * @return
    */
-  public List<SourceLocation> getReverseMappingsFor(IStorage targetStorage, int line) {
+  public List<SourceLocation> getReverseMappingsFor(String targetPath, int line) {
     List<SourceLocation> mappings = new ArrayList<SourceMapManager.SourceLocation>();
 
     synchronized (sourceMaps) {
@@ -228,9 +228,7 @@ public class SourceMapManager {
 
         for (String path : map.getSourceNames()) {
           // TODO(devoncarew): the files in the maps should all be pre-resolved
-          IStorage storage = resolveStorage(mapStorage, path);
-
-          if (storage != null && storage.equals(targetStorage)) {
+          if (targetPath.equals(path)) {
             List<SourceMapInfo> reverseMappings = map.getReverseMappingsFor(path, line);
 
             for (SourceMapInfo reverseMapping : reverseMappings) {
@@ -298,16 +296,13 @@ public class SourceMapManager {
     return false;
   }
 
-  public boolean isMapTarget(IStorage targetStorage) { //&&&!!! There can be race conditions because of that method
-    if (targetStorage != null) {
+  public boolean isMapTarget(String targetPath) { //&&&!!! There can be race conditions because of that method
+    if (targetPath != null) {
       synchronized (sourceMaps) {
         for (IStorage sourceStorage : sourceMaps.keySet()) {
           SourceMap map = sourceMaps.get(sourceStorage);
           for (String path : map.getSourceNames()) {
-            // TODO(devoncarew): the files in the maps should all be pre-resolved
-            IStorage storage = resolveStorage(sourceStorage, path);
-
-            if (storage != null && storage.equals(targetStorage)) {
+            if (targetPath.equals(path)) {
               return true;
             }
           }

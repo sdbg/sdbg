@@ -2,6 +2,8 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="debugUIHelper" name="Debug UI Helper" schema="schema/debugUIHelper.exsd"/>
+   <extension-point id="breakpointPathResolver" name="Breakpoint Path Resolver" schema="schema/breakpointPathResolver.exsd"/>
+   <extension-point id="sourceLookupExtensions" name="Source Lookup Extensions" schema="schema/sourceLookupExtensions.exsd"/>
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
@@ -81,6 +83,18 @@
          description="Dart Maps"
          modelIdentifier="com.github.sdbg.debug.core">
       </logicalStructureType>
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.core.breakpointPathResolver">
+      <resolver
+            class="com.github.sdbg.debug.core.internal.jdt.JDTBreakpointPathResolver">
+      </resolver>
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.core.sourceLookupExtensions">
+      <extensions
+            class="com.github.sdbg.debug.core.internal.jdt.JDTSourceLookupExtensions">
+      </extensions>
    </extension>
 
 </plugin>

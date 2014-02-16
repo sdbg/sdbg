@@ -13,22 +13,38 @@
  */
 package com.github.sdbg.debug.core.internal.source;
 
-import org.eclipse.debug.core.ILaunch;
-import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector;
-import org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant;
-
+import com.github.sdbg.debug.core.ISourceLookupExtensions;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.util.SDBGNoSourceFoundElement;
 import com.github.sdbg.utilities.AdapterUtilities;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector;
+import org.eclipse.debug.core.sourcelookup.ISourceContainer;
+import org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant;
+import org.eclipse.debug.core.sourcelookup.ISourcePathComputer;
+import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
+
 /**
- * A collection of Dart specific source lookup participants.
+ * A collection of SDBG specific source lookup participants.
  * 
  * @see org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant
  */
 public class SDBGSourceLookupDirector extends AbstractSourceLookupDirector {
-
   public SDBGSourceLookupDirector() {
-
   }
 
   @Override
@@ -48,6 +64,61 @@ public class SDBGSourceLookupDirector extends AbstractSourceLookupDirector {
 
   @Override
   public void initializeParticipants() {
-    addParticipants(new ISourceLookupParticipant[] {new SDBGSourceLookupParticipant()});
+    IProject project = new SDBGLaunchConfigWrapper(getLaunchConfiguration()).getProject();
+
+    List<ISourceLookupParticipant> participants = new ArrayList<ISourceLookupParticipant>();
+    for (ISourceLookupExtensions extensions : getSourceLookupExtensions()) {
+      participants.addAll(Arrays.asList(extensions.getSourceLookupParticipants(project)));
+    }
+
+    participants.add(new SDBGSourceLookupParticipant());
+    addParticipants(participants.toArray(new ISourceLookupParticipant[0]));
+  }
+
+  @Override
+  protected void setLaunchConfiguration(ILaunchConfiguration configuration) {
+    super.setLaunchConfiguration(configuration);
+
+    IProject project = new SDBGLaunchConfigWrapper(getLaunchConfiguration()).getProject();
+
+    ISourcePathComputerDelegate computer = null;
+    for (ISourceLookupExtensions extensions : getSourceLookupExtensions()) {
+      computer = extensions.getSourcePathComputer(project);
+      if (computer != null) {
+        break;
+      }
+    }
+
+    if (computer != null) {
+      final ISourcePathComputerDelegate fComputer = computer;
+      setSourcePathComputer(new ISourcePathComputer() {
+        @Override
+        public ISourceContainer[] computeSourceContainers(ILaunchConfiguration configuration,
+            IProgressMonitor monitor) throws CoreException {
+          return fComputer.computeSourceContainers(configuration, monitor);
+        }
+
+        @Override
+        public String getId() {
+          return ""; // TODO: Does this really matter?
+        }
+      });
+    }
+  }
+
+  private Collection<ISourceLookupExtensions> getSourceLookupExtensions() {
+    Collection<ISourceLookupExtensions> sourceLookupExtensions = new ArrayList<ISourceLookupExtensions>();
+
+    IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
+        ISourceLookupExtensions.EXTENSION_ID);
+    for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
+      try {
+        sourceLookupExtensions.add((ISourceLookupExtensions) element.createExecutableExtension("class"));
+      } catch (CoreException e) {
+        SDBGDebugCorePlugin.logError(e);
+      }
+    }
+
+    return sourceLookupExtensions;
   }
 }

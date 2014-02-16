@@ -3,10 +3,13 @@
 <schema targetNamespace="com.github.sdbg.debug.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="com.github.sdbg.debug.core" id="debugUIHelper" name="Debug UI Helper"/>
+         <meta.schema plugin="com.github.sdbg.debug.core" id="sourceLookupExtensions" name="Source Lookup Extensions"/>
       </appinfo>
       <documentation>
-         This extension point allows the definition of a Debug UI Helper - it exposes debug functionality to non-UI code.
+         This extension point allows the definition of language specific source lookup extensions: 
+         First, depending on the type of the project, an additional set of source lookup participants can be provided.
+         Second, again depending on the type of the project, a source path computer can be provided.
+         In case that a single project receives multiple source path computers (by multiple source lookup extensions), only one source path computer will be used.
       </documentation>
    </annotation>
 
@@ -18,7 +21,7 @@
       </annotation>
       <complexType>
          <sequence>
-            <element ref="helper"/>
+            <element ref="extensions"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -47,7 +50,7 @@
       </complexType>
    </element>
 
-   <element name="helper">
+   <element name="extensions">
       <complexType>
          <attribute name="class" type="string" use="required">
             <annotation>
@@ -55,32 +58,26 @@
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn="com.github.sdbg.debug.core.DebugUIHelper:"/>
+                  <meta.attribute kind="java" basedOn="com.github.sdbg.debug.core.ISourceLookupExtensions:"/>
                </appinfo>
             </annotation>
          </attribute>
       </complexType>
    </element>
-
-
    <annotation>
       <appinfo>
          <meta.section type="examples"/>
       </appinfo>
       <documentation>
-         To declare a debug UI helper:
+         To declare source lookup extensions:
 
 &lt;pre&gt;
-   &lt;extension point=&quot;com.github.sdbg.debug.core.debugUIHelper&quot;&gt;
-      &lt;owner class=&quot;com.xyz.SampleDebugUIHelper&quot;/&gt;
+   &lt;extension point=&quot;com.github.sdbg.debug.core.sourceLookupExtensions&quot;&gt;
+      &lt;owner class=&quot;com.xyz.MyLangSourceLookupExtensions&quot;/&gt;
    &lt;/extension&gt;
 &lt;/pre&gt;
 
-Note that a product should only ever declare one implementation of a debug UI helper.
+Note that a language should only ever declare one implementation of a source lookup extensions.
       </documentation>
    </annotation>
-
-
-
-
 </schema>

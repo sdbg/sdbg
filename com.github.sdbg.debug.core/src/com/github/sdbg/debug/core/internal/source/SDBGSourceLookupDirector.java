@@ -28,15 +28,12 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector;
-import org.eclipse.debug.core.sourcelookup.ISourceContainer;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant;
 import org.eclipse.debug.core.sourcelookup.ISourcePathComputer;
-import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
 
 /**
  * A collection of SDBG specific source lookup participants.
@@ -44,6 +41,8 @@ import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
  * @see org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant
  */
 public class SDBGSourceLookupDirector extends AbstractSourceLookupDirector {
+  private Collection<ISourceLookupExtensions> sourceLookupExtensions;
+
   public SDBGSourceLookupDirector() {
   }
 
@@ -85,49 +84,35 @@ public class SDBGSourceLookupDirector extends AbstractSourceLookupDirector {
 
     IProject project = new SDBGLaunchConfigWrapper(getLaunchConfiguration()).getProject();
 
-    ISourcePathComputerDelegate computer = null;
+    ISourcePathComputer computer = null;
     for (ISourceLookupExtensions extensions : getSourceLookupExtensions()) {
       try {
         computer = extensions.getSourcePathComputer(project);
         if (computer != null) {
+          setSourcePathComputer(computer);
           break;
         }
       } catch (CoreException e) {
         SDBGDebugCorePlugin.logError(e);
       }
     }
-
-    if (computer != null) {
-      final ISourcePathComputerDelegate fComputer = computer;
-      setSourcePathComputer(new ISourcePathComputer() {
-        @Override
-        public ISourceContainer[] computeSourceContainers(ILaunchConfiguration configuration,
-            IProgressMonitor monitor) throws CoreException {
-          return fComputer.computeSourceContainers(configuration, monitor);
-        }
-
-        @Override
-        public String getId() {
-          return ""; // TODO: Does this really matter?
-        }
-      });
-    }
   }
 
   private Collection<ISourceLookupExtensions> getSourceLookupExtensions() {
-    Collection<ISourceLookupExtensions> sourceLookupExtensions = new ArrayList<ISourceLookupExtensions>();
+    if (sourceLookupExtensions == null) {
+      sourceLookupExtensions = new ArrayList<ISourceLookupExtensions>();
 
-    IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
-        ISourceLookupExtensions.EXTENSION_ID);
-    for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
-      try {
-        sourceLookupExtensions.add((ISourceLookupExtensions) element.createExecutableExtension("class"));
-      } catch (CoreException e) {
-        SDBGDebugCorePlugin.logError(e);
+      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
+          ISourceLookupExtensions.EXTENSION_ID);
+      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
+        try {
+          sourceLookupExtensions.add((ISourceLookupExtensions) element.createExecutableExtension("class"));
+        } catch (CoreException e) {
+          SDBGDebugCorePlugin.logError(e);
+        }
       }
     }
 
     return sourceLookupExtensions;
   }
 }
-

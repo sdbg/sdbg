@@ -13,6 +13,7 @@
  */
 package com.github.sdbg.debug.ui.internal.presentation;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.model.IExceptionStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue;
@@ -30,16 +31,21 @@ import java.io.Reader;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IStackFrame;
@@ -49,6 +55,7 @@ import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.debug.core.sourcelookup.containers.ZipEntryStorage;
 import org.eclipse.debug.ui.IDebugModelPresentation;
 import org.eclipse.debug.ui.IInstructionPointerPresentation;
+import org.eclipse.debug.ui.ISourcePresentation;
 import org.eclipse.debug.ui.IValueDetailListener;
 import org.eclipse.jface.text.source.Annotation;
 import org.eclipse.jface.viewers.DecorationOverlayIcon;
@@ -73,6 +80,8 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
   private static final String BREAK_ON_EXCEPTION_ANNOTAION = "org.eclipse.debug.ui.currentIPEx";
 
   private List<ILabelProviderListener> listeners = new ArrayList<ILabelProviderListener>();
+
+  private Collection<ISourcePresentation> sourcePresentations;
 
   public SDBGDebugModelPresentation() {
 
@@ -116,61 +125,39 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
   @Override
   public String getEditorId(IEditorInput input, Object element) {
-    IFile file = null;
-
-    if (element instanceof IFile) {
-      file = (IFile) element;
-    }
-
-    if (element instanceof ILineBreakpoint) {
-      IResource resource = ((ILineBreakpoint) element).getMarker().getResource();
-
-      if (resource instanceof IFile) {
-        file = (IFile) resource;
+    for (ISourcePresentation sourcePresentation : getSourcePresentations()) {
+      String editorId = sourcePresentation.getEditorId(input, element);
+      if (editorId != null) {
+        return editorId;
       }
     }
 
-    if (file != null) {
-      try {
-        return IDE.getEditorDescriptor(file).getId();
-      } catch (PartInitException e) {
-
-      }
+    try {
+      return IDE.getEditorDescriptor(input.getName()).getId();
+    } catch (PartInitException e) {
+      return null;
     }
-
-    if (element instanceof LocalFileStorage) {
-      //&&&!!!
-      try {
-        return IDE.getEditorDescriptor(((LocalFileStorage) element).getFile().getAbsolutePath()).getId();
-      } catch (PartInitException e) {
-
-      }
-    }
-
-    if (element instanceof IStorage) {
-      //&&&!!!
-      try {
-        return IDE.getEditorDescriptor(((IStorage) element).getFullPath().toOSString()).getId();
-      } catch (PartInitException e) {
-
-      }
-    }
-
-    if (input instanceof SDBGSourceNotFoundEditorInput) {
-      return SDBGSourceNotFoundEditor.EDITOR_ID;
-    }
-
-    return null;
   }
 
   @Override
   public IEditorInput getEditorInput(Object element) {
-    if (element instanceof IFile) {
-      return new FileEditorInput((IFile) element);
+    for (ISourcePresentation sourcePresentation : getSourcePresentations()) {
+      IEditorInput result = sourcePresentation.getEditorInput(element);
+      if (result != null) {
+        return result;
+      }
+    }
+
+    if (element instanceof IMarker) {
+      element = DebugPlugin.getDefault().getBreakpointManager().getBreakpoint((IMarker) element);
     }
 
     if (element instanceof ILineBreakpoint) {
       return new FileEditorInput((IFile) ((ILineBreakpoint) element).getMarker().getResource());
+    }
+
+    if (element instanceof IFile) {
+      return new FileEditorInput((IFile) element);
     }
 
     if (element instanceof LocalFileStorage) {
@@ -478,5 +465,23 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     }
 
     return null;
+  }
+
+  private Collection<ISourcePresentation> getSourcePresentations() {
+    if (sourcePresentations == null) {
+      sourcePresentations = new ArrayList<ISourcePresentation>();
+
+      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
+          "com.github.sdbg.debug.ui.sourcePresentation");
+      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
+        try {
+          sourcePresentations.add((ISourcePresentation) element.createExecutableExtension("class"));
+        } catch (CoreException e) {
+          SDBGDebugCorePlugin.logError(e);
+        }
+      }
+    }
+
+    return sourcePresentations;
   }
 }

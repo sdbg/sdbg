@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="sourcePresentation" name="Source Presentation" schema="schema/sourcePresentation.exsd"/>
     <extension
          point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
@@ -323,7 +324,7 @@
             name="Source not available"
             icon="icons/obj16/dart.png"
             class="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor"
-            id="com.github.sdbg.debug.ui.internal.presentation.DartSourceNotFoundEditor">
+            id="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor">
       </editor>
    </extension>
    
@@ -792,6 +793,12 @@
             <objectState name="canInspectObject" value="true"></objectState>
          </visibility>
       </objectContribution>      
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.ui.sourcePresentation">
+      <extensions
+            class="com.github.sdbg.debug.ui.internal.jdt.JDTSourcePresentation">
+      </extensions>
    </extension>
 
    <!-- extension point="org.eclipse.ui.popupMenus">

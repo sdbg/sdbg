@@ -457,11 +457,12 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
           + sourceLocation.getColumnNumber() + "] ==> mapped to " + targetLocation);
     }
 
-    if (targetLocation.getStorage() != null) {
-      return targetLocation.getStorage().getFullPath().toPortableString();
-    } else {
-      return targetLocation.getPath();
-    }
+//!!!
+//    if (targetLocation.getStorage() instanceof IFile) {
+//      return targetLocation.getStorage().getFullPath().toPortableString();
+//    } else {
+    return targetLocation.getPath();
+//    }
   }
 
   protected IVariable getThisVariable() throws DebugException {

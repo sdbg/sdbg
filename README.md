@@ -1,15 +1,15 @@
 # SDBG: Sourcemap Debugger
 
-This is an eclipse plugin designed to expose IDE debugging support for compiled javascript applications using sourcemaps.
+This is an Eclipse plugin designed to expose IDE debugging support for compiled JavaScript applications using sourcemaps.
 
 It has been adapted from the [Dart](http://dartlang.org) project, and modified for use in the [GWT](http://gwtproject.org) project.
 
-The current implementation is a proof of concept;  
-you can set a breakpoint in java, launch an instance of chrome, and hit that breakpoint in Eclipse.
+The current implementation can be considered alpha quality:  
+you can set a breakpoint in Java, launch an instance of Chrome, and hit that breakpoint in Eclipse.
 
-Eclipse will display the Variables tab with your javascript objects in them (not yet translated back to java),  
-the stack trace will be the same stack as javascript (not yet translated back to java),  
-and stepping into or over code will, you guessed it, be the same as if you'd pressed the button in chrome debugger.
+Eclipse will display the Variables tab with your JavaScript objects in them (not yet translated back to Java),  
+the stack trace will be partially translated back to Java,  
+and stepping into or over code will, you guessed it, be the same as if you'd pressed the button in Chrome debugger.
 
 ## Install Instructions
 
@@ -19,14 +19,14 @@ git clone git@github.com:sdbg/sdbg.git
 For development, you are recommended to simply import the root of the source as a maven project.  
 Inside the com.github.sdbg.debug.ui project, you will see a launch configuration called SDBG.launch.
 
-Running this will open a new instance of eclipse with the debugger plugin installed.  
+Running this will open a new instance of Eclipse with the debugger plugin installed.  
 If you encounter any issues, please post to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg)
 
 You may also build a p2 repository and zip by running mvn install from the root of the project ($SDBG_DIRECTORY),  
-and you can have tycho maven plugin create a fresh install of eclipse, with sdbg installed by running:  
+and you can have tycho maven plugin create a fresh install of Eclipse, with sdbg installed by running:  
 cd $SDBG_DIRECTORY/com.github.sdbg.releng.install; mvn install
 
-You can run new eclipse installation with ./target/eclipse/eclipse from the installer directory.
+You can run new Eclipse installation with ./target/eclipse/eclipse from the installer directory.
 
 ## Usage Instructions
 

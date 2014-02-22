@@ -11,6 +11,11 @@
 
   <artifactId>com.github.sdbg.releng.install</artifactId>
   <properties>
+    <eclipse.url>http://download.eclipse.org</eclipse.url>
+    <eclipse.version>kepler</eclipse.version>
+    <eclipse.version.number>4.3</eclipse.version.number>
+    <eclipse.version.text>e43</eclipse.version.text>
+    <eclipse.repo.url>${eclipse.url}/releases/${eclipse.version}</eclipse.repo.url>
     <eclipse.destination>${project.basedir}/target/eclipse</eclipse.destination>
     <features>org.eclipse.sdk.ide,org.eclipse.platform,org.eclipse.equinox.p2.core.feature.feature.group,org.eclipse.jdt,org.eclipse.m2e.feature.feature.group,org.jboss.tools.m2e.jdt.feature.feature.group,org.eclipse.m2e.logback.feature.feature.group,com.github.sdbg.debug.ui</features>
     <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.p2/target/repository</sites>

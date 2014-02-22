@@ -5,7 +5,7 @@
 
   <parent>
     <groupId>com.github.sdbg</groupId>
-    <version>0.0.0.qualifier</version>
+    <version>0.1.0.qualifier</version>
     <artifactId>com.github.sdbg.parent</artifactId>
   </parent>
 
@@ -18,7 +18,7 @@
     <eclipse.repo.url>${eclipse.url}/releases/${eclipse.version}</eclipse.repo.url>
     <eclipse.destination>${project.basedir}/target/eclipse</eclipse.destination>
     <features>org.eclipse.sdk.ide,org.eclipse.platform,org.eclipse.equinox.p2.core.feature.feature.group,org.eclipse.jdt,org.eclipse.m2e.feature.feature.group,org.jboss.tools.m2e.jdt.feature.feature.group,org.eclipse.m2e.logback.feature.feature.group,com.github.sdbg.debug.ui</features>
-    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.p2/target/repository</sites>
+    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.releng.p2/target/repository</sites>
   </properties>
   <build>
     <plugins>

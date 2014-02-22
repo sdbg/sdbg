@@ -4,14 +4,43 @@ This is an Eclipse plugin designed to expose IDE debugging support for compiled 
 
 It has been adapted from the [Dart](http://dartlang.org) project, and modified for use in the [GWT](http://gwtproject.org) project.
 
-The current implementation can be considered alpha quality:  
-you can set a breakpoint in Java, launch an instance of Chrome, and hit that breakpoint in Eclipse.
+The current implementation can be considered alpha quality.
 
-Eclipse will display the Variables tab with your JavaScript objects in them (not yet translated back to Java),  
-the stack trace will be partially translated back to Java,  
-and stepping into or over code will, you guessed it, be the same as if you'd pressed the button in Chrome debugger.
+## Usage Instructions
 
-## Install Instructions
+Eclipse 3.7 or later is required.
+
+Download the latest [SDBG P2 repository ZIP](https://raw.github.com/sdbg/sdbg/master/SDBG-P2.zip) and install it by using the following sequence of Eclipse commands:
+Help menu -> Install New Software... -> Add... -> Archive...
+
+Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository.  
+Simply unzip this project into your workspace, and import it.  
+Next, create a new "Chrome launch" configuration with project = gwtproject and URL = http://gwtproject.org;  
+Put a breakpoint in the method called "toggleMenu", in the (only) Java file in the gwtproject project - GWTProjectEntryPoint.java;  
+Click on "Articles" or "Documentation" in the "Table of contents" tree at http://gwtproject.org;  
+Observe the breakpoint being hit
+
+Any comments, bugs or issues should be directed to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg).
+
+## Status
+
+What is working:
+- Launching an instance of Chrome for debugging
+- Setting breakpoints in Java, including in JAR libraries
+- Opening the Java (or other source language) source files instead of the obfuscated JavaScript
+
+What is mostly working:
+- Deobfuscating the stacktrace. Works but does not look 100% like e.g. the JDT Debugger stacktrace. For example, the methods are not deobfuscated to their Java equivalents
+- Connecting to a running Chrome instance; works but is well hidden. Go in Eclipse Preferences and assign a shortcut to the Chrome Remote Connection Dialog
+
+Future work:
+- Prio A: Stepping into or over the code does not follow the Java/source language statements, but the JavaScript ones;
+- Prio A: Deobfuscating the Variable tabs. Currently, Eclipse will display the Variables tab with your JavaScript objects in them (not yet translated back to Java);
+- Prio A-B: Support for other source languages besides Java (e.g. CoffeeScript, TypeScript etc.); should require relatively little effort, as the interfaces for implementing such support are now qwell defined;
+- Prio A-B: Support for Safari, Opera and Mobile Safari; should be easy as all these currently use the same Remote Debugging protocol as Chrome;
+- Prip B: Support for Internet Explorer and Firefox;
+
+## Build Instructions
 
 git clone git@github.com:sdbg/sdbg.git
 (forgive the large download; we have retained all Dart history for posterity and access via eGit)
@@ -27,17 +56,6 @@ and you can have tycho maven plugin create a fresh install of Eclipse, with sdbg
 cd $SDBG_DIRECTORY/com.github.sdbg.releng.install; mvn install
 
 You can run new Eclipse installation with ./target/eclipse/eclipse from the installer directory.
-
-## Usage Instructions
-
-Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository.  
-Simply unzip this project into your workspace, and import it.  
-Next, create a new "Chrome launch" configuration with project = gwtproject and URL = http://gwtproject.org;  
-Put a breakpoint in the method called "toggleMenu", in the (only) Java file in the gwtproject project - GWTProjectEntryPoint.java;  
-Click on "Articles" or "Documentation" in the "Table of contents" tree at http://gwtproject.org;  
-Observe the breakpoint being hit
-
-Any comments, bugs or issues should be directed to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg).
 
 ## Contributions
 

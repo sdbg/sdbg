@@ -48,7 +48,7 @@
             class="com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint"
             id="com.github.sdbg.debug.core.lineBreakpoint"
             markerType="com.github.sdbg.debug.core.breakpointMarker"
-            name="Dart breakpoint">
+            name="SDBG breakpoint">
       </breakpoint>
    </extension>
 
@@ -56,7 +56,7 @@
 
    <extension point="org.eclipse.debug.core.sourceLocators">
       <sourceLocator
-         name="Dart Source Lookup Director"
+         name="SDBG Source Lookup Director"
          class="com.github.sdbg.debug.core.internal.source.SDBGSourceLookupDirector"
          id="com.github.sdbg.debug.core.sourceLookupDirector">
       </sourceLocator>
@@ -80,7 +80,7 @@
       <logicalStructureType
          id="com.github.sdbg.debug.core.logical.mapStructureType"
          class="com.github.sdbg.debug.core.internal.logical.MapStructureType"
-         description="Dart Maps"
+         description="SDBG Maps"
          modelIdentifier="com.github.sdbg.debug.core">
       </logicalStructureType>
    </extension>

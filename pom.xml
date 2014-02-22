@@ -5,7 +5,7 @@
 
   <groupId>com.github.sdbg</groupId>
   <artifactId>com.github.sdbg.parent</artifactId>
-  <version>0.0.0.qualifier</version>
+  <version>0.1.0.qualifier</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -20,7 +20,8 @@
     <module>com.github.sdbg.debug.ui</module>
     <module>com.github.sdbg.integration.jdt</module>
     <module>com.github.sdbg.feature</module>
-    <module>com.github.sdbg.p2</module>
+    <module>com.github.sdbg.releng.p2</module>
+    <module>com.github.sdbg.releng.targetplatform</module>
   </modules>
 
   <build>
@@ -46,7 +47,7 @@
 		   <artifact>  
 		    <groupId>com.github.sdbg</groupId>  
 		    <artifactId>com.github.sdbg.releng.targetplatform</artifactId>  
-		    <version>0.0.0-qualifier</version>  
+		    <version>0.0.0.qualifier</version>  
 		   </artifact>  
 		  </target>  
         </configuration>  

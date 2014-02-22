@@ -86,7 +86,7 @@
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
             icon="icons/chromium_16.png"
             id="com.github.sdbg.debug.ui.chromeLaunchShortcut"
-            label="%dart.chromelaunch.shortcut.label"
+            label="%sdbg.chromelaunch.shortcut.label"
             modes="run,debug">
          <configurationType
                id="com.github.sdbg.debug.core.chromeLaunchConfig">
@@ -206,7 +206,7 @@
             class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut"
             icon="icons/obj16/globe_dark.png"
             id="com.github.sdbg.debug.ui.browserLaunchShortcut"
-            label="%dart.clientlaunch.shortcut.label"
+            label="%sdbg.clientlaunch.shortcut.label"
             modes="run">
          <configurationType
                id="com.github.sdbg.debug.core.browserLaunchConfig">

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="com.github.sdbg.debug.core.breakpointPathResolver">
+      <resolver
+            class="com.github.sdbg.integration.jdt.JDTBreakpointPathResolver">
+      </resolver>
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.core.sourceLookupExtensions">
+      <extensions
+            class="com.github.sdbg.integration.jdt.JDTSourceLookupExtensions">
+      </extensions>
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.ui.sourcePresentation">
+      <extensions
+            class="com.github.sdbg.integration.jdt.ui.JDTSourcePresentation">
+      </extensions>
+   </extension>
+</plugin>

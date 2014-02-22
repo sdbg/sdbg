@@ -29,4 +29,10 @@
          download-size="0"
          install-size="0"
          version="0.0.0"/>
+
+   <plugin
+         id="com.github.sdbg.integration.jdt"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
 </feature>

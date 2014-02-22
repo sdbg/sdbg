@@ -7,10 +7,7 @@ Bundle-Version: 0.0.0.qualifier
 Bundle-Activator: com.github.sdbg.debug.core.SDBGDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
- org.eclipse.debug.core,
- org.eclipse.jdt.debug,
- org.eclipse.jdt.launching,
- org.eclipse.jdt.core
+ org.eclipse.debug.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Export-Package: com.github.sdbg.core,

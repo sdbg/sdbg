@@ -1,4 +1,4 @@
-package com.github.sdbg.debug.ui.internal.jdt;
+package com.github.sdbg.integration.jdt.ui;
 
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.debug.core.DebugPlugin;

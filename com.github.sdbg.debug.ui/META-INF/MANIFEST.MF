@@ -16,17 +16,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.console,
  org.eclipse.debug.ui,
  com.github.sdbg.debug.core,
- org.eclipse.ltk.core.refactoring,
- org.eclipse.jdt.core,
- org.eclipse.jdt.ui,
- org.eclipse.jdt.debug,
- org.eclipse.jdt.debug.ui
-Export-Package: com.github.sdbg.debug.ui.internal,
- com.github.sdbg.debug.ui.internal.chrome,
- com.github.sdbg.debug.ui.internal.launch,
- com.github.sdbg.debug.ui.internal.preferences,
- com.github.sdbg.debug.ui.internal.util,
- com.github.sdbg.debug.ui.internal.view
+ org.eclipse.ltk.core.refactoring
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ClassPath: .

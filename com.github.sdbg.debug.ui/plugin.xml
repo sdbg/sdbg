@@ -794,13 +794,6 @@
          </visibility>
       </objectContribution>      
    </extension>
-   <extension
-         point="com.github.sdbg.debug.ui.sourcePresentation">
-      <extensions
-            class="com.github.sdbg.debug.ui.internal.jdt.JDTSourcePresentation">
-      </extensions>
-   </extension>
-
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"

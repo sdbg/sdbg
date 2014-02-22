@@ -1,4 +1,4 @@
-package com.github.sdbg.debug.core.internal.jdt;
+package com.github.sdbg.integration.jdt;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;

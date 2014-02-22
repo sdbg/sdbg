@@ -37,6 +37,7 @@
     <module>com.github.sdbg.debug.core</module>
     <module>com.github.sdbg.debug.core_test</module>
     <module>com.github.sdbg.debug.ui</module>
+    <module>com.github.sdbg.integration.jdt</module>
     <module>com.github.sdbg.feature</module>
     <module>com.github.sdbg.p2</module>
   </modules>

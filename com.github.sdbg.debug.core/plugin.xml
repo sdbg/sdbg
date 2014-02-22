@@ -84,17 +84,4 @@
          modelIdentifier="com.github.sdbg.debug.core">
       </logicalStructureType>
    </extension>
-   <extension
-         point="com.github.sdbg.debug.core.breakpointPathResolver">
-      <resolver
-            class="com.github.sdbg.debug.core.internal.jdt.JDTBreakpointPathResolver">
-      </resolver>
-   </extension>
-   <extension
-         point="com.github.sdbg.debug.core.sourceLookupExtensions">
-      <extensions
-            class="com.github.sdbg.debug.core.internal.jdt.JDTSourceLookupExtensions">
-      </extensions>
-   </extension>
-
 </plugin>

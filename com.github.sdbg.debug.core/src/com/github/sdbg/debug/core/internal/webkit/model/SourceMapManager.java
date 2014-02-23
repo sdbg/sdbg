@@ -228,7 +228,8 @@ public class SourceMapManager {
 
         for (String path : map.getSourceNames()) {
           // TODO(devoncarew): the files in the maps should all be pre-resolved
-          if (targetPath.equals(path)) {
+          String relativePath = relativisePath(mapStorage, path);
+          if (targetPath.equals(relativePath)) {
             List<SourceMapInfo> reverseMappings = map.getReverseMappingsFor(path, line);
 
             for (SourceMapInfo reverseMapping : reverseMappings) {

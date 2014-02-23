@@ -65,7 +65,7 @@
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
             configTypeID="com.github.sdbg.debug.core.chromeLaunchConfig"
-            icon="icons/chromium_16.png"
+            icon="icons/chrome.png"
             id="com.github.sdbg.debug.core.chromeLaunchConfigImage">
       </launchConfigurationTypeImage>
    </extension>
@@ -84,7 +84,7 @@
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
-            icon="icons/chromium_16.png"
+            icon="icons/chrome.png"
             id="com.github.sdbg.debug.ui.chromeLaunchShortcut"
             label="%sdbg.chromelaunch.shortcut.label"
             modes="run,debug">

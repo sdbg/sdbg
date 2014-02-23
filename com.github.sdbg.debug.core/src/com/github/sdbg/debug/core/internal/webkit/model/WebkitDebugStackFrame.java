@@ -257,9 +257,24 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
   @Override
   public String getLongName() {
-    String file = getFileOrLibraryName();
+    String name = getShortName();
 
-    return getShortName() + (file == null ? "" : " - " + file);
+    String file = getFileName();
+    if (file != null) {
+      name += "(" + file;
+
+      try {
+        int lineNumber = getLineNumber();
+        if (lineNumber > 0) {
+          name += ":" + lineNumber;
+        }
+      } catch (DebugException e) {
+      }
+
+      name += ")";
+    }
+
+    return name;
   }
 
   @Override
@@ -511,7 +526,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
         exception);
   }
 
-  private String getFileOrLibraryName() {
+  private String getFileName() {
     String path = getSourceLocationPath();
 
     if (path != null) {

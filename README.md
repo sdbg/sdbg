@@ -10,7 +10,7 @@ The current implementation can be considered alpha quality.
 
 Eclipse 3.7 or later is required.
 
-Download the latest [SDBG P2 repository ZIP](https://raw.github.com/sdbg/sdbg/master/SDBG-P2.zip) and install it by using the following sequence of Eclipse commands:
+Download the latest [SDBG P2 repository ZIP](https://github.com/sdbg/sdbg/releases) and install it by using the following sequence of Eclipse commands:
 Help menu -> Install New Software... -> Add... -> Archive...
 
 Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository.  

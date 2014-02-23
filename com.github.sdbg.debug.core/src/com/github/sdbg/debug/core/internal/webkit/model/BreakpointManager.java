@@ -326,8 +326,6 @@ public class BreakpointManager implements IBreakpointListener {
             if (location.getStorage() instanceof IFile) {
               mappedRegex = getResourceResolver().getUrlRegexForResource(
                   (IFile) location.getStorage());
-            } else if (location.getStorage() != null) {
-              mappedRegex = location.getStorage().getFullPath().toPortableString();
             } else {
               mappedRegex = location.getPath();
             }

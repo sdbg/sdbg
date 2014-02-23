@@ -5,7 +5,7 @@
 
   <groupId>com.github.sdbg</groupId>
   <artifactId>com.github.sdbg.parent</artifactId>
-  <version>0.1.4.qualifier</version>
+  <version>0.1.5.qualifier</version>
   <packaging>pom</packaging>
 
   <properties>

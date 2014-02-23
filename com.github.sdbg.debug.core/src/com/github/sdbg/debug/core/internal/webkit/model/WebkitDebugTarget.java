@@ -33,7 +33,6 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
-import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -473,7 +472,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       @Override
       public void debuggerScriptParsed(final WebkitScript script) {
         checkForDebuggerExtension(script);
-        Trace.trace("Script " + script + " loaded");
+        //TODO: Too chatty Trace.trace("Script " + script + " loaded");
 
         if (script.hasScriptSource() || script.getSourceMapURL() != null) {
           IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());

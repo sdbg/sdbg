@@ -14,6 +14,13 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+
+import de.roderick.weberknecht.WebSocket;
+import de.roderick.weberknecht.WebSocketEventHandler;
+import de.roderick.weberknecht.WebSocketException;
+import de.roderick.weberknecht.WebSocketMessage;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
@@ -23,13 +30,6 @@ import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-
-import de.roderick.weberknecht.WebSocket;
-import de.roderick.weberknecht.WebSocketEventHandler;
-import de.roderick.weberknecht.WebSocketException;
-import de.roderick.weberknecht.WebSocketMessage;
 
 /**
  * A class to connect to and communicate with a Webkit Inspection Protocol server.
@@ -71,16 +71,16 @@ import de.roderick.weberknecht.WebSocketMessage;
  */
 public class WebkitConnection {
 
+  public static interface WebkitConnectionListener {
+    public void connectionClosed(WebkitConnection connection);
+  }
+
   static interface Callback {
     public void handleResult(JSONObject result) throws JSONException;
   }
 
   static interface NotificationHandler {
     public void handleNotification(String method, JSONObject params) throws JSONException;
-  }
-
-  public static interface WebkitConnectionListener {
-    public void connectionClosed(WebkitConnection connection);
   }
 
   private URI webSocketUri;
@@ -245,10 +245,6 @@ public class WebkitConnection {
     return network;
   }
 
-  private int getNextRequestId() {
-    return ++requestId;
-  }
-
   public WebkitPage getPage() {
     if (page == null) {
       page = new WebkitPage(this);
@@ -277,6 +273,10 @@ public class WebkitConnection {
     return websocket != null && connected;
   }
 
+  public void removeConnectionListener(WebkitConnectionListener listener) {
+    connectionListeners.remove(listener);
+  }
+
   protected void notifyClosed() {
     for (WebkitConnectionListener listener : connectionListeners) {
       listener.connectionClosed(this);
@@ -294,6 +294,67 @@ public class WebkitConnection {
     }
 
     callbackMap.clear();
+  }
+
+  protected void processWebSocketMessage(WebSocketMessage message) {
+    try {
+      JSONObject object = new JSONObject(message.getText());
+
+      //TODO: too chatty SDBGDebugCorePlugin.log("<== " + object);
+
+      if (object.has("id")) {
+        processResponse(object);
+      } else {
+        processNotification(object);
+      }
+    } catch (JSONException exception) {
+      SDBGDebugCorePlugin.logError(exception);
+    }
+  }
+
+  protected void registerNotificationHandler(String prefix, NotificationHandler handler) {
+    notificationHandlers.put(prefix, handler);
+  }
+
+  protected void sendRequest(JSONObject request) throws IOException, JSONException {
+    sendRequest(request, null);
+  }
+
+  protected void sendRequest(JSONObject request, Callback callback) throws IOException,
+      JSONException {
+    if (!isConnected()) {
+      throw new IOException("connection terminated");
+    }
+
+    int id = 0;
+
+    try {
+      synchronized (this) {
+        id = getNextRequestId();
+
+        request.put("id", id);
+
+        if (callback != null) {
+          callbackMap.put(id, callback);
+        }
+      }
+
+      // TODO: Too chatty SDBGDebugCorePlugin.log("==> " + request);
+
+      websocket.send(request.toString());
+    } catch (WebSocketException exception) {
+      if (callback != null) {
+        synchronized (this) {
+          callbackMap.remove(id);
+        }
+      }
+
+      throw new IOException(exception);
+    }
+  }
+
+  private int getNextRequestId() {
+    return ++requestId;
   }
 
   private void processNotification(JSONObject object) throws JSONException {
@@ -349,67 +410,6 @@ public class WebkitConnection {
       }
     } catch (Throwable exception) {
       SDBGDebugCorePlugin.logError(exception);
-    }
-  }
-
-  protected void processWebSocketMessage(WebSocketMessage message) {
-    try {
-      JSONObject object = new JSONObject(message.getText());
-
-      SDBGDebugCorePlugin.log("<== " + object);
-
-      if (object.has("id")) {
-        processResponse(object);
-      } else {
-        processNotification(object);
-      }
-    } catch (JSONException exception) {
-      SDBGDebugCorePlugin.logError(exception);
-    }
-  }
-
-  protected void registerNotificationHandler(String prefix, NotificationHandler handler) {
-    notificationHandlers.put(prefix, handler);
-  }
-
-  public void removeConnectionListener(WebkitConnectionListener listener) {
-    connectionListeners.remove(listener);
-  }
-
-  protected void sendRequest(JSONObject request) throws IOException, JSONException {
-    sendRequest(request, null);
-  }
-
-  protected void sendRequest(JSONObject request, Callback callback) throws IOException,
-      JSONException {
-    if (!isConnected()) {
-      throw new IOException("connection terminated");
-    }
-
-    int id = 0;
-
-    try {
-      synchronized (this) {
-        id = getNextRequestId();
-
-        request.put("id", id);
-
-        if (callback != null) {
-          callbackMap.put(id, callback);
-        }
-      }
-
-      SDBGDebugCorePlugin.log("==> " + request);
-
-      websocket.send(request.toString());
-    } catch (WebSocketException exception) {
-      if (callback != null) {
-        synchronized (this) {
-          callbackMap.remove(id);
-        }
-      }
-
-      throw new IOException(exception);
     }
   }
 

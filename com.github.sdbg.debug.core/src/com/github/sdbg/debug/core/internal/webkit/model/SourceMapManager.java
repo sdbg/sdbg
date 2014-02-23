@@ -328,7 +328,10 @@ public class SourceMapManager {
         sourceMaps.remove(script);
       }
 
-      System.out.println("Processing script " + script);
+      if (SDBGDebugCorePlugin.LOGGING) {
+        System.out.println("Processing script " + script);
+      }
+
       processScript(script, sourceMapUrl);
     }
   }

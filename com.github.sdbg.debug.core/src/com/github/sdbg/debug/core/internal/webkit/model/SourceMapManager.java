@@ -198,7 +198,7 @@ public class SourceMapManager {
           if (mapping != null) {
             return new SourceLocation(
                 resolveStorage(mapStorage, mapping.getFile()),
-                mapping.getFile(),
+                relativisePath(mapStorage, mapping.getFile()),
                 mapping.getLine(),
                 mapping.getColumn(),
                 mapping.getName());
@@ -400,6 +400,44 @@ public class SourceMapManager {
     } catch (CoreException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  // TODO: It may turn out that this processing is language specific 
+  // and should be assisted by the language-specific integrations
+  private String relativisePath(IStorage relativeStorage, String path) {
+    URI uri = null;
+
+    try {
+      uri = new URI(path);
+      if (uri != null && uri.getScheme() != null) {
+        // In case the path is a full URI, only keep the path part of it
+        path = uri.getPath();
+      }
+    } catch (URISyntaxException e) {
+      // Do nothing
+    }
+
+    if (path.startsWith("/")) {
+      IPath parentPath = null;
+      if (relativeStorage instanceof IFile) {
+        parentPath = ((IFile) relativeStorage).getFullPath();
+      } else if (relativeStorage instanceof URLStorage) {
+        parentPath = ((URLStorage) relativeStorage).getFullPath();
+      }
+
+      if (parentPath != null) {
+        parentPath = parentPath.removeLastSegments(1);
+        String sParentPath = parentPath.toPortableString();
+        if (path.startsWith(sParentPath)) {
+          path = path.substring(sParentPath.length());
+          if (path.startsWith("/")) {
+            path = path.substring(1);
+          }
+        }
+      }
+    }
+
+    return path;
   }
 
   private IStorage resolveStorage(IStorage relativeStorage, String path) {

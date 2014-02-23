@@ -13,6 +13,11 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
+import com.github.sdbg.debug.core.model.ISDBGThread;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,11 +27,6 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IStackFrame;
-
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
-import com.github.sdbg.debug.core.model.ISDBGThread;
 
 /**
  * The IThread implementation for the Webkit debug elements.
@@ -83,45 +83,6 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
     return getDebugTarget().canTerminate();
   }
 
-  private IStackFrame[] createFrames(List<WebkitCallFrame> webkitFrames,
-      WebkitRemoteObject exception) {
-    List<IStackFrame> frames = new ArrayList<IStackFrame>();
-
-    for (int i = 0; i < webkitFrames.size(); i++) {
-      WebkitCallFrame webkitFrame = webkitFrames.get(i);
-
-      WebkitDebugStackFrame frame;
-
-      if (i == 0 && exception != null) {
-        frame = new WebkitDebugStackFrame(getTarget(), this, webkitFrame, exception);
-      } else {
-        frame = new WebkitDebugStackFrame(getTarget(), this, webkitFrame);
-      }
-
-      frames.add(frame);
-    }
-
-    return frames.toArray(new IStackFrame[frames.size()]);
-  }
-
-  private IBreakpoint getBreakpointFor(List<WebkitCallFrame> frames) {
-    if (frames.size() > 0) {
-      return getBreakpointFor(frames.get(0));
-    } else {
-      return null;
-    }
-  }
-
-  private IBreakpoint getBreakpointFor(WebkitCallFrame frame) {
-    BreakpointManager breakpointManager = getTarget().getBreakpointManager();
-
-    if (breakpointManager != null) {
-      return breakpointManager.getBreakpointFor(frame.getLocation());
-    } else {
-      return null;
-    }
-  }
-
   @Override
   public IBreakpoint[] getBreakpoints() {
     return suspendedBreakpoints;
@@ -146,7 +107,7 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
   public String getName() throws DebugException {
     // TODO(devoncarew): we need to be able to retrieve the list of isolates from the VM.
 
-    return "isolate-0" + (isSuspended() ? " [suspended]" : "");
+    return "JS Thread" + (isSuspended() ? " (Suspended)" : " (Running)");
   }
 
   @Override
@@ -166,49 +127,9 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
     return frames.length > 0 ? frames[0] : null;
   }
 
-  void handleDebuggerResumed() {
-    // clear data
-    suspended = false;
-    suspendedFrames = EMPTY_FRAMES;
-    suspendedBreakpoints = EMPTY_BREAKPOINTS;
-
-    // send event
-    int reason = expectedResumeReason;
-    expectedResumeReason = DebugEvent.UNSPECIFIED;
-
-    fireResumeEvent(reason);
-  }
-
-  protected void handleDebuggerSuspended(PausedReasonType pausedReason,
-      List<WebkitCallFrame> webkitFrames, WebkitRemoteObject exception) {
-    int reason = DebugEvent.BREAKPOINT;
-
-    if (expectedSuspendReason != DebugEvent.UNSPECIFIED) {
-      reason = expectedSuspendReason;
-      expectedSuspendReason = DebugEvent.UNSPECIFIED;
-    } else {
-      IBreakpoint breakpoint = getBreakpointFor(webkitFrames);
-
-      if (breakpoint != null) {
-        suspendedBreakpoints = new IBreakpoint[] {breakpoint};
-        reason = DebugEvent.BREAKPOINT;
-      }
-    }
-
-    suspended = true;
-
-    suspendedFrames = createFrames(webkitFrames, exception);
-
-    fireSuspendEvent(reason);
-  }
-
   @Override
   public boolean hasStackFrames() throws DebugException {
     return isSuspended();
-  }
-
-  private boolean isDisconnected() {
-    return getDebugTarget().isDisconnected();
   }
 
   @Override
@@ -309,6 +230,85 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
   @Override
   public void terminate() throws DebugException {
     getDebugTarget().terminate();
+  }
+
+  protected void handleDebuggerSuspended(PausedReasonType pausedReason,
+      List<WebkitCallFrame> webkitFrames, WebkitRemoteObject exception) {
+    int reason = DebugEvent.BREAKPOINT;
+
+    if (expectedSuspendReason != DebugEvent.UNSPECIFIED) {
+      reason = expectedSuspendReason;
+      expectedSuspendReason = DebugEvent.UNSPECIFIED;
+    } else {
+      IBreakpoint breakpoint = getBreakpointFor(webkitFrames);
+
+      if (breakpoint != null) {
+        suspendedBreakpoints = new IBreakpoint[] {breakpoint};
+        reason = DebugEvent.BREAKPOINT;
+      }
+    }
+
+    suspended = true;
+
+    suspendedFrames = createFrames(webkitFrames, exception);
+
+    fireSuspendEvent(reason);
+  }
+
+  void handleDebuggerResumed() {
+    // clear data
+    suspended = false;
+    suspendedFrames = EMPTY_FRAMES;
+    suspendedBreakpoints = EMPTY_BREAKPOINTS;
+
+    // send event
+    int reason = expectedResumeReason;
+    expectedResumeReason = DebugEvent.UNSPECIFIED;
+
+    fireResumeEvent(reason);
+  }
+
+  private IStackFrame[] createFrames(List<WebkitCallFrame> webkitFrames,
+      WebkitRemoteObject exception) {
+    List<IStackFrame> frames = new ArrayList<IStackFrame>();
+
+    for (int i = 0; i < webkitFrames.size(); i++) {
+      WebkitCallFrame webkitFrame = webkitFrames.get(i);
+
+      WebkitDebugStackFrame frame;
+
+      if (i == 0 && exception != null) {
+        frame = new WebkitDebugStackFrame(getTarget(), this, webkitFrame, exception);
+      } else {
+        frame = new WebkitDebugStackFrame(getTarget(), this, webkitFrame);
+      }
+
+      frames.add(frame);
+    }
+
+    return frames.toArray(new IStackFrame[frames.size()]);
+  }
+
+  private IBreakpoint getBreakpointFor(List<WebkitCallFrame> frames) {
+    if (frames.size() > 0) {
+      return getBreakpointFor(frames.get(0));
+    } else {
+      return null;
+    }
+  }
+
+  private IBreakpoint getBreakpointFor(WebkitCallFrame frame) {
+    BreakpointManager breakpointManager = getTarget().getBreakpointManager();
+
+    if (breakpointManager != null) {
+      return breakpointManager.getBreakpointFor(frame.getLocation());
+    } else {
+      return null;
+    }
+  }
+
+  private boolean isDisconnected() {
+    return getDebugTarget().isDisconnected();
   }
 
 }

@@ -1,9 +1,9 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="com.google.sdbg.debug.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="com.github.sdbg.debug.core" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="com.google.sdbg.debug.core" id="debugUIHelper" name="Debug UI Helper"/>
+         <meta.schema plugin="com.github.sdbg.debug.core" id="debugUIHelper" name="Debug UI Helper"/>
       </appinfo>
       <documentation>
          This extension point allows the definition of a Debug UI Helper - it exposes debug functionality to non-UI code.

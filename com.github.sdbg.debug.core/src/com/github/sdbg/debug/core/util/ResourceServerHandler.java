@@ -14,6 +14,9 @@
 
 package com.github.sdbg.debug.core.util;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.Streams;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,9 +55,6 @@ import org.eclipse.core.runtime.Path;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.utilities.Streams;
 
 // GET /index.html HTTP/1.1
 // Host: www.example.com
@@ -289,10 +289,7 @@ class ResourceServerHandler implements Runnable {
       HttpHeader header = parseHeader(in);
 
       if (header == null) {
-        if (SDBGDebugCorePlugin.LOGGING) {
-          System.out.println("resource server: socket closed early");
-        }
-
+        Trace.trace("Resource server: socket closed early");
         safeClose(socket);
       } else if (isAllowableConnection(socket, header)) {
         HttpResponse response;
@@ -306,11 +303,10 @@ class ResourceServerHandler implements Runnable {
           response = createErrorResponse("Request type " + header.method + " not supported.");
         }
 
-        if (SDBGDebugCorePlugin.LOGGING) {
-          System.out.println("resource server: " + header);
-
+        Trace.trace("Resource server: " + header);
+        if (Trace.TRACING) {
           if (response.responseCode != HttpResponse.OK) {
-            System.out.println("       response: " + response);
+            Trace.trace("       response: " + response);
           }
         }
 

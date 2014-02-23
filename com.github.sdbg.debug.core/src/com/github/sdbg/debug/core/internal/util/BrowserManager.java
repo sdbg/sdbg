@@ -26,6 +26,7 @@ import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.NetUtils;
 
 import java.io.File;
@@ -243,7 +244,7 @@ public class BrowserManager {
     // For now, we always start a debugging connection, even when we're not really debugging.
     boolean enableBreakpoints = enableDebugging;
 
-    monitor.beginTask("Launching Dartium...", enableDebugging ? 7 : 2);
+    monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
 
     File chromeExe = findChrome();
 
@@ -252,7 +253,7 @@ public class BrowserManager {
     String browserName = chromeExe.getName();
 
     // avg: 0.434 sec (old: 0.597)
-    LogTimer timer = new LogTimer("Dartium debug startup");
+    LogTimer timer = new LogTimer("Chrome debug startup");
 
     // avg: 55ms
     timer.startTask(browserName + " startup");
@@ -310,7 +311,7 @@ public class BrowserManager {
       monitor.worked(1);
 
       if (isProcessTerminated(browserProcess)) {
-        SDBGDebugCorePlugin.logError("Dartium output: " + dartiumOutput.toString());
+        SDBGDebugCorePlugin.logError("Chrome output: " + dartiumOutput.toString());
 
         throw new CoreException(new Status(
             IStatus.ERROR,
@@ -334,7 +335,7 @@ public class BrowserManager {
           resolver);
     }
 
-    DebugUIHelper.getHelper().activateApplication(chromeExe, "Chromium");
+    DebugUIHelper.getHelper().activateApplication(chromeExe, "Chrome");
 
     timer.stopTask();
     timer.stopTimer();
@@ -371,10 +372,10 @@ public class BrowserManager {
             "Unable to connect to Chromium"));
       }
 
-      // Even when Dartium has reported all the debuggable tabs to us, the debug
+      // Even when Chrome has reported all the debuggable tabs to us, the debug
       // server
       // may not yet have started up. Delay a small fixed amount of time.
-      sleep(100);
+      sleep(1000);
 
       WebkitConnection connection = new WebkitConnection(
           tab.getHost(),
@@ -407,10 +408,7 @@ public class BrowserManager {
       }
 
       debugTarget.openConnection(url, true);
-
-      if (SDBGDebugCorePlugin.LOGGING) {
-        System.out.println("Connected to WIP debug agent on port " + devToolsPortNumber);
-      }
+      Trace.trace("Connected to WIP debug agent on port " + devToolsPortNumber);
 
       timer.stopTask();
     } catch (IOException e) {
@@ -418,7 +416,7 @@ public class BrowserManager {
 
       IStatus status;
 
-      // Clean up the error message on certain connection failures to Dartium.
+      // Clean up the error message on certain connection failures to Chrome.
       // http://code.google.com/p/dart/issues/detail?id=4435
       if (e.toString().indexOf("connection failed: unknown status code 500") != -1) {
         SDBGDebugCorePlugin.logError(e);
@@ -426,7 +424,7 @@ public class BrowserManager {
         status = new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Dartium");
+            "Unable to connect to Chrome");
       } else {
         status = new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID, e.toString(), e);
       }
@@ -447,7 +445,7 @@ public class BrowserManager {
     arguments.add("--remote-debugging-port=" + devToolsPortNumber);
 
     // In order to start up multiple Chrome processes, we need to specify a different user dir.
-    arguments.add("--user-data-dir=" + getCreateUserDataDirectoryPath("dartium"));
+    arguments.add("--user-data-dir=" + getCreateUserDataDirectoryPath("chrome"));
 
     if (launchConfig.isEnableExperimentalWebkitFeatures()) {
       arguments.add("--enable-experimental-webkit-features");
@@ -498,7 +496,7 @@ public class BrowserManager {
       return chromeTab;
     }
 
-    StringBuilder builder = new StringBuilder("unable to locate target dartium tab [" + tabs.size()
+    StringBuilder builder = new StringBuilder("Unable to locate target Chrome tab [" + tabs.size()
         + " tabs]\n");
 
     for (ChromiumTabInfo tab : tabs) {
@@ -542,7 +540,7 @@ public class BrowserManager {
       }
 
       if (System.currentTimeMillis() > endTime) {
-        throw new IOException("Timed out trying to connect to Dartium");
+        throw new IOException("Timed out trying to connect to Chrome");
       }
 
       sleep(25);
@@ -553,26 +551,20 @@ public class BrowserManager {
     StringBuilder msg = new StringBuilder();
 
     if (output.length() != 0) {
-      msg.append("Dartium stdout: ").append(output).append("\n");
+      msg.append("Chrome stdout: ").append(output).append("\n");
     }
 
     boolean expired = false;
 
     if (output.length() != 0) {
-      if (output.indexOf("Dartium build has expired") != -1) {
+      if (output.indexOf("Chrome build has expired") != -1) {
         expired = true;
       }
 
       if (expired) {
-        msg.append("\nThis build of Dartium has expired.\n\n");
-        msg.append("Please download a new Dart Editor or Dartium build from \n");
-        msg.append("https://www.dartlang.org/tools/dartium/");
+        msg.append("\nThis build of Chrome has expired.\n\n");
+        msg.append("Please download a new Chrome build");
       }
-    }
-
-    if (DartCore.isLinux() && !expired) {
-      msg.append("\nFor information on how to setup your machine to run Dartium visit ");
-      msg.append("http://code.google.com/p/dart/wiki/PreparingYourMachine#Linux");
     }
 
     if (msg.length() != 0) {
@@ -612,7 +604,7 @@ public class BrowserManager {
               String str = new String(buffer, 0, count);
 
               // Log any browser process output to stdout.
-              if (SDBGDebugCorePlugin.LOGGING) {
+              if (Trace.TRACING) {
                 System.out.print(str);
               }
 

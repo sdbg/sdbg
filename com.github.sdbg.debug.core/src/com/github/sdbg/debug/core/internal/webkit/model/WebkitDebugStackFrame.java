@@ -28,6 +28,7 @@ import com.github.sdbg.debug.core.model.IExceptionStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue.IValueCallback;
 import com.github.sdbg.debug.core.model.IVariableResolver;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -257,19 +258,30 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
   @Override
   public String getLongName() {
-    String file = getFileOrLibraryName();
+    String file = getFileName();
+    if (file != null) {
+      try {
+        int lineNumber = getLineNumber();
+        if (lineNumber > 0) {
+          file += ":" + lineNumber;
+        }
+      } catch (DebugException e) {
+      }
+    }
 
-    return getShortName() + (file == null ? "" : " - " + file);
+    String name = getCallerName();
+    if (name != null && name.length() > 0) {
+      return name + "(" + (file != null ? file : "") + ")";
+    } else if (file != null) {
+      return file;
+    } else {
+      return "(code block)";
+    }
   }
 
   @Override
   public String getName() throws DebugException {
-//&&&!!!    
-//    if (DebuggerUtils.areSiblingNamesUnique(this)) {
-//      return getShortName();
-//    } else {
     return getLongName();
-//    }
   }
 
   @Override
@@ -279,15 +291,12 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
   @Override
   public String getShortName() {
-    if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
-      SourceMapManager.SourceLocation location = getMappedLocation();
-
-      if (location.getName() != null) {
-        return location.getName() + "()";
-      }
+    String callerName = getCallerName();
+    if (callerName != null && callerName.length() > 0) {
+      return getCallerName() + "()";
+    } else {
+      return "(code block)";
     }
-
-    return DebuggerUtils.demangleVmName(webkitFrame.getFunctionName()) + "()";
   }
 
   @Override
@@ -448,20 +457,21 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   protected String getMappedLocationPath() {
     SourceMapManager.SourceLocation targetLocation = getMappedLocation();
 
-    if (SDBGDebugCorePlugin.LOGGING) {
+    if (Trace.TRACING) {
       WebkitLocation sourceLocation = webkitFrame.getLocation();
       WebkitScript script = getConnection().getDebugger().getScript(sourceLocation.getScriptId());
       String scriptPath = script == null ? "null" : script.getUrl();
 
-      System.out.println("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","
+      Trace.trace("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","
           + sourceLocation.getColumnNumber() + "] ==> mapped to " + targetLocation);
     }
 
-    if (targetLocation.getStorage() != null) {
-      return targetLocation.getStorage().getFullPath().toPortableString();
-    } else {
-      return targetLocation.getPath();
-    }
+//!!!
+//    if (targetLocation.getStorage() instanceof IFile) {
+//      return targetLocation.getStorage().getFullPath().toPortableString();
+//    } else {
+    return targetLocation.getPath();
+//    }
   }
 
   protected IVariable getThisVariable() throws DebugException {
@@ -510,7 +520,22 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
         exception);
   }
 
-  private String getFileOrLibraryName() {
+  private String getCallerName() {
+    String name = null;
+
+    if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
+      SourceMapManager.SourceLocation location = getMappedLocation();
+      name = location.getName();
+    }
+
+    if (name == null) {
+      name = DebuggerUtils.demangleVmName(webkitFrame.getFunctionName());
+    }
+
+    return name;
+  }
+
+  private String getFileName() {
     String path = getSourceLocationPath();
 
     if (path != null) {

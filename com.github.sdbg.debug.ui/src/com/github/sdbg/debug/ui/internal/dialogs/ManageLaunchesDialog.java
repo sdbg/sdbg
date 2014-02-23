@@ -14,12 +14,14 @@
 
 package com.github.sdbg.debug.ui.internal.dialogs;
 
-import com.github.sdbg.core.DartCoreDebug;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -70,9 +72,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.internal.WorkbenchPlugin;
-
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 /**
  * A dialog to create, edit, and manage launch configurations.
@@ -486,8 +485,8 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
         CreateLaunchAction action = new CreateLaunchAction(this, configType);
         toolBarManager.add(action);
       } else {
-        if ((configType.getIdentifier().contains("pubServe") && DartCoreDebug.ENABLE_PUB_SERVE_LAUNCH)
-            || (configType.getIdentifier().contains("chromeApp") && DartCoreDebug.ENABLE_CHROME_APP_LAUNCH_CONFIG)) {
+        if ((configType.getIdentifier().contains("pubServe") && false/*&&&DartCoreDebug.ENABLE_PUB_SERVE_LAUNCH*/)
+            || (configType.getIdentifier().contains("chromeApp") /*&& DartCoreDebug.ENABLE_CHROME_APP_LAUNCH_CONFIG*/)) {
 
           CreateLaunchAction action = new CreateLaunchAction(this, configType);
           toolBarManager.add(action);

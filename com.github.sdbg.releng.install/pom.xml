@@ -5,15 +5,20 @@
 
   <parent>
     <groupId>com.github.sdbg</groupId>
-    <version>0.0.0.qualifier</version>
+    <version>0.1.6.qualifier</version>
     <artifactId>com.github.sdbg.parent</artifactId>
   </parent>
 
   <artifactId>com.github.sdbg.releng.install</artifactId>
   <properties>
+    <eclipse.url>http://download.eclipse.org</eclipse.url>
+    <eclipse.version>kepler</eclipse.version>
+    <eclipse.version.number>4.3</eclipse.version.number>
+    <eclipse.version.text>e43</eclipse.version.text>
+    <eclipse.repo.url>${eclipse.url}/releases/${eclipse.version}</eclipse.repo.url>
     <eclipse.destination>${project.basedir}/target/eclipse</eclipse.destination>
     <features>org.eclipse.sdk.ide,org.eclipse.platform,org.eclipse.equinox.p2.core.feature.feature.group,org.eclipse.jdt,org.eclipse.m2e.feature.feature.group,org.jboss.tools.m2e.jdt.feature.feature.group,org.eclipse.m2e.logback.feature.feature.group,com.github.sdbg.debug.ui</features>
-    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.p2/target/repository</sites>
+    <sites>${eclipse.url}/releases/${eclipse.version},${eclipse.url}/webtools/repository/${eclipse.version},${eclipse.url}/technology/m2e/releases,http://download.jboss.org/jbosstools/updates/m2e-extensions/m2e-jdt-compiler/,file://${project.parent.basedir}/com.github.sdbg.releng.p2/target/repository</sites>
   </properties>
   <build>
     <plugins>
@@ -84,6 +89,41 @@
             </executions>
         </plugin>
     </plugins>
-</build>
+    <pluginManagement>
+    	<plugins>
+    		<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+    		<plugin>
+    			<groupId>org.eclipse.m2e</groupId>
+    			<artifactId>lifecycle-mapping</artifactId>
+    			<version>1.0.0</version>
+    			<configuration>
+    				<lifecycleMappingMetadata>
+    					<pluginExecutions>
+    						<pluginExecution>
+    							<pluginExecutionFilter>
+    								<groupId>
+    									org.eclipse.tycho.extras
+    								</groupId>
+    								<artifactId>
+    									tycho-eclipserun-plugin
+    								</artifactId>
+    								<versionRange>
+    									[0.19.0,)
+    								</versionRange>
+    								<goals>
+    									<goal>eclipse-run</goal>
+    								</goals>
+    							</pluginExecutionFilter>
+    							<action>
+    								<ignore></ignore>
+    							</action>
+    						</pluginExecution>
+    					</pluginExecutions>
+    				</lifecycleMappingMetadata>
+    			</configuration>
+    		</plugin>
+    	</plugins>
+    </pluginManagement>
+  </build>
 
 </project>

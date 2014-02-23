@@ -13,13 +13,14 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.model.IValue;
-
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
+import com.github.sdbg.debug.core.util.Trace;
+
+import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IValue;
 
 /**
  * The IVariable implementation of the Webkit Debug Element.
@@ -123,14 +124,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     return isLibraryObject;
   }
 
-  private boolean isListMember() {
-    if (parent != null && parent.isListValue()) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
   public boolean isListValue() {
     try {
       return ((WebkitDebugValue) getValue()).isListValue();
@@ -162,18 +155,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     return isSpecialObject && descriptor.getName().equals("exception");
   }
 
-  protected void setIsLibraryObject(boolean value) {
-    this.isLibraryObject = value;
-  }
-
-  protected void setIsStatic(boolean value) {
-    isStatic = value;
-  }
-
-  protected void setParent(WebkitDebugVariable parent) {
-    this.parent = parent;
-  }
-
   @Override
   public void setValue(IValue value) throws DebugException {
     setValue(value.getValueString());
@@ -184,7 +165,7 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     if (SDBGDebugCorePlugin.VM_SUPPORTS_VALUE_MODIFICATION) {
       // TODO(devoncarew):
 
-      System.out.println("change: " + expression);
+      Trace.trace("Change: " + expression);
     }
   }
 
@@ -212,6 +193,26 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     // TODO(devoncarew): do verification for numbers
 
     return true;
+  }
+
+  protected void setIsLibraryObject(boolean value) {
+    this.isLibraryObject = value;
+  }
+
+  protected void setIsStatic(boolean value) {
+    isStatic = value;
+  }
+
+  protected void setParent(WebkitDebugVariable parent) {
+    this.parent = parent;
+  }
+
+  private boolean isListMember() {
+    if (parent != null && parent.isListValue()) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
 }

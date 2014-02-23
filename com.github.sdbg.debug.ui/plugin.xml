@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="sourcePresentation" name="Source Presentation" schema="schema/sourcePresentation.exsd"/>
     <extension
          point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
@@ -64,7 +65,7 @@
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
             configTypeID="com.github.sdbg.debug.core.chromeLaunchConfig"
-            icon="icons/chromium_16.png"
+            icon="icons/chrome.png"
             id="com.github.sdbg.debug.core.chromeLaunchConfigImage">
       </launchConfigurationTypeImage>
    </extension>
@@ -83,9 +84,9 @@
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
-            icon="icons/chromium_16.png"
+            icon="icons/chrome.png"
             id="com.github.sdbg.debug.ui.chromeLaunchShortcut"
-            label="%dart.chromelaunch.shortcut.label"
+            label="%sdbg.chromelaunch.shortcut.label"
             modes="run,debug">
          <configurationType
                id="com.github.sdbg.debug.core.chromeLaunchConfig">
@@ -205,7 +206,7 @@
             class="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut"
             icon="icons/obj16/globe_dark.png"
             id="com.github.sdbg.debug.ui.browserLaunchShortcut"
-            label="%dart.clientlaunch.shortcut.label"
+            label="%sdbg.clientlaunch.shortcut.label"
             modes="run">
          <configurationType
                id="com.github.sdbg.debug.core.browserLaunchConfig">
@@ -323,7 +324,7 @@
             name="Source not available"
             icon="icons/obj16/dart.png"
             class="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor"
-            id="com.github.sdbg.debug.ui.internal.presentation.DartSourceNotFoundEditor">
+            id="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor">
       </editor>
    </extension>
    
@@ -793,7 +794,6 @@
          </visibility>
       </objectContribution>      
    </extension>
-
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"

@@ -19,6 +19,7 @@ import com.github.sdbg.debug.core.internal.source.WorkspaceSourceContainer;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMap;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMapInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -95,8 +96,8 @@ public class SourceMapManager {
 
     @Override
     public String toString() {
-      return "[" + (storage != null ? storage : path) + "," + line + "," + column + "," + name
-          + "]";
+      return "[" + (storage != null ? storage : "") + "," + path + "," + line + "," + column + ","
+          + name + "]";
     }
   }
 
@@ -164,6 +165,11 @@ public class SourceMapManager {
     public boolean isReadOnly() {
       return true;
     }
+
+    @Override
+    public String toString() {
+      return "URLStorage[" + url + "]";
+    }
   }
 
   private IResourceResolver resourceResolver;
@@ -188,6 +194,10 @@ public class SourceMapManager {
    * @return
    */
   public SourceLocation getMappingFor(IStorage storage, int line, int column) {
+    if (Trace.TRACING) {
+      Trace.trace("Get mappings for " + storage + ":" + line + ":" + column);
+    }
+
     synchronized (sourceMaps) {
       IStorage mapStorage = sourceMapsStorages.get(storage);
       if (mapStorage != null) {
@@ -196,12 +206,18 @@ public class SourceMapManager {
           SourceMapInfo mapping = map.getMappingFor(line, column);
 
           if (mapping != null) {
-            return new SourceLocation(
+            SourceLocation location = new SourceLocation(
                 resolveStorage(mapStorage, mapping.getFile()),
-                mapping.getFile(),
+                relativisePath(mapStorage, mapping.getFile()),
                 mapping.getLine(),
                 mapping.getColumn(),
                 mapping.getName());
+
+            if (Trace.TRACING) {
+              Trace.trace("Found mapping: " + location);
+            }
+
+            return location;
           }
         }
       }
@@ -218,7 +234,11 @@ public class SourceMapManager {
    * @param line
    * @return
    */
-  public List<SourceLocation> getReverseMappingsFor(IStorage targetStorage, int line) {
+  public List<SourceLocation> getReverseMappingsFor(String targetPath, int line) {
+    if (Trace.TRACING) {
+      Trace.trace("Get reverse mappings for " + targetPath + ":" + line);
+    }
+
     List<SourceLocation> mappings = new ArrayList<SourceMapManager.SourceLocation>();
 
     synchronized (sourceMaps) {
@@ -228,11 +248,14 @@ public class SourceMapManager {
 
         for (String path : map.getSourceNames()) {
           // TODO(devoncarew): the files in the maps should all be pre-resolved
-          IStorage storage = resolveStorage(mapStorage, path);
+          String relativePath = relativisePath(mapStorage, path);
+          if (Trace.TRACING
+              && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
+            Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+          }
 
-          if (storage != null && storage.equals(targetStorage)) {
+          if (targetPath.equals(relativePath)) {
             List<SourceMapInfo> reverseMappings = map.getReverseMappingsFor(path, line);
-
             for (SourceMapInfo reverseMapping : reverseMappings) {
               if (reverseMapping != null) {
                 IStorage mapSource = scriptStorage; //&&&!!! map.getMapSource();
@@ -246,6 +269,10 @@ public class SourceMapManager {
                       reverseMapping.getName()));
                 }
               }
+            }
+
+            if (Trace.TRACING && !mappings.isEmpty()) {
+              Trace.trace("Found reverse mappings: " + mappings);
             }
           }
         }
@@ -290,24 +317,44 @@ public class SourceMapManager {
    */
   public boolean isMapSource(IStorage storage) { //&&&!!! There can be race conditions because of that method
     if (storage != null) {
+      if (Trace.TRACING) {
+        Trace.trace("Check for map source: " + storage);
+      }
+
       synchronized (sourceMaps) {
-        return sourceMapsStorages.containsKey(storage);
+        boolean result = sourceMapsStorages.containsKey(storage);
+
+        if (Trace.TRACING && result) {
+          Trace.trace("Confirmed - map source");
+        }
+
+        return result;
       }
     }
 
     return false;
   }
 
-  public boolean isMapTarget(IStorage targetStorage) { //&&&!!! There can be race conditions because of that method
-    if (targetStorage != null) {
-      synchronized (sourceMaps) {
-        for (IStorage sourceStorage : sourceMaps.keySet()) {
-          SourceMap map = sourceMaps.get(sourceStorage);
-          for (String path : map.getSourceNames()) {
-            // TODO(devoncarew): the files in the maps should all be pre-resolved
-            IStorage storage = resolveStorage(sourceStorage, path);
+  public boolean isMapTarget(String targetPath) { //&&&!!! There can be race conditions because of that method
+    if (targetPath != null) {
+      if (Trace.TRACING) {
+        Trace.trace("Check for map target: " + targetPath);
+      }
 
-            if (storage != null && storage.equals(targetStorage)) {
+      synchronized (sourceMaps) {
+        for (IStorage mapStorage : sourceMaps.keySet()) {
+          SourceMap map = sourceMaps.get(mapStorage);
+          for (String path : map.getSourceNames()) {
+            String relativePath = relativisePath(mapStorage, path);
+            if (Trace.TRACING
+                && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
+              Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+            }
+
+            if (targetPath.equals(relativePath)) {
+              if (Trace.TRACING) {
+                Trace.trace("Confirmed - map target");
+              }
               return true;
             }
           }
@@ -331,8 +378,7 @@ public class SourceMapManager {
       if (mapStorage != null) {
         sourceMaps.remove(script);
       }
-
-      System.out.println("Processing script " + script);
+      Trace.trace("Checking script for sourcemaps: " + script);
       processScript(script, sourceMapUrl);
     }
   }
@@ -380,6 +426,7 @@ public class SourceMapManager {
             Properties properties = new Properties();
             properties.load(new StringReader(sourceMapUrlLine));
             sourceMapUrl = properties.getProperty("sourceMapURL");
+            Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
           }
         } finally {
           reader.close();
@@ -405,6 +452,44 @@ public class SourceMapManager {
     } catch (CoreException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  // TODO: It may turn out that this processing is language specific 
+  // and should be assisted by the language-specific integrations
+  private String relativisePath(IStorage relativeStorage, String path) {
+    URI uri = null;
+
+    try {
+      uri = new URI(path);
+      if (uri != null && uri.getScheme() != null) {
+        // In case the path is a full URI, only keep the path part of it
+        path = uri.getPath();
+      }
+    } catch (URISyntaxException e) {
+      // Do nothing
+    }
+
+    if (path.startsWith("/")) {
+      IPath parentPath = null;
+      if (relativeStorage instanceof IFile) {
+        parentPath = ((IFile) relativeStorage).getFullPath();
+      } else if (relativeStorage instanceof URLStorage) {
+        parentPath = ((URLStorage) relativeStorage).getFullPath();
+      }
+
+      if (parentPath != null) {
+        parentPath = parentPath.removeLastSegments(1);
+        String sParentPath = parentPath.toPortableString();
+        if (path.startsWith(sParentPath)) {
+          path = path.substring(sParentPath.length());
+          if (path.startsWith("/")) {
+            path = path.substring(1);
+          }
+        }
+      }
+    }
+
+    return path;
   }
 
   private IStorage resolveStorage(IStorage relativeStorage, String path) {

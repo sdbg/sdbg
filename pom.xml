@@ -5,46 +5,29 @@
 
   <groupId>com.github.sdbg</groupId>
   <artifactId>com.github.sdbg.parent</artifactId>
-  <version>0.0.0.qualifier</version>
+  <version>0.1.6.qualifier</version>
   <packaging>pom</packaging>
 
   <properties>
     <tycho-version>0.19.0</tycho-version>
     <tycho-extras-version>0.19.0</tycho-extras-version>
-    <eclipse.url>http://download.eclipse.org</eclipse.url>
-    <eclipse.version>kepler</eclipse.version>
-    <eclipse.version.number>4.3</eclipse.version.number>
-    <eclipse.version.text>e43</eclipse.version.text>
-    <eclipse.repo.url>${eclipse.url}/releases/${eclipse.version}</eclipse.repo.url>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
-
-  <!--
-  Using this repo will cause the build to check for updates unless -o is specified for offline mode.
-  The "Maven Way" would be to add this repo to your settings.xml, but for the sake of a robust build,
-  we include it here, so we can create test launch configurations that can download and launch an
-  eclipse instance without requiring the user (or jenkins) to download or configure anything by hand.
-  -->
-  <repositories>
-    <repository>
-      <id>eclipse</id>
-      <url>${eclipse.repo.url}</url>
-      <layout>p2</layout>
-    </repository>
-  </repositories>
 
   <modules>
     <module>com.github.sdbg.debug.core</module>
     <module>com.github.sdbg.debug.core_test</module>
     <module>com.github.sdbg.debug.ui</module>
+    <module>com.github.sdbg.integration.jdt</module>
     <module>com.github.sdbg.feature</module>
-    <module>com.github.sdbg.p2</module>
+    <module>com.github.sdbg.releng.p2</module>
+    <module>com.github.sdbg.releng.targetplatform</module>
   </modules>
 
   <build>
     <sourceDirectory>src</sourceDirectory>
-    <outputDirectory>bin</outputDirectory>
     <testSourceDirectory>test</testSourceDirectory>
+    <outputDirectory>bin</outputDirectory>
     <plugins>
       <plugin>
         <groupId>org.eclipse.tycho</groupId>
@@ -55,7 +38,25 @@
           <pomDependencies>consider</pomDependencies>
         </configuration>
       </plugin>
+      <plugin>  
+        <groupId>org.eclipse.tycho</groupId>  
+        <artifactId>target-platform-configuration</artifactId>  
+        <version>${tycho-version}</version>  
+        <configuration>  
+		  <target>  
+		   <artifact>  
+		    <groupId>com.github.sdbg</groupId>  
+		    <artifactId>com.github.sdbg.releng.targetplatform</artifactId>  
+		    <version>0.0.0.qualifier</version>  
+		   </artifact>  
+		  </target>  
+        </configuration>  
+      </plugin>
+      <plugin>  
+        <groupId>org.eclipse.tycho</groupId>  
+        <artifactId>tycho-versions-plugin</artifactId>  
+        <version>${tycho-version}</version>  
+      </plugin> 
     </plugins>
   </build>
-
 </project>

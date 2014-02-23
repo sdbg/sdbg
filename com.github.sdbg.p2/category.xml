@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<site>
-   <feature url="features/com.github.sdbg.feature_0.0.0.qualifier.jar" id="com.github.sdbg.feature" version="0.0.0.qualifier"/>
-   <category-def name="com.github.sdbg.plugin" label="Source Map Debugger"/>
-</site>

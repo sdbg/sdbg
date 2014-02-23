@@ -15,15 +15,18 @@
 package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +36,9 @@ import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointListener;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -53,6 +59,8 @@ public class BreakpointManager implements IBreakpointListener {
   private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
 
   private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
+
+  private Collection<IBreakpointPathResolver> breakpointPathResolvers;
 
   public BreakpointManager(WebkitDebugTarget debugTarget) {
     this.debugTarget = debugTarget;
@@ -250,7 +258,6 @@ public class BreakpointManager implements IBreakpointListener {
 
   void handleGlobalObjectCleared() {
     //&&&!!! Breakpoints' cleanup code should be present here?!
-    System.out.println("!!!");
   }
 
   void updateBreakpointsConcerningScript(IStorage script) {
@@ -270,48 +277,28 @@ public class BreakpointManager implements IBreakpointListener {
       if (bp.isEnabled() && bp instanceof ILineBreakpoint) {
         final ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
 
-        String regex = getResourceResolver().getUrlRegexForResource(
-            breakpoint.getMarker().getResource());
+        String path = null;
+        for (IBreakpointPathResolver resolver : getBreakpointPathResolvers()) {
+          if (resolver.isSupported(bp)) {
+            path = resolver.getPath(bp);
+            break;
+          }
+        }
+
+        String regex;
+        if (path != null) {
+          regex = path;
+        } else {
+          regex = getResourceResolver().getUrlRegexForResource(breakpoint.getMarker().getResource());
+        }
 
         if (regex == null) {
           return;
         }
 
         int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLineNumber());
+        Trace.trace("Set breakpoint [" + regex + "," + line + "]");
 
-//&&&      
-//      int packagesIndex = regex.indexOf(PACKAGES_DIRECTORY_PATH);
-//
-//      if (packagesIndex != -1) {
-//        // convert xxx/packages/foo/foo.dart to *foo/foo.dart
-//        regex = regex.substring(packagesIndex + PACKAGES_DIRECTORY_PATH.length());
-//      } else if (isInSelfLinkedLib(breakpoint.getFile())) {
-//        // Check if source is located in the "lib" directory; if there is a link to it from the 
-//        // packages directory breakpoint should be /packages/...
-//        String packageName = DartCore.getSelfLinkedPackageName(breakpoint.getFile());
-//
-//        if (packageName != null) {
-//          // Create a breakpoint for self-links.
-//          int libIndex = regex.lastIndexOf(LIB_DIRECTORY_PATH);
-//          String packageRegex = packageName + "/"
-//              + regex.substring(libIndex + LIB_DIRECTORY_PATH.length());
-//
-//          debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
-//              null,
-//              packageRegex,
-//              line,
-//              -1,
-//              new WebkitCallback<String>() {
-//                @Override
-//                public void handleResult(WebkitResult<String> result) {
-//                  if (!result.isError()) {
-//                    addToBreakpointMap(breakpoint, result.getResult(), false);
-//                  }
-//                }
-//              });
-//        }
-//      }
-//
         debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
             null,
             regex,
@@ -330,9 +317,9 @@ public class BreakpointManager implements IBreakpointListener {
         // source mapping.
         SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
 
-        if (sourceMapManager.isMapTarget((IFile) breakpoint.getMarker().getResource())) {
+        if (sourceMapManager.isMapTarget(path)) {
           List<SourceMapManager.SourceLocation> locations = sourceMapManager.getReverseMappingsFor(
-              (IFile) breakpoint.getMarker().getResource(),
+              path,
               line);
 
           for (SourceMapManager.SourceLocation location : locations) {
@@ -348,12 +335,12 @@ public class BreakpointManager implements IBreakpointListener {
             }
 
             if (mappedRegex != null) {
-              if (SDBGDebugCorePlugin.LOGGING) {
-                System.out.println("breakpoint [" + regex + ","
-                    + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
-                    + ",-1] ==> mapped to [" + mappedRegex + "," + location.getLine() + ","
-                    + location.getColumn() + "]");
-              }
+              Trace.trace("Breakpoint [" + regex + ","
+                  + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
+                  + ",-1] ==> mapped to [" + mappedRegex + "," + location.getLine() + ","
+                  + location.getColumn() + "]");
+
+              Trace.trace("Set breakpoint [" + mappedRegex + "," + location.getLine() + "]");
 
               debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
                   null,
@@ -377,8 +364,23 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-  private IResourceResolver getResourceResolver() {
-    return debugTarget.getResourceResolver();
+  private Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
+    if (breakpointPathResolvers == null) {
+      breakpointPathResolvers = new ArrayList<IBreakpointPathResolver>();
+
+      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
+          IBreakpointPathResolver.EXTENSION_ID);
+      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
+        try {
+          breakpointPathResolvers.add((IBreakpointPathResolver) element.createExecutableExtension("class"));
+        } catch (CoreException e) {
+          SDBGDebugCorePlugin.logError(e);
+        }
+      }
+
+    }
+
+    return breakpointPathResolvers;
   }
 
 //&&&  
@@ -408,4 +410,8 @@ public class BreakpointManager implements IBreakpointListener {
 //    return isPubLib(container.getParent());
 //  }
 //
+
+  private IResourceResolver getResourceResolver() {
+    return debugTarget.getResourceResolver();
+  }
 }

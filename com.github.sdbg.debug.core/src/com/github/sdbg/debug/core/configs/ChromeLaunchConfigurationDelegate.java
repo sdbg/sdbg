@@ -13,6 +13,15 @@
  */
 package com.github.sdbg.debug.core.configs;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.model.IRemoteConnectionDelegate;
+import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
+
 import java.util.concurrent.Semaphore;
 
 import org.eclipse.core.resources.IFile;
@@ -25,16 +34,6 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IDebugTarget;
-
-import com.github.sdbg.core.DartCoreDebug;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
-import com.github.sdbg.debug.core.model.IRemoteConnectionDelegate;
-import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
-import com.github.sdbg.debug.core.util.IBrowserTabChooser;
-import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 /**
  * The launch configuration delegate for the com.github.sdbg.debug.core.chromeLaunchConfig launch
@@ -78,12 +77,20 @@ public class ChromeLaunchConfigurationDelegate extends SDBGLaunchConfigurationDe
     }
   }
 
+  @Override
+  public IDebugTarget performRemoteConnection(String host, int port, IProgressMonitor monitor)
+      throws CoreException {
+    BrowserManager browserManager = new BrowserManager();
+
+    return browserManager.performRemoteConnection(tabChooser, host, port, monitor);
+  }
+
   private void launchImpl(SDBGLaunchConfigWrapper launchConfig, String mode, ILaunch launch,
       IProgressMonitor monitor) throws CoreException {
     launchConfig.markAsLaunched();
 
-    boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode)
-        && !DartCoreDebug.DISABLE_BROWSER_DEBUGGER;
+    boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
+    //&&&&& !DartCoreDebug.DISABLE_BROWSER_DEBUGGER;
 
     // Launch the browser - show errors if we couldn't.
     IResource resource = null;
@@ -109,14 +116,6 @@ public class ChromeLaunchConfigurationDelegate extends SDBGLaunchConfigurationDe
     } else {
       manager.launchBrowser(launch, launchConfig, url, monitor, enableDebugging);
     }
-  }
-
-  @Override
-  public IDebugTarget performRemoteConnection(String host, int port, IProgressMonitor monitor)
-      throws CoreException {
-    BrowserManager browserManager = new BrowserManager();
-
-    return browserManager.performRemoteConnection(tabChooser, host, port, monitor);
   }
 
 }

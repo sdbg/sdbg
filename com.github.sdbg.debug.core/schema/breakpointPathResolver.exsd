@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Schema file written by PDE -->
+<schema targetNamespace="com.github.sdbg.debug.core" xmlns="http://www.w3.org/2001/XMLSchema">
+<annotation>
+      <appinfo>
+         <meta.schema plugin="com.github.sdbg.debug.core" id="breakpointPathResolver" name="Breakpoint Path Resolver"/>
+      </appinfo>
+      <documentation>
+         This extension point allows the definition of a breakpoint path resolver. 
+         Give a breakpoint, the breakpoint path resolver can return the file path for which the breakpoint is set. 
+         This extension is useful for languages that support setting breakpoints on files which are not resources in the workspace. 
+         One such example is the Java Development Tools debugger, which allows setting of breakpoints on classes which are part of the JRE or inside JAR archives.
+         Note that the returned file path is always relative, as it cannot possibly uniquely identify the class in the workspace, because, as already mentioned,
+         the class may well not exist as a Resource in the workspace in the first place.   
+      </documentation>
+   </annotation>
+
+   <element name="extension">
+      <annotation>
+         <appinfo>
+            <meta.element />
+         </appinfo>
+      </annotation>
+      <complexType>
+         <sequence>
+            <element ref="resolver"/>
+         </sequence>
+         <attribute name="point" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="id" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+            </annotation>
+         </attribute>
+         <attribute name="name" type="string">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute translatable="true"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+
+   <element name="resolver">
+      <complexType>
+         <attribute name="class" type="string" use="required">
+            <annotation>
+               <documentation>
+                  
+               </documentation>
+               <appinfo>
+                  <meta.attribute kind="java" basedOn="com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver:"/>
+               </appinfo>
+            </annotation>
+         </attribute>
+      </complexType>
+   </element>
+   <annotation>
+      <appinfo>
+         <meta.section type="examples"/>
+      </appinfo>
+      <documentation>
+         To declare a breakpoint path resolver:
+
+&lt;pre&gt;
+   &lt;extension point=&quot;com.github.sdbg.debug.core.breakpointPathResolver&quot;&gt;
+      &lt;owner class=&quot;com.xyz.MyLangBreakpointPathResolver&quot;/&gt;
+   &lt;/extension&gt;
+&lt;/pre&gt;
+
+Note that a language should only ever declare one implementation of a breakpoint path resolver.
+      </documentation>
+   </annotation>
+</schema>

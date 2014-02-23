@@ -13,6 +13,12 @@
  */
 package com.github.sdbg.debug.core;
 
+import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
+import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.debug.core.util.Trace;
+import com.github.sdbg.utilities.StringUtilities;
+
 import java.io.IOException;
 
 import org.eclipse.core.runtime.IStatus;
@@ -25,12 +31,6 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IDebugEventSetListener;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
-
-import com.github.sdbg.core.DartCoreDebug;
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
-import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
-import com.github.sdbg.debug.core.util.ResourceServerManager;
-import com.github.sdbg.utilities.StringUtilities;
 
 /**
  * The plugin activator for the com.github.sdbg.debug.core plugin.
@@ -57,11 +57,6 @@ public class SDBGDebugCorePlugin extends Plugin {
    * The debug model ID.
    */
   public static final String DEBUG_MODEL_ID = "com.github.sdbg.debug.core"; //$NON-NLS-1$
-
-  /**
-   * If true, causes the Debug plugin to log to the Eclipse .log.
-   */
-  public static final boolean LOGGING = DartCoreDebug.LOGGING_DEBUGGER;
 
   // TODO(devoncarew): remove this when the debugger supports value modification
   public static boolean VM_SUPPORTS_VALUE_MODIFICATION = false;
@@ -100,8 +95,6 @@ public class SDBGDebugCorePlugin extends Plugin {
   // TODO(keertip): preference used to clear manage launches dialog settings, remove before M6 
   private static final String PREFS_CLEAR_LAUNCHES_DIALOG_SETTINGS = "launchesDialogSettings";
 
-  private static long loggingStart = System.currentTimeMillis();
-
   /**
    * Create a Status object with the given message and this plugin's ID.
    * 
@@ -125,11 +118,7 @@ public class SDBGDebugCorePlugin extends Plugin {
    * @param str
    */
   public static void log(String str) {
-    if (LOGGING) {
-      long time = System.currentTimeMillis() - loggingStart;
-
-      System.out.printf("[%.3f %s]\n", (time / 1000.0), str);
-    }
+    Trace.trace(str);
   }
 
   /**
@@ -191,7 +180,7 @@ public class SDBGDebugCorePlugin extends Plugin {
    * @param message
    */
   public static void logInfo(String message) {
-    if (LOGGING && getPlugin() != null) {
+    if (Trace.TRACING && getPlugin() != null) {
       getPlugin().getLog().log(new Status(IStatus.INFO, PLUGIN_ID, message));
     }
   }

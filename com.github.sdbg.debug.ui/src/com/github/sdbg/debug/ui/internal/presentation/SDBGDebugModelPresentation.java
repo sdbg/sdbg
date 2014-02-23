@@ -125,6 +125,10 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
   @Override
   public String getEditorId(IEditorInput input, Object element) {
+    if (input instanceof SDBGSourceNotFoundEditorInput) {
+      return SDBGSourceNotFoundEditor.EDITOR_ID;
+    }
+
     for (ISourcePresentation sourcePresentation : getSourcePresentations()) {
       String editorId = sourcePresentation.getEditorId(input, element);
       if (editorId != null) {

@@ -257,34 +257,30 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
   @Override
   public String getLongName() {
-    String name = getShortName();
-
     String file = getFileName();
     if (file != null) {
-      name += "(" + file;
-
       try {
         int lineNumber = getLineNumber();
         if (lineNumber > 0) {
-          name += ":" + lineNumber;
+          file += ":" + lineNumber;
         }
       } catch (DebugException e) {
       }
-
-      name += ")";
     }
 
-    return name;
+    String name = getCallerName();
+    if (name != null && name.length() > 0) {
+      return name + "(" + (file != null ? file : "") + ")";
+    } else if (file != null) {
+      return file;
+    } else {
+      return "(code block)";
+    }
   }
 
   @Override
   public String getName() throws DebugException {
-//&&&!!!    
-//    if (DebuggerUtils.areSiblingNamesUnique(this)) {
-//      return getShortName();
-//    } else {
     return getLongName();
-//    }
   }
 
   @Override
@@ -294,15 +290,12 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
   @Override
   public String getShortName() {
-    if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
-      SourceMapManager.SourceLocation location = getMappedLocation();
-
-      if (location.getName() != null) {
-        return location.getName() + "()";
-      }
+    String callerName = getCallerName();
+    if (callerName != null && callerName.length() > 0) {
+      return getCallerName() + "()";
+    } else {
+      return "(code block)";
     }
-
-    return DebuggerUtils.demangleVmName(webkitFrame.getFunctionName()) + "()";
   }
 
   @Override
@@ -524,6 +517,21 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
         remoteObjects,
         null,
         exception);
+  }
+
+  private String getCallerName() {
+    String name = null;
+
+    if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
+      SourceMapManager.SourceLocation location = getMappedLocation();
+      name = location.getName();
+    }
+
+    if (name == null) {
+      name = DebuggerUtils.demangleVmName(webkitFrame.getFunctionName());
+    }
+
+    return name;
   }
 
   private String getFileName() {

@@ -257,7 +257,6 @@ public class BreakpointManager implements IBreakpointListener {
 
   void handleGlobalObjectCleared() {
     //&&&!!! Breakpoints' cleanup code should be present here?!
-    System.out.println("!!!");
   }
 
   void updateBreakpointsConcerningScript(IStorage script) {

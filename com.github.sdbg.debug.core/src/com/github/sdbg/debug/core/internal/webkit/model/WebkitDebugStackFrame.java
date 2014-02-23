@@ -28,6 +28,7 @@ import com.github.sdbg.debug.core.model.IExceptionStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue.IValueCallback;
 import com.github.sdbg.debug.core.model.IVariableResolver;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -456,12 +457,12 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   protected String getMappedLocationPath() {
     SourceMapManager.SourceLocation targetLocation = getMappedLocation();
 
-    if (SDBGDebugCorePlugin.LOGGING) {
+    if (Trace.TRACING) {
       WebkitLocation sourceLocation = webkitFrame.getLocation();
       WebkitScript script = getConnection().getDebugger().getScript(sourceLocation.getScriptId());
       String scriptPath = script == null ? "null" : script.getUrl();
 
-      System.out.println("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","
+      Trace.trace("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","
           + sourceLocation.getColumnNumber() + "] ==> mapped to " + targetLocation);
     }
 

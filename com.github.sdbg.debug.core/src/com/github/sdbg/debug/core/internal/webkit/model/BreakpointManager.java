@@ -22,6 +22,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -296,6 +297,8 @@ public class BreakpointManager implements IBreakpointListener {
         }
 
         int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLineNumber());
+        Trace.trace("Set breakpoint [" + regex + "," + line + "]");
+
         debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
             null,
             regex,
@@ -332,12 +335,12 @@ public class BreakpointManager implements IBreakpointListener {
             }
 
             if (mappedRegex != null) {
-              if (SDBGDebugCorePlugin.LOGGING) {
-                System.out.println("breakpoint [" + regex + ","
-                    + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
-                    + ",-1] ==> mapped to [" + mappedRegex + "," + location.getLine() + ","
-                    + location.getColumn() + "]");
-              }
+              Trace.trace("Breakpoint [" + regex + ","
+                  + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
+                  + ",-1] ==> mapped to [" + mappedRegex + "," + location.getLine() + ","
+                  + location.getColumn() + "]");
+
+              Trace.trace("Set breakpoint [" + mappedRegex + "," + location.getLine() + "]");
 
               debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
                   null,

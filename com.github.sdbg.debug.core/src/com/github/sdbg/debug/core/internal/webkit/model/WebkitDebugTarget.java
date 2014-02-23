@@ -13,6 +13,28 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.DebugUIHelper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.WebkitConnectionListener;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.DebuggerListenerAdapter;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseOnExceptionsType;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
+import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
+import com.github.sdbg.debug.core.util.Trace;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,27 +63,6 @@ import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IMemoryBlock;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IThread;
-
-import com.github.sdbg.debug.core.DebugUIHelper;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.WebkitConnectionListener;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.DebuggerListenerAdapter;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseOnExceptionsType;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
-import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 /**
  * The IDebugTarget implementation for the Webkit debug elements.
@@ -472,8 +473,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       @Override
       public void debuggerScriptParsed(final WebkitScript script) {
         checkForDebuggerExtension(script);
-
-        System.out.println("Script " + script + " loaded");
+        Trace.trace("Script " + script + " loaded");
 
         if (script.hasScriptSource() || script.getSourceMapURL() != null) {
           IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
@@ -514,9 +514,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     process.fireCreationEvent();
 
     // Set our existing breakpoints and start listening for new breakpoints.
-    System.out.println("About to resolve breakpoints");
     breakpointManager.connect();
-    System.out.println("Breakpoints resolved");
 
     connection.getDebugger().setBreakpointsActive(enableBreakpoints);
 

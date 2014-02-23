@@ -26,6 +26,7 @@ import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.NetUtils;
 
 import java.io.File;
@@ -407,10 +408,7 @@ public class BrowserManager {
       }
 
       debugTarget.openConnection(url, true);
-
-      if (SDBGDebugCorePlugin.LOGGING) {
-        System.out.println("Connected to WIP debug agent on port " + devToolsPortNumber);
-      }
+      Trace.trace("Connected to WIP debug agent on port " + devToolsPortNumber);
 
       timer.stopTask();
     } catch (IOException e) {
@@ -606,7 +604,7 @@ public class BrowserManager {
               String str = new String(buffer, 0, count);
 
               // Log any browser process output to stdout.
-              if (SDBGDebugCorePlugin.LOGGING) {
+              if (Trace.TRACING) {
                 System.out.print(str);
               }
 

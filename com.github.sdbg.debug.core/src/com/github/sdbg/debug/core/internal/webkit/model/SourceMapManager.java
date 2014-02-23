@@ -19,6 +19,7 @@ import com.github.sdbg.debug.core.internal.source.WorkspaceSourceContainer;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMap;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMapInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -95,8 +96,8 @@ public class SourceMapManager {
 
     @Override
     public String toString() {
-      return "[" + (storage != null ? storage : path) + "," + line + "," + column + "," + name
-          + "]";
+      return "[" + (storage != null ? storage : "") + "," + path + "," + line + "," + column + ","
+          + name + "]";
     }
   }
 
@@ -164,6 +165,11 @@ public class SourceMapManager {
     public boolean isReadOnly() {
       return true;
     }
+
+    @Override
+    public String toString() {
+      return "URLStorage[" + url + "]";
+    }
   }
 
   private IResourceResolver resourceResolver;
@@ -188,6 +194,8 @@ public class SourceMapManager {
    * @return
    */
   public SourceLocation getMappingFor(IStorage storage, int line, int column) {
+    Trace.trace("Get mappings for " + storage + ":" + line + ":" + column);
+
     synchronized (sourceMaps) {
       IStorage mapStorage = sourceMapsStorages.get(storage);
       if (mapStorage != null) {
@@ -196,12 +204,14 @@ public class SourceMapManager {
           SourceMapInfo mapping = map.getMappingFor(line, column);
 
           if (mapping != null) {
-            return new SourceLocation(
+            SourceLocation location = new SourceLocation(
                 resolveStorage(mapStorage, mapping.getFile()),
                 relativisePath(mapStorage, mapping.getFile()),
                 mapping.getLine(),
                 mapping.getColumn(),
                 mapping.getName());
+            Trace.trace("Found mapping: " + location);
+            return location;
           }
         }
       }
@@ -219,6 +229,8 @@ public class SourceMapManager {
    * @return
    */
   public List<SourceLocation> getReverseMappingsFor(String targetPath, int line) {
+    Trace.trace("Get reverse mappings for " + targetPath + ":" + line);
+
     List<SourceLocation> mappings = new ArrayList<SourceMapManager.SourceLocation>();
 
     synchronized (sourceMaps) {
@@ -229,9 +241,12 @@ public class SourceMapManager {
         for (String path : map.getSourceNames()) {
           // TODO(devoncarew): the files in the maps should all be pre-resolved
           String relativePath = relativisePath(mapStorage, path);
+          if (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath)) {
+            Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+          }
+
           if (targetPath.equals(relativePath)) {
             List<SourceMapInfo> reverseMappings = map.getReverseMappingsFor(path, line);
-
             for (SourceMapInfo reverseMapping : reverseMappings) {
               if (reverseMapping != null) {
                 IStorage mapSource = scriptStorage; //&&&!!! map.getMapSource();
@@ -245,6 +260,10 @@ public class SourceMapManager {
                       reverseMapping.getName()));
                 }
               }
+            }
+
+            if (!mappings.isEmpty()) {
+              Trace.trace("Found reverse mappings: " + mappings);
             }
           }
         }
@@ -328,10 +347,7 @@ public class SourceMapManager {
         sourceMaps.remove(script);
       }
 
-      if (SDBGDebugCorePlugin.LOGGING) {
-        System.out.println("Processing script " + script);
-      }
-
+      Trace.trace("Processing script " + script);
       processScript(script, sourceMapUrl);
     }
   }
@@ -379,6 +395,7 @@ public class SourceMapManager {
             Properties properties = new Properties();
             properties.load(new StringReader(sourceMapUrlLine));
             sourceMapUrl = properties.getProperty("sourceMapURL");
+            Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
           }
         } finally {
           reader.close();

@@ -299,6 +299,7 @@ public class BreakpointManager implements IBreakpointListener {
         int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLineNumber());
         Trace.trace("Set breakpoint [" + regex + "," + line + "]");
 
+        // TODO: Only makes sense to do this for JavaScript breakpoints...
         debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
             null,
             regex,
@@ -318,6 +319,9 @@ public class BreakpointManager implements IBreakpointListener {
         SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
 
         if (sourceMapManager.isMapTarget(path)) {
+          // TODO: All breakpoints which were NOT detected as sourcemapped should be kept in a separate list
+          // Each time a new sourcemap is generated, this list of breakpoints should be re-examined
+
           List<SourceMapManager.SourceLocation> locations = sourceMapManager.getReverseMappingsFor(
               path,
               line);

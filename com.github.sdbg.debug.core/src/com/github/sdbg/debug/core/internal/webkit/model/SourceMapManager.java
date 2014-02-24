@@ -416,7 +416,7 @@ public class SourceMapManager {
             if (sourceMapUrlLine.startsWith("//#") || sourceMapUrlLine.startsWith("//@")) {
               sourceMapUrlLine = sourceMapUrlLine.substring(2).trim();
 
-              if (sourceMapUrlLine.matches("sourceMapURL\\s*\\=")) {
+              if (sourceMapUrlLine.matches("sourceMappingURL\\s*\\=")) {
                 break;
               }
             }
@@ -425,8 +425,8 @@ public class SourceMapManager {
           if (sourceMapUrlLine != null) {
             Properties properties = new Properties();
             properties.load(new StringReader(sourceMapUrlLine));
-            sourceMapUrl = properties.getProperty("sourceMapURL");
-            Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
+            sourceMapUrl = properties.getProperty("sourceMappingURL");
+            Trace.trace("Sourcemap detected in a // comment");
           }
         } finally {
           reader.close();
@@ -436,6 +436,7 @@ public class SourceMapManager {
       IStorage mapStorage;
       if (sourceMapUrl != null) {
         mapStorage = resolveStorage(script, sourceMapUrl);
+        Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
       } else {
         mapStorage = null;
       }

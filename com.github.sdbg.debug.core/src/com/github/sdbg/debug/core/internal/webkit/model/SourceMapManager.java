@@ -282,8 +282,8 @@ public class SourceMapManager {
     return mappings;
   }
 
-  public List<IStorage> getSources(IStorage storage) {
-    List<IStorage> sources = new ArrayList<IStorage>();
+  public List<String> getSourcePaths(IStorage storage) {
+    List<String> paths = new ArrayList<String>();
 
     synchronized (sourceMaps) {
       IStorage mapStorage = sourceMapsStorages.get(storage);
@@ -294,18 +294,14 @@ public class SourceMapManager {
 
           if (sourceNames != null) {
             for (String sourceName : sourceNames) {
-              IStorage resolvedStorage = resolveStorage(mapStorage, sourceName);
-
-              if (resolvedStorage != null) {
-                sources.add(resolvedStorage);
-              }
+              paths.add(relativisePath(mapStorage, sourceName));
             }
           }
         }
       }
     }
 
-    return sources;
+    return paths;
   }
 
   /**
@@ -435,8 +431,8 @@ public class SourceMapManager {
 
       IStorage mapStorage;
       if (sourceMapUrl != null) {
-        mapStorage = resolveStorage(script, sourceMapUrl);
         Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
+        mapStorage = resolveStorage(script, sourceMapUrl);
       } else {
         mapStorage = null;
       }
@@ -446,6 +442,7 @@ public class SourceMapManager {
         if (map != null) {
           sourceMapsStorages.put(script, mapStorage);
           sourceMaps.put(mapStorage, map);
+          Trace.trace("Parsing sourcemap succeeded: " + mapStorage);
         }
       }
     } catch (IOException e) {

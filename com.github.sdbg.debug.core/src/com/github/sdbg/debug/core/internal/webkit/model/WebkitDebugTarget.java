@@ -476,25 +476,9 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
 
         if (script.hasScriptSource() || script.getSourceMapURL() != null) {
           IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
+          breakpointManager.removeBreakpointsConcerningScript(storage);
           sourceMapManager.handleScriptParsed(storage, script.getSourceMapURL());
-          breakpointManager.updateBreakpointsConcerningScript(storage);
-//        } else {
-//          try {
-//            connection.getDebugger().getScriptSource(
-//                script.getScriptId(),
-//                new WebkitCallback<String>() {
-//                  @Override
-//                  public void handleResult(WebkitResult<String> result) {
-//                    if (!result.isError()) {
-//                      IStorage storage = new WebkitScriptStorage(script, result.getResult());
-//                      sourceMapManager.handleScriptParsed(storage, script.getSourceMapURL());
-//                      breakpointManager.updateBreakpointsConcerningScript(storage);
-//                    }
-//                  }
-//                });
-//          } catch (IOException e) {
-//            throw new RuntimeException(e);
-//          }
+          breakpointManager.addBreakpointsConcerningScript(storage);
         }
       }
     });

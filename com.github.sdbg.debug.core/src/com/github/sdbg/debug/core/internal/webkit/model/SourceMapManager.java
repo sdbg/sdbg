@@ -282,8 +282,8 @@ public class SourceMapManager {
     return mappings;
   }
 
-  public List<IStorage> getSources(IStorage storage) {
-    List<IStorage> sources = new ArrayList<IStorage>();
+  public List<String> getSourcePaths(IStorage storage) {
+    List<String> paths = new ArrayList<String>();
 
     synchronized (sourceMaps) {
       IStorage mapStorage = sourceMapsStorages.get(storage);
@@ -294,18 +294,14 @@ public class SourceMapManager {
 
           if (sourceNames != null) {
             for (String sourceName : sourceNames) {
-              IStorage resolvedStorage = resolveStorage(mapStorage, sourceName);
-
-              if (resolvedStorage != null) {
-                sources.add(resolvedStorage);
-              }
+              paths.add(relativisePath(mapStorage, sourceName));
             }
           }
         }
       }
     }
 
-    return sources;
+    return paths;
   }
 
   /**
@@ -416,7 +412,7 @@ public class SourceMapManager {
             if (sourceMapUrlLine.startsWith("//#") || sourceMapUrlLine.startsWith("//@")) {
               sourceMapUrlLine = sourceMapUrlLine.substring(2).trim();
 
-              if (sourceMapUrlLine.matches("sourceMapURL\\s*\\=")) {
+              if (sourceMapUrlLine.matches("sourceMappingURL\\s*\\=")) {
                 break;
               }
             }
@@ -425,8 +421,8 @@ public class SourceMapManager {
           if (sourceMapUrlLine != null) {
             Properties properties = new Properties();
             properties.load(new StringReader(sourceMapUrlLine));
-            sourceMapUrl = properties.getProperty("sourceMapURL");
-            Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
+            sourceMapUrl = properties.getProperty("sourceMappingURL");
+            Trace.trace("Sourcemap detected in a // comment");
           }
         } finally {
           reader.close();
@@ -435,6 +431,7 @@ public class SourceMapManager {
 
       IStorage mapStorage;
       if (sourceMapUrl != null) {
+        Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
         mapStorage = resolveStorage(script, sourceMapUrl);
       } else {
         mapStorage = null;
@@ -445,6 +442,7 @@ public class SourceMapManager {
         if (map != null) {
           sourceMapsStorages.put(script, mapStorage);
           sourceMaps.put(mapStorage, map);
+          Trace.trace("Parsing sourcemap succeeded: " + mapStorage);
         }
       }
     } catch (IOException e) {

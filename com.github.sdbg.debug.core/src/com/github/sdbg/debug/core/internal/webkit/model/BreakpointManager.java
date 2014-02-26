@@ -16,6 +16,7 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
+import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
@@ -47,15 +48,11 @@ import org.eclipse.debug.core.model.ILineBreakpoint;
 /**
  * Handle adding a removing breakpoints to the WebKit connection for the WebkitDebugTarget class.
  */
-public class BreakpointManager implements IBreakpointListener {
-
-//&&&  
-//  private static String PACKAGES_DIRECTORY_PATH = "/packages/";
-//  private static String LIB_DIRECTORY_PATH = "/lib/";
-//
+public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointManager {
   private WebkitDebugTarget debugTarget;
 
   private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
+
   private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
 
   private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
@@ -64,6 +61,18 @@ public class BreakpointManager implements IBreakpointListener {
 
   public BreakpointManager(WebkitDebugTarget debugTarget) {
     this.debugTarget = debugTarget;
+  }
+
+  @Override
+  public void addBreakpointsConcerningScript(IStorage script) {
+    SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+    for (String path : sourceMapManager.getSourcePaths(script)) {
+      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+        if (!isJSBreakpoint(breakpoint) && path.equals(getBreakpointPath(breakpoint))) {
+          breakpointAdded(breakpoint);
+        }
+      }
+    }
   }
 
   @Override
@@ -81,6 +90,8 @@ public class BreakpointManager implements IBreakpointListener {
 
   @Override
   public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
+    // TODO: This is happening frequently, therefore scan the delta for changes concerning us and only then do the breakpoint remove+add trick
+
     // We generate this change event in the handleBreakpointResolved() method - ignore one
     // instance of the event.
     if (ignoredBreakpoints.contains(breakpoint)) {
@@ -115,10 +126,9 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
+  @Override
   public void connect() throws IOException {
     IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
-    // &&&!!! DartDebugCorePlugin.DEBUG_MODEL_ID);
-
     for (IBreakpoint breakpoint : breakpoints) {
       if (debugTarget.supportsBreakpoint(breakpoint)) {
         addBreakpoint(breakpoint);
@@ -128,6 +138,7 @@ public class BreakpointManager implements IBreakpointListener {
     DebugPlugin.getDefault().getBreakpointManager().addBreakpointListener(this);
   }
 
+  @Override
   public void dispose(boolean deleteAll) {
     // Null check for when the editor is shutting down.
     if (DebugPlugin.getDefault() != null) {
@@ -151,6 +162,7 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
+  @Override
   public IBreakpoint getBreakpointFor(WebkitLocation location) {
     try {
       IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
@@ -187,52 +199,8 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-//&&&  
-//  @VisibleForTesting
-//  public String getPackagePath(String regex, IFile resource) {
-//    Path path = new Path(regex);
-//    int i = 0;
-//    if (regex.indexOf(LIB_DIRECTORY_PATH) != -1) {
-//      // remove all segments after "lib", they show path in the package
-//      while (i < path.segmentCount() && !path.segment(i).equals("lib")) {
-//        i++;
-//      }
-//    } else {
-//      i = 1;
-//    }
-//    String filePath = regex;
-//    if (path.segmentCount() > i + 1) {
-//      filePath = new Path(regex).removeLastSegments(path.segmentCount() - (i + 1)).toString();
-//    }
-//
-//    String packagePath = resolvePathToPackage(resource, filePath);
-//    if (packagePath != null) {
-//      packagePath += "/" + path.removeFirstSegments(i + 1);
-//    }
-//    return packagePath;
-//  }
-
-//&&&  
-//  @VisibleForTesting
-//  protected String resolvePathToPackage(IFile resource, String filePath) {
-//    return DartCore.getProjectManager().resolvePathToPackage(resource, filePath);
-//  }
-
-  void addToBreakpointMap(IBreakpoint breakpoint, String id, boolean trackChanges) {
-    synchronized (breakpointToIdMap) {
-      if (breakpointToIdMap.get(breakpoint) == null) {
-        breakpointToIdMap.put(breakpoint, new ArrayList<String>());
-      }
-
-      breakpointToIdMap.get(breakpoint).add(id);
-
-      if (trackChanges) {
-        breakpointsToUpdateMap.put(id, breakpoint);
-      }
-    }
-  }
-
-  void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
+  @Override
+  public void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
     try {
       IBreakpoint bp = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
 
@@ -256,17 +224,19 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-  void handleGlobalObjectCleared() {
-    //&&&!!! Breakpoints' cleanup code should be present here?!
+  @Override
+  public void handleGlobalObjectCleared() {
+    // TODO: Breakpoints' cleanup code should be present here?!
+    Trace.trace("Global object cleared");
   }
 
-  void updateBreakpointsConcerningScript(IStorage script) {
+  @Override
+  public void removeBreakpointsConcerningScript(IStorage script) {
     SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-    for (IStorage source : sourceMapManager.getSources(script)) {
+    for (String path : sourceMapManager.getSourcePaths(script)) {
       for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
-        if (source.equals(breakpoint.getMarker().getResource())) {
+        if (!isJSBreakpoint(breakpoint) && path.equals(getBreakpointPath(breakpoint))) {
           breakpointRemoved(breakpoint, null/*delta*/);
-          breakpointAdded(breakpoint);
         }
       }
     }
@@ -277,84 +247,70 @@ public class BreakpointManager implements IBreakpointListener {
       if (bp.isEnabled() && bp instanceof ILineBreakpoint) {
         final ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
 
-        String path = null;
-        for (IBreakpointPathResolver resolver : getBreakpointPathResolvers()) {
-          if (resolver.isSupported(bp)) {
-            path = resolver.getPath(bp);
-            break;
-          }
-        }
+        addToBreakpointMap(breakpoint, null/*id*/, true/*trackChanges*/);
 
-        String regex;
+        String path = getBreakpointPath(breakpoint);
         if (path != null) {
-          regex = path;
-        } else {
-          regex = getResourceResolver().getUrlRegexForResource(breakpoint.getMarker().getResource());
-        }
+          int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLineNumber());
 
-        if (regex == null) {
-          return;
-        }
+          if (isJSBreakpoint(breakpoint)) {
+            // Handle pure JavaScript breakpoints
+            Trace.trace("Set breakpoint [" + path + "," + line + "]");
 
-        int line = WebkitLocation.eclipseToWebkitLine(breakpoint.getLineNumber());
-        Trace.trace("Set breakpoint [" + regex + "," + line + "]");
+            debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
+                null,
+                path,
+                line,
+                -1,
+                new WebkitCallback<String>() {
+                  @Override
+                  public void handleResult(WebkitResult<String> result) {
+                    if (!result.isError()) {
+                      addToBreakpointMap(breakpoint, result.getResult(), true);
+                    }
+                  }
+                });
+          } else {
+            // Handle source mapped breakpoints
+            SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+            if (sourceMapManager.isMapTarget(path)) {
+              List<SourceMapManager.SourceLocation> locations = sourceMapManager.getReverseMappingsFor(
+                  path,
+                  line);
 
-        debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
-            null,
-            regex,
-            line,
-            -1,
-            new WebkitCallback<String>() {
-              @Override
-              public void handleResult(WebkitResult<String> result) {
-                if (!result.isError()) {
-                  addToBreakpointMap(breakpoint, result.getResult(), true);
+              for (SourceMapManager.SourceLocation location : locations) {
+                String mappedPath;
+                if (location.getStorage() instanceof IFile) {
+                  mappedPath = getResourceResolver().getUrlRegexForResource(
+                      (IFile) location.getStorage());
+                } else if (location.getStorage() != null) {
+                  mappedPath = location.getStorage().getFullPath().toPortableString();
+                } else {
+                  mappedPath = location.getPath();
+                }
+
+                if (mappedPath != null) {
+                  Trace.trace("Breakpoint [" + path + ","
+                      + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
+                      + ",-1] ==> mapped to [" + mappedPath + "," + location.getLine() + ","
+                      + location.getColumn() + "]");
+                  Trace.trace("Set breakpoint [" + mappedPath + "," + location.getLine() + "]");
+
+                  debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
+                      null,
+                      mappedPath,
+                      location.getLine(),
+                      location.getColumn(),
+                      new WebkitCallback<String>() {
+                        @Override
+                        public void handleResult(WebkitResult<String> result) {
+                          if (!result.isError()) {
+                            addToBreakpointMap(breakpoint, result.getResult(), false);
+                          }
+                        }
+                      });
                 }
               }
-            });
-
-        // Handle source mapped breakpoints - set an additional breakpoint if the file is under
-        // source mapping.
-        SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-
-        if (sourceMapManager.isMapTarget(path)) {
-          List<SourceMapManager.SourceLocation> locations = sourceMapManager.getReverseMappingsFor(
-              path,
-              line);
-
-          for (SourceMapManager.SourceLocation location : locations) {
-            String mappedRegex;
-            // &&&!!!
-            if (location.getStorage() instanceof IFile) {
-              mappedRegex = getResourceResolver().getUrlRegexForResource(
-                  (IFile) location.getStorage());
-            } else if (location.getStorage() != null) {
-              mappedRegex = location.getStorage().getFullPath().toPortableString();
-            } else {
-              mappedRegex = location.getPath();
-            }
-
-            if (mappedRegex != null) {
-              Trace.trace("Breakpoint [" + regex + ","
-                  + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
-                  + ",-1] ==> mapped to [" + mappedRegex + "," + location.getLine() + ","
-                  + location.getColumn() + "]");
-
-              Trace.trace("Set breakpoint [" + mappedRegex + "," + location.getLine() + "]");
-
-              debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
-                  null,
-                  mappedRegex,
-                  location.getLine(),
-                  location.getColumn(),
-                  new WebkitCallback<String>() {
-                    @Override
-                    public void handleResult(WebkitResult<String> result) {
-                      if (!result.isError()) {
-                        addToBreakpointMap(breakpoint, result.getResult(), false);
-                      }
-                    }
-                  });
             }
           }
         }
@@ -362,6 +318,42 @@ public class BreakpointManager implements IBreakpointListener {
     } catch (CoreException e) {
       throw new IOException(e);
     }
+  }
+
+  private void addToBreakpointMap(IBreakpoint breakpoint, String id, boolean trackChanges) {
+    synchronized (breakpointToIdMap) {
+      if (breakpointToIdMap.get(breakpoint) == null) {
+        breakpointToIdMap.put(breakpoint, new ArrayList<String>());
+      }
+
+      if (id != null) {
+        breakpointToIdMap.get(breakpoint).add(id);
+
+        if (trackChanges) {
+          breakpointsToUpdateMap.put(id, breakpoint);
+        }
+      }
+    }
+  }
+
+  private String getBreakpointPath(IBreakpoint bp) {
+    String path = null;
+    for (IBreakpointPathResolver resolver : getBreakpointPathResolvers()) {
+      if (resolver.isSupported(bp)) {
+        try {
+          path = resolver.getPath(bp);
+        } catch (CoreException e) {
+        }
+
+        break;
+      }
+    }
+
+    if (path == null) {
+      path = getResourceResolver().getUrlRegexForResource(bp.getMarker().getResource());
+    }
+
+    return path;
   }
 
   private Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
@@ -383,35 +375,70 @@ public class BreakpointManager implements IBreakpointListener {
     return breakpointPathResolvers;
   }
 
-//&&&  
-//  private boolean isInSelfLinkedLib(IFile file) {
-//    if (file == null) {
-//      return false;
-//    }
-//
-//    return isPubLib(file.getParent());
-//  }
-//
-//  private boolean isPubLib(IContainer container) {
-//    if (container.getParent() == null) {
-//      return false;
-//    }
-//
-//    if (container.getName().equals("lib")) {
-//      if (DartCore.isApplicationDirectory(container.getParent())) {
-//        return true;
-//      }
-//    }
-//
-//    if (container.getParent() instanceof IWorkspaceRoot) {
-//      return false;
-//    }
-//
-//    return isPubLib(container.getParent());
-//  }
-//
-
   private IResourceResolver getResourceResolver() {
     return debugTarget.getResourceResolver();
+  }
+
+  private boolean isJSBreakpoint(IBreakpoint breakpoint) {
+    return breakpoint instanceof SDBGBreakpoint; // TODO: Extend IBreakpointPathResolver so that it has a say on that as well 
+  }
+}
+
+interface ISDBGBreakpointManager {
+
+  public void addBreakpointsConcerningScript(IStorage script);
+
+  public void connect() throws IOException;
+
+  public void dispose(boolean deleteAll);
+
+  public IBreakpoint getBreakpointFor(WebkitLocation location);
+
+  public void handleBreakpointResolved(WebkitBreakpoint breakpoint);
+
+  public void handleGlobalObjectCleared();
+
+  public void removeBreakpointsConcerningScript(IStorage script);
+}
+
+class NullBreakpointManager implements ISDBGBreakpointManager {
+
+  public NullBreakpointManager() {
+
+  }
+
+  @Override
+  public void addBreakpointsConcerningScript(IStorage script) {
+
+  }
+
+  @Override
+  public void connect() throws IOException {
+
+  }
+
+  @Override
+  public void dispose(boolean deleteAll) {
+
+  }
+
+  @Override
+  public IBreakpoint getBreakpointFor(WebkitLocation location) {
+    return null;
+  }
+
+  @Override
+  public void handleBreakpointResolved(WebkitBreakpoint breakpoint) {
+
+  }
+
+  @Override
+  public void handleGlobalObjectCleared() {
+
+  }
+
+  @Override
+  public void removeBreakpointsConcerningScript(IStorage script) {
+
   }
 }

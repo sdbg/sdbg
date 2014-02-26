@@ -94,10 +94,32 @@ class ResourceServerHandler implements Runnable {
       }
     }
 
+    /**
+     * Return the value for the given key; assume case-insensitively for the key.
+     * 
+     * @param key
+     * @return
+     */
+    public String getHeaderKey(String key) {
+      String value = headers.get(key);
+
+      if (value != null) {
+        return value;
+      }
+
+      for (String k : headers.keySet()) {
+        if (k.equalsIgnoreCase(key)) {
+          return headers.get(k);
+        }
+      }
+
+      return null;
+    }
+
     public List<int[]> getRanges() {
       // Range: bytes=0-99,500-1499,4000-
       if (headers.containsKey(RANGE)) {
-        String rangeStr = headers.get(RANGE);
+        String rangeStr = getHeaderKey(RANGE);
 
         if (rangeStr.startsWith("bytes=")) {
           rangeStr = rangeStr.substring("bytes=".length());
@@ -670,7 +692,7 @@ class ResourceServerHandler implements Runnable {
 
     // User-Agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_3) AppleWebKit/536.8 (KHTML, like Gecko) Chrome/20.0.1110.0 (Dart) Safari/536.8
     if (SDBGDebugCorePlugin.getPlugin().getUserAgentManager() != null) {
-      String userAgent = header.headers.get(USER_AGENT);
+        String userAgent = header.getHeaderKey(USER_AGENT);
 
       boolean allowed = SDBGDebugCorePlugin.getPlugin().getUserAgentManager().allowUserAgent(
           remoteAddress,

@@ -14,6 +14,14 @@
 
 package com.github.sdbg.debug.ui.internal.chromeapp;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
+import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
+import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+import com.github.sdbg.utilities.Streams;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -21,6 +29,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -30,14 +39,6 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
-import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
-import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
-import com.github.sdbg.utilities.Streams;
-
 /**
  * A launch shortcut to run Chrome packaged applications. This will launch a Chrome app pointed to
  * by a manifest.json file.
@@ -46,6 +47,26 @@ import com.github.sdbg.utilities.Streams;
  */
 public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements ILaunchShortcutExt {
   public static final String MANIFEST_FILE_NAME = "manifest.json";
+
+  public static boolean containsManifestJsonFile(IContainer container) {
+    return findManifestJsonFile(container) != null;
+  }
+
+  public static boolean isManifestFile(IResource resource) {
+    return resource instanceof IFile && resource.getName().equals(MANIFEST_FILE_NAME);
+  }
+
+  private static IFile findManifestJsonFile(IContainer container) {
+    if (container.exists(new Path(MANIFEST_FILE_NAME))) {
+      return container.getFile(new Path(MANIFEST_FILE_NAME));
+    }
+
+    if (container.getParent() != null) {
+      return findManifestJsonFile(container.getParent());
+    } else {
+      return null;
+    }
+  }
 
   public ChromeAppLaunchShortcut() {
     super("Chrome App");
@@ -76,8 +97,7 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
   }
 
   @Override
-  protected IResource getLaunchableResource(Object originalResource)
-      throws /*&&&DartModelException*/CoreException {
+  protected IResource getLaunchableResource(Object originalResource) {
     if (!(originalResource instanceof IResource)) {
       return null;
     }
@@ -98,7 +118,13 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
     }
 
     // Launch an existing configuration if one exists
-    ILaunchConfiguration config = findConfig(resource);
+    ILaunchConfiguration config;
+
+    try {
+      config = findConfig(resource);
+    } catch (OperationCanceledException ex) {
+      return;
+    }
 
     if (config == null) {
       // Create and launch a new configuration
@@ -140,30 +166,9 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
       return false;
     }
 
-    try {
       IResource launchAbleResource = getLaunchableResource(resource);
 
       return configResource.equals(launchAbleResource);
-//&&&    } catch (DartModelException ex) {
-    } catch (CoreException ex) {
-      return false;
-    }
-  }
-
-  private boolean containsManifestJsonFile(IContainer container) {
-    return findManifestJsonFile(container) != null;
-  }
-
-  private IFile findManifestJsonFile(IContainer container) {
-    if (container.exists(new Path(MANIFEST_FILE_NAME))) {
-      return container.getFile(new Path(MANIFEST_FILE_NAME));
-    }
-
-    if (container.getParent() != null) {
-      return findManifestJsonFile(container.getParent());
-    } else {
-      return null;
-    }
   }
 
   /**
@@ -177,10 +182,6 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
     String name = parseNameFromJson(jsonResource);
 
     return name == null ? jsonResource.getName() : name;
-  }
-
-  private boolean isManifestFile(IResource resource) {
-    return resource instanceof IFile && resource.getName().equals(MANIFEST_FILE_NAME);
   }
 
   /**

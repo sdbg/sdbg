@@ -13,6 +13,8 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
+import com.github.sdbg.debug.ui.internal.chromeapp.ChromeAppLaunchShortcut;
+
 import org.eclipse.core.expressions.PropertyTester;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.core.resources.IContainer;
@@ -29,6 +31,7 @@ import org.eclipse.core.runtime.Platform;
  * <ul>
  * <li>"isDartProject" - whether the given project is a Dart project
  * <li>"isInDartProject" - whether the given resource is in a Dart project.
+ * <li>"containsChromeApp" - whether the given resource contains a chrome app
  */
 public class DartPropertyTester extends PropertyTester {
 
@@ -96,15 +99,6 @@ public class DartPropertyTester extends PropertyTester {
     return resolvedResource != null ? resolvedResource : resource;
   }
 
-  protected boolean isDartProject(IResource resource) {
-    return false; //&&& DartProjectNature.hasDartNature(resource.getProject())
-    //&& resource == resource.getProject();
-  }
-
-  protected boolean isInDartProject(IResource resource) {
-    return false; //&&&DartProjectNature.hasDartNature(resource.getProject());
-  }
-
   @Override
   public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
     IResource resource = getAdapter(receiver, IResource.class);
@@ -124,6 +118,29 @@ public class DartPropertyTester extends PropertyTester {
     } else {
       return false;
     }
+  }
+
+  protected boolean containsChromeApp(IResource resource) {
+    if (resource instanceof IFile) {
+      if (ChromeAppLaunchShortcut.isManifestFile(resource)) {
+        return true;
+      } else {
+        return ChromeAppLaunchShortcut.containsManifestJsonFile(resource.getParent());
+      }
+    } else if (resource instanceof IContainer) {
+      return ChromeAppLaunchShortcut.containsManifestJsonFile((IContainer) resource);
+    } else {
+      return false;
+    }
+  }
+
+  protected boolean isDartProject(IResource resource) {
+    return false; //&&& DartProjectNature.hasDartNature(resource.getProject())
+    //&& resource == resource.getProject();
+  }
+
+  protected boolean isInDartProject(IResource resource) {
+    return false; //&&&DartProjectNature.hasDartNature(resource.getProject());
   }
 
 }

@@ -13,6 +13,16 @@
  */
 package com.github.sdbg.debug.ui.internal.browser;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.util.ResourceServer;
+import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.utilities.ProcessRunner;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -23,10 +33,12 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
@@ -37,16 +49,6 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.browser.IWebBrowser;
 import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
-
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.util.ResourceServer;
-import com.github.sdbg.debug.core.util.ResourceServerManager;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.utilities.ProcessRunner;
-import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 /**
  * Launches the Dart application (compiled to js) in the browser.
@@ -116,10 +118,6 @@ public class BrowserLaunchConfigurationDelegate extends SDBGLaunchConfigurationD
             Messages.BrowserLaunchConfigurationDelegate_HtmlFileNotFound));
       }
 
-      if (wrapper.getRunDart2js()) {
-        compileJavascript(resource, wrapper.getDart2jsFlagsAsArray(), monitor);
-      }
-
       try {
         // This returns just a plain file: url.
         ResourceServer server = ResourceServerManager.getServer();
@@ -159,57 +157,6 @@ public class BrowserLaunchConfigurationDelegate extends SDBGLaunchConfigurationD
 
     DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
 
-  }
-
-  /**
-   * Before proceeding with launch, compile JavaScript
-   * 
-   * @param resource
-   * @param dart2jsFlags
-   * @throws CoreException
-   */
-  private void compileJavascript(IResource resource, String[] dart2jsFlags, IProgressMonitor monitor)
-      throws CoreException {
-//&&&    
-//
-//    if (locateMappedFile(resource) != null) {
-//      resource = locateMappedFile(resource);
-//    }
-//    IResource libraryFile = null;
-//    ProjectManager manager = DartCore.getProjectManager();
-//    Source htmlSource = manager.getSource((IFile) resource);
-//    AnalysisContext context = manager.getContext(resource);
-//    HtmlElement htmlElement = context.getHtmlElement(htmlSource);
-//    if (htmlElement != null) {
-//      HtmlScriptElement[] scripts = htmlElement.getScripts();
-//      for (HtmlScriptElement script : scripts) {
-//        // TODO(keertip): handle case of html having multiple external script tags
-//        if (script instanceof ExternalHtmlScriptElement) {
-//          libraryFile = manager.getResource(((ExternalHtmlScriptElement) script).getScriptSource());
-//        }
-//      }
-//    }
-//
-//    if (libraryFile != null) {
-//      CompilationResult result = Dart2JSCompiler.compileLibrary(
-//          (IFile) libraryFile,
-//          dart2jsFlags,
-//          monitor,
-//          DartCore.getConsole());
-//      if (result.getExitCode() != 0) {
-//        String errMsg = NLS.bind(
-//            "Failure to launch - unable to generate JavaScript for {0}.\n\nPlease see the console or log for more details.",
-//            resource.getName());
-//
-//        errMsg = errMsg.trim();
-//
-//        DartDebugCorePlugin.logError(result.getAllOutput());
-//
-//        throw new CoreException(new Status(IStatus.ERROR, DartDebugUIPlugin.PLUGIN_ID, errMsg));
-//      }
-//
-//    }
-//
   }
 
   private void launchInExternalBrowser(final String url) throws CoreException {
@@ -274,19 +221,19 @@ public class BrowserLaunchConfigurationDelegate extends SDBGLaunchConfigurationD
     }
   }
 
-//&&&  
-//  private IResource locateMappedFile(IResource resourceFile) {
-//    String mappingPath = DartCore.getResourceRemapping((IFile) resourceFile);
-//
-//    if (mappingPath != null) {
-//      IResource mappedResource = ResourcesPlugin.getWorkspace().getRoot().findMember(
-//          Path.fromPortableString(mappingPath));
-//
-//      if (mappedResource != null && mappedResource.exists()) {
-//        return mappedResource;
-//      }
-//    }
-//    return null;
-//  }
-//
+  @SuppressWarnings("unused")
+  private IResource locateMappedFile(IResource resourceFile) {
+    String mappingPath = null; // &&& DartCore.getResourceRemapping((IFile) resourceFile);
+
+    if (mappingPath != null) {
+      IResource mappedResource = ResourcesPlugin.getWorkspace().getRoot().findMember(
+          Path.fromPortableString(mappingPath));
+
+      if (mappedResource != null && mappedResource.exists()) {
+        return mappedResource;
+      }
+    }
+    return null;
+  }
+
 }

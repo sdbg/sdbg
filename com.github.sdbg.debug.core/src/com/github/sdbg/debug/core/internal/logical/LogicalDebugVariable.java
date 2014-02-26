@@ -14,11 +14,11 @@
 
 package com.github.sdbg.debug.core.internal.logical;
 
+import com.github.sdbg.debug.core.model.ISDBGVariable;
+
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.DebugElement;
 import org.eclipse.debug.core.model.IValue;
-
-import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 /**
  * A logical debug variable - used to display implementation formats in more user friendly
@@ -67,6 +67,11 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
 
   @Override
   public boolean isLibraryObject() {
+    return false;
+  }
+
+  @Override
+  public boolean isLocal() {
     return false;
   }
 

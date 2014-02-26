@@ -27,9 +27,9 @@
       </propertyTester>
        <propertyTester
             class="com.github.sdbg.debug.ui.internal.launch.RunInBrowserPropertyTester"
-            id="com.github.sdbg.debug.ui.run.deployPolymerPropertyTester"
-            namespace="com.github.sdbg.debug.ui.launch"
-            properties=" canDeployPolymer"
+            id="com.google.dart.tools.debug.ui.run.pubBuildPropertyTester"
+            namespace="com.google.dart.tools.debug.ui.launch"
+            properties=" canPubBuild"
             type="org.eclipse.jface.viewers.ISelection">
       </propertyTester>
        <propertyTester
@@ -54,6 +54,13 @@
          id="com.github.sdbg.debug.dartPropertyTester"
          namespace="com.github.sdbg.debug"
          properties="isInDartProject"
+         type="org.eclipse.core.runtime.IAdaptable"
+         class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
+      </propertyTester>
+      <propertyTester
+         id="com.github.sdbg.debug.dartPropertyTester"
+         namespace="com.github.sdbg.debug"
+         properties="containsChromeApp"
          type="org.eclipse.core.runtime.IAdaptable"
          class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
       </propertyTester>
@@ -87,6 +94,7 @@
             icon="icons/chrome.png"
             id="com.github.sdbg.debug.ui.chromeLaunchShortcut"
             label="%sdbg.chromelaunch.shortcut.label"
+            description="Run the selected application in Dartium"
             modes="run,debug">
          <configurationType
                id="com.github.sdbg.debug.core.chromeLaunchConfig">
@@ -397,13 +405,6 @@
                id="org.eclipse.ui.commands.toggleState">
          </state>
       </command>
-      <command
-            categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.internal.launch.DeployPolymerAppHandler"
-            description="Generate JavaScript for Polymer App"
-            id="com.github.sdbg.debug.ui.run.deploypolymer"
-            name="Build Polymer App">
-      </command>
    </extension>
    
    <!-- extension point="org.eclipse.ui.views">
@@ -508,7 +509,7 @@
                   <and>
                      <test
                            forcePluginActivation="true"
-                           property="com.github.sdbg.debug.ui.launch.canDeployPolymer">
+                           property="com.github.sdbg.debug.ui.launch.canPubBuild">
                      </test>
                   </and>
                </with>

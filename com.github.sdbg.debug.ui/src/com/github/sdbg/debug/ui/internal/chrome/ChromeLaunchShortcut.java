@@ -13,21 +13,22 @@
  */
 package com.github.sdbg.debug.ui.internal.chrome;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.ILaunchConfigurationType;
-import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
-import org.eclipse.debug.core.ILaunchManager;
-
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
 import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationType;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
+import org.eclipse.debug.core.ILaunchManager;
 
 /**
  * A launch shortcut to allow users to launch applications in Chrome.
@@ -73,7 +74,13 @@ public class ChromeLaunchShortcut extends AbstractLaunchShortcut implements ILau
     }
 
     // Launch an existing configuration if one exists
-    ILaunchConfiguration config = findConfig(resource);
+    ILaunchConfiguration config;
+
+    try {
+      config = findConfig(resource);
+    } catch (OperationCanceledException ex) {
+      return;
+    }
 
     if (config == null) {
       // Create and launch a new configuration

@@ -14,7 +14,6 @@
 
 package com.github.sdbg.debug.ui.internal.dialogs;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
@@ -351,11 +350,6 @@ public class ManageLaunchesDialog extends TitleAreaDialog implements ILaunchConf
 
     IDialogSettings workbenchSettings = WorkbenchPlugin.getDefault().getDialogSettings();
     IDialogSettings section = workbenchSettings.getSection(settingsName);
-
-    if (SDBGDebugCorePlugin.getPlugin().getClearDialogSettings()) {
-      section = null;
-      SDBGDebugCorePlugin.getPlugin().setClearLaunchesDialogSettings(false);
-    }
 
     if (section == null) {
       section = workbenchSettings.addNewSection(settingsName);

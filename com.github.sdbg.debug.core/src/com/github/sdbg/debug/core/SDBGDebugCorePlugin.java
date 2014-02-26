@@ -92,9 +92,6 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
 
-  // TODO(keertip): preference used to clear manage launches dialog settings, remove before M6 
-  private static final String PREFS_CLEAR_LAUNCHES_DIALOG_SETTINGS = "launchesDialogSettings";
-
   /**
    * Create a Status object with the given message and this plugin's ID.
    * 
@@ -242,10 +239,6 @@ public class SDBGDebugCorePlugin extends Plugin {
     return getPrefs().get(PREFS_BROWSER_NAME, "");
   }
 
-  public boolean getClearDialogSettings() {
-    return getPrefs().getBoolean(PREFS_CLEAR_LAUNCHES_DIALOG_SETTINGS, true);
-  }
-
   /**
    * Returns the path to the Dart VM executable, if it has been set. Otherwise, this method returns
    * the empty string.
@@ -296,16 +289,6 @@ public class SDBGDebugCorePlugin extends Plugin {
     prefs.putBoolean(PREFS_DEFAULT_BROWSER, useDefault);
     prefs.put(PREFS_BROWSER_NAME, name);
     prefs.put(PREFS_BROWSER_ARGS, args);
-
-    try {
-      getPrefs().flush();
-    } catch (BackingStoreException exception) {
-      logError(exception);
-    }
-  }
-
-  public void setClearLaunchesDialogSettings(boolean value) {
-    getPrefs().putBoolean(PREFS_CLEAR_LAUNCHES_DIALOG_SETTINGS, value);
 
     try {
       getPrefs().flush();

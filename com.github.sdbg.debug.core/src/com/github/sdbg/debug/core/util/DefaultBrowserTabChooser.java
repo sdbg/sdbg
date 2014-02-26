@@ -14,9 +14,9 @@
 
 package com.github.sdbg.debug.core.util;
 
-import java.util.List;
-
 import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
+
+import java.util.List;
 
 /**
  * An IBrowserTabChooser which tries to determine the best tab to debug algorithmically, without
@@ -43,18 +43,10 @@ public class DefaultBrowserTabChooser implements IBrowserTabChooser {
       }
     }
 
-    if (tabs.size() == 0) {
-      // If no tabs, return null.
-      return null;
-    } else if (tabs.size() == 1) {
-      // If one tab, return that.
-      return tabs.get(0);
-    } else {
-      // If more then one tab, return the first visible, non-Chrome extension tab.
-      for (IBrowserTabInfo tab : tabs) {
-        if (!(tab instanceof ChromiumTabInfo) || !((ChromiumTabInfo) tab).isChromeExtension()) {
-          return tab;
-        }
+    // Return the first visible, non-Chrome extension tab.
+    for (IBrowserTabInfo tab : tabs) {
+      if (!(tab instanceof ChromiumTabInfo) || !((ChromiumTabInfo) tab).isChromeExtension()) {
+        return tab;
       }
     }
 

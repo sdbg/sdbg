@@ -33,12 +33,6 @@ public class ElementToActionFilterAdpater implements IActionFilter {
 
   @Override
   public boolean testAttribute(Object target, String name, String value) {
-//&&&    
-//
-//    IAdaptable element = (IAdaptable) target;
-//    if (element instanceof HTMLFile) {
-//      return true;
-//    }
     return false;
   }
 

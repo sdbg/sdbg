@@ -32,6 +32,7 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   private WebkitDebugValue value;
 
   private boolean isSpecialObject;
+  private boolean isLocal;
   private boolean isStatic;
   private boolean isLibraryObject;
 
@@ -132,6 +133,11 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     }
   }
 
+  @Override
+  public boolean isLocal() {
+    return isLocal;
+  }
+
   public boolean isPrimitiveValue() {
     try {
       return ((WebkitDebugValue) getValue()).isPrimitive();
@@ -197,6 +203,10 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   protected void setIsLibraryObject(boolean value) {
     this.isLibraryObject = value;
+  }
+
+  protected void setIsLocal(boolean value) {
+    isLocal = value;
   }
 
   protected void setIsStatic(boolean value) {

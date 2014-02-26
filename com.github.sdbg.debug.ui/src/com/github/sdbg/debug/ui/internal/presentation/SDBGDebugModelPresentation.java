@@ -229,6 +229,8 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
           return SDBGDebugUIPlugin.getImage("obj16/object_library.png");
         } else if (variable.isStatic()) {
           return SDBGDebugUIPlugin.getImage("obj16/object_static.png");
+        } else if (variable.isLocal()) {
+          return SDBGDebugUIPlugin.getImage("obj16/object_local.gif");
         } else {
           return SDBGDebugUIPlugin.getImage("obj16/object_obj.png");
         }

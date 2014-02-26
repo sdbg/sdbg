@@ -14,6 +14,12 @@
 
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,12 +27,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.debug.core.model.IVariable;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 
 /**
  * A helper class to asynchronously collect variable values for the WebkitDebugStackFrame class.
@@ -49,7 +49,7 @@ class VariableCollector {
               @Override
               public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
                 try {
-                  collector.collectFields(result, !obj.isList(), !obj.isList());
+                  collector.collectFields(result, !obj.isList(), !obj.isList(), false);
                 } catch (Throwable t) {
                   SDBGDebugCorePlugin.logError(t);
 
@@ -93,7 +93,7 @@ class VariableCollector {
               @Override
               public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
                 try {
-                  collector.collectFields(result, false, !obj.isList());
+                  collector.collectFields(result, false, !obj.isList(), true);
                 } catch (Throwable t) {
                   SDBGDebugCorePlugin.logError(t);
 
@@ -126,6 +126,11 @@ class VariableCollector {
   private List<IVariable> variables = new ArrayList<IVariable>();
   private List<WebkitPropertyDescriptor> webkitProperties = new ArrayList<WebkitPropertyDescriptor>();
 
+  public VariableCollector(WebkitDebugTarget target, List<IVariable> variables) {
+    this.target = target;
+    this.variables.addAll(variables);
+  }
+
   private VariableCollector(WebkitDebugTarget target, int work) {
     this(target, work, null);
   }
@@ -137,13 +142,20 @@ class VariableCollector {
     latch = new CountDownLatch(work);
   }
 
-  public VariableCollector(WebkitDebugTarget target, List<IVariable> variables) {
-    this.target = target;
-    this.variables.addAll(variables);
+  public IVariable[] getVariables() throws InterruptedException {
+    latch.await();
+
+    return variables.toArray(new IVariable[variables.size()]);
+  }
+
+  public List<WebkitPropertyDescriptor> getWebkitProperties() throws InterruptedException {
+    latch.await();
+
+    return webkitProperties;
   }
 
   private void collectFields(WebkitResult<WebkitPropertyDescriptor[]> results, boolean shouldSort,
-      boolean collectStatics) {
+      boolean collectStatics, boolean isLocal) {
     boolean gettingStaticFields = false;
 
     if (!results.isError()) {
@@ -233,18 +245,6 @@ class VariableCollector {
     variables.add(variable);
   }
 
-  private void createThisVariable(WebkitRemoteObject thisObject) {
-    variables.add(new WebkitDebugVariable(target, WebkitPropertyDescriptor.createObjectDescriptor(
-        thisObject,
-        "this"), true));
-  }
-
-  public IVariable[] getVariables() throws InterruptedException {
-    latch.await();
-
-    return variables.toArray(new IVariable[variables.size()]);
-  }
-
 //  private void createLibraryVariable(WebkitRemoteObject libraryObject) {
 //    WebkitDebugVariable variable = new WebkitDebugVariable(
 //        target,
@@ -253,10 +253,10 @@ class VariableCollector {
 //    variables.add(variable);
 //  }
 
-  public List<WebkitPropertyDescriptor> getWebkitProperties() throws InterruptedException {
-    latch.await();
-
-    return webkitProperties;
+  private void createThisVariable(WebkitRemoteObject thisObject) {
+    variables.add(new WebkitDebugVariable(target, WebkitPropertyDescriptor.createObjectDescriptor(
+        thisObject,
+        "this"), true));
   }
 
   private boolean isListNonIndex(WebkitPropertyDescriptor descriptor) {

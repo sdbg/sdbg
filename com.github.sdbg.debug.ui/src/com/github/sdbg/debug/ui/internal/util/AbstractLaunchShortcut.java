@@ -13,6 +13,10 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +24,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationType;
@@ -33,11 +38,6 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
-
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 
 /**
  * An abstract parent of Dart launch shortcuts.
@@ -81,18 +81,8 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
   public final IResource getLaunchableResource(IEditorPart editor) {
     IResource resource = (IResource) editor.getEditorInput().getAdapter(IResource.class);
 
-    try {
-      if (resource != null) {
-        return getLaunchableResource(resource);
-      }
-//&&&    } catch (DartModelException e) {
-    } catch (CoreException e) {
-      DebugErrorHandler.errorDialog(
-          null,
-          "Error Launching " + launchTypeLabel,
-          "Unable to locate launchable resource.",
-          e);
-      return null;
+    if (resource != null) {
+      return getLaunchableResource(resource);
     }
 
     return null;
@@ -104,35 +94,19 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
       return null;
     }
 
-    Object elem = ((IStructuredSelection) selection).getFirstElement();
+    Object obj = ((IStructuredSelection) selection).getFirstElement();
 
-    Object res = null;
-    if (elem instanceof IResource) {
-      res = elem;
-//    } else if (elem instanceof DartElement) {
-//      res = elem;
-    } else if (elem instanceof IAdaptable) {
-      res = ((IAdaptable) elem).getAdapter(IResource.class);
-    }
-    try {
-      IResource resource = getLaunchableResource(res);
-      if (resource == null) {
-        MessageDialog.openInformation(
-            null,
-            "Unable to Run " + launchTypeLabel,
-            "Unable to run the current selection: could not find an associated html file");
-      }
-      return resource;
+    IResource resource;
 
-//&&&    } catch (DartModelException e) {
-    } catch (CoreException e) {
-      DebugErrorHandler.errorDialog(
-          null,
-          "Error Launching " + launchTypeLabel,
-          "Unable to locate launchable resource.",
-          e);
-      return null;
+    if (obj instanceof IResource) {
+      resource = (IResource) obj;
+    } else if (obj instanceof IAdaptable) {
+      resource = (IResource) ((IAdaptable) obj).getAdapter(IResource.class);
+    } else {
+      resource = null;
     }
+
+    return getLaunchableResource(resource);
   }
 
   @Override
@@ -140,19 +114,6 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
     // let the framework resolve configurations based on resource mapping
     return null;
   }
-
-//&&&  
-//
-//  private IResource getHtmlFileForLibrarySource(Source[] sources) {
-//    ProjectManager manager = DartCore.getProjectManager();
-//    for (Source source : sources) {
-//      IResource launchResource = manager.getHtmlFileForLibrary(source);
-//      if (launchResource != null) {
-//        return launchResource;
-//      }
-//    }
-//    return null;
-//  }
 
   @Override
   public final ILaunchConfiguration[] getLaunchConfigurations(ISelection selection) {
@@ -165,21 +126,11 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
     IResource resource = (IResource) editor.getEditorInput().getAdapter(IResource.class);
 
     if (resource != null) {
-      try {
-        resource = getLaunchableResource(resource);
+      resource = getLaunchableResource(resource);
 
-        if (resource != null) {
-          launch(resource, mode);
+      if (resource != null) {
+        launch(resource, mode);
 
-          return;
-        }
-//&&&      } catch (DartModelException e) {
-      } catch (CoreException e) {
-        DebugErrorHandler.errorDialog(
-            null,
-            "Error Launching " + launchTypeLabel,
-            "Unable to locate launchable resource.",
-            e);
         return;
       }
     }
@@ -232,7 +183,8 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
    * @param resource the resource
    * @return the launch configuration or <code>null</code> if none
    */
-  protected final ILaunchConfiguration findConfig(IResource resource) {
+  protected final ILaunchConfiguration findConfig(IResource resource)
+      throws OperationCanceledException {
     List<ILaunchConfiguration> candidateConfigs = Arrays.asList(getAssociatedLaunchConfigurations(resource));
 
     int candidateCount = candidateConfigs.size();
@@ -240,7 +192,12 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
     if (candidateCount == 1) {
       return candidateConfigs.get(0);
     } else if (candidateCount > 1) {
-      return chooseConfiguration(candidateConfigs);
+      ILaunchConfiguration result = chooseConfiguration(candidateConfigs);
+      if (result != null) {
+        return result;
+      } else {
+        throw new OperationCanceledException();
+      }
     }
 
     return null;
@@ -258,8 +215,7 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
    * @param originalResource the original resource or <code>null</code>
    * @return the Dart resource to be launched or <code>null</code>
    */
-  protected IResource getLaunchableResource(Object originalResource)
-      throws /*&&&DartModelException*/CoreException {
+  protected IResource getLaunchableResource(Object originalResource) {
     if (originalResource == null) {
       return null;
     }
@@ -271,15 +227,14 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
       }
       return getPrimaryLaunchTarget(resource);
     }
-    return null;
 
+    return null;
   }
 
   /**
    * Checks if given resource is part of/is library that can be run on browser
    */
   protected boolean isBrowserApplication(IResource resource) {
-
     if (getPrimaryLaunchTarget(resource) != null) {
       return true;
     }
@@ -310,28 +265,34 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
   }
 
   private IResource getPrimaryLaunchTarget(IResource resource) {
-
-    // html file - is launchable 
+    // Html files are always launchable. 
     if (DartCore.isHtmlLikeFileName(resource.getName())) {
       return resource;
     }
 
 //&&&    
-//    ProjectManager manager = DartCore.getProjectManager();
+//    LightweightModel model = LightweightModel.getModel();
 //
-//    if (resource instanceof IProject) {
-//      Source[] sources = manager.getLibrarySources((IProject) resource);
-//      return getHtmlFileForLibrarySource(sources);
-//    }
+//    if (resource instanceof IContainer) {
+//      List<IFile> targets = model.getHtmlLaunchTargets((IContainer) resource);
 //
-//    // dart file - get library and check if it has html file associated
-//    if (DartCore.isDartLikeFileName(resource.getName())) {
+//      if (targets.size() > 0) {
+//        return targets.get(0);
+//      }
+//    } else {
 //      IFile file = (IFile) resource;
-//      Source[] sources = manager.getLibrarySources(file);
-//      return getHtmlFileForLibrarySource(sources);
+//
+//      if (model.isClientLibrary(file)) {
+//        return model.getHtmlFileForLibrary(file);
+//      } else {
+//        IFile containingLib = model.getContainingLibrary(file);
+//
+//        if (containingLib != null && model.isClientLibrary(containingLib)) {
+//          return model.getHtmlFileForLibrary(containingLib);
+//        }
+//      }
 //    }
-    // TODO(keertip): figure out association for other files like css etc.
+
     return null;
   }
-
 }

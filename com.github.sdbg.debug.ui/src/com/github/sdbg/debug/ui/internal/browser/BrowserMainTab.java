@@ -13,53 +13,26 @@
  */
 package com.github.sdbg.debug.ui.internal.browser;
 
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
-import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
-import org.eclipse.jface.layout.GridDataFactory;
-import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Text;
-
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
+
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
+import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
+import org.eclipse.jface.layout.GridLayoutFactory;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 
 /**
  * Main launch tab for Browser launch configurations
  */
 public class BrowserMainTab extends AbstractLaunchConfigurationTab {
 
-  private static Font italicFont;
-
-  private static Font getItalicFont(Font font) {
-    if (italicFont == null) {
-      FontData data = font.getFontData()[0];
-
-      italicFont = new Font(Display.getDefault(), new FontData(
-          data.getName(),
-          data.getHeight(),
-          SWT.ITALIC));
-    }
-
-    return italicFont;
-  }
-
-  private Text dart2jsFlagsText;
-  private int hIndent = 20;
-  private Button runDart2jsButton;
   private LaunchTargetComposite launchTargetGroup;
 
   @Override
@@ -76,36 +49,6 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
       }
     });
 
-    // dart2js group
-    Group dart2jsGroup = new Group(composite, SWT.NONE);
-    dart2jsGroup.setText(Messages.BrowserMainTab_Dart2js);
-    GridDataFactory.fillDefaults().grab(true, false).applyTo(dart2jsGroup);
-    GridLayoutFactory.swtDefaults().numColumns(3).applyTo(dart2jsGroup);
-    ((GridLayout) dart2jsGroup.getLayout()).marginBottom = 5;
-
-    runDart2jsButton = new Button(dart2jsGroup, SWT.CHECK);
-    runDart2jsButton.setText("Compile before launch");
-    GridDataFactory.swtDefaults().span(3, 1).applyTo(runDart2jsButton);
-
-    Label dart2jsLabel = new Label(dart2jsGroup, SWT.NONE);
-    dart2jsLabel.setText("Compiler flags:");
-    GridDataFactory.swtDefaults().hint(launchTargetGroup.getLabelColumnWidth() + hIndent, -1).applyTo(
-        dart2jsLabel);
-
-    dart2jsFlagsText = new Text(dart2jsGroup, SWT.BORDER | SWT.SINGLE);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
-        dart2jsFlagsText);
-
-    Label label = new Label(dart2jsGroup, SWT.NONE);
-    GridDataFactory.swtDefaults().hint(launchTargetGroup.getButtonWidthHint(), -1).applyTo(label);
-
-    label = new Label(dart2jsGroup, SWT.NONE);
-    label.setText("(e.g. --minify)");
-    label.setFont(getItalicFont(label.getFont()));
-    GridDataFactory.swtDefaults().indent(
-        hIndent + launchTargetGroup.getLabelColumnWidth(),
-        SWT.DEFAULT).span(3, 1).applyTo(label);
-
     setControl(composite);
   }
 
@@ -118,9 +61,6 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
       setControl(null);
     }
 
-    if (italicFont != null) {
-      italicFont.dispose();
-    }
   }
 
   @Override
@@ -167,19 +107,9 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
 
     if (wrapper.getShouldLaunchFile()) {
       launchTargetGroup.setHtmlButtonSelection(true);
-      updateEnablements(true);
     } else {
       launchTargetGroup.setHtmlButtonSelection(false);
-      updateEnablements(false);
     }
-    runDart2jsButton.setSelection(wrapper.getRunDart2js());
-    dart2jsFlagsText.setText(wrapper.getDart2jsFlags());
-  }
-
-  private void notifyPanelChanged() {
-    setDirty(true);
-    updateEnablements(launchTargetGroup.getHtmlButtonSelection());
-    updateLaunchConfigurationDialog();
   }
 
   /**
@@ -206,19 +136,6 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     wrapper.setUrl(launchTargetGroup.getUrlString());
     wrapper.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
 
-    wrapper.setRunDart2js(runDart2jsButton.getSelection());
-    wrapper.setDart2jsFlags(dart2jsFlagsText.getText().trim());
-
-  }
-
-  private String performSdkCheck() {
-//&&&    
-//    if (!DartSdkManager.getManager().hasSdk()) {
-//      return "Dart2js is not installed ("
-//          + DartSdkManager.getManager().getSdk().getDart2JsExecutable() + ")";
-//    } else {
-    return null;
-//    }
   }
 
   @Override
@@ -229,8 +146,19 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     wrapper.setRunDart2js(true);
   }
 
-  private void updateEnablements(boolean isFile) {
-    runDart2jsButton.setEnabled(isFile);
-    dart2jsFlagsText.setEnabled(isFile);
+  private void notifyPanelChanged() {
+    setDirty(true);
+    updateLaunchConfigurationDialog();
   }
+
+  private String performSdkCheck() {
+//&&&	  
+//    if (!DartSdkManager.getManager().hasSdk()) {
+//      return "Dart2js is not installed ("
+//          + DartSdkManager.getManager().getSdk().getDart2JsExecutable() + ")";
+//    } else {
+      return null;
+//    }
+  }
+
 }

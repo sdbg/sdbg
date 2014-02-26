@@ -298,7 +298,7 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
   }
 
   private IBreakpoint getBreakpointFor(WebkitCallFrame frame) {
-    BreakpointManager breakpointManager = getTarget().getBreakpointManager();
+    ISDBGBreakpointManager breakpointManager = getTarget().getBreakpointManager();
 
     if (breakpointManager != null) {
       return breakpointManager.getBreakpointFor(frame.getLocation());

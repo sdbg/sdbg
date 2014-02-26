@@ -31,7 +31,8 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.CallFra
 class WebkitStreamMonitor implements IStreamMonitor, WebkitConsole.ConsoleListener {
   private final static String FAILED_TO_LOAD = "Failed to load resource";
   private final static String CHROME_THUMB = "chrome://thumb/";
-  //private final static String CHROME_NEW_TAB = "chrome://newtab/";
+  private final static String CHROME_SEARCH_THUMB = "chrome-search://thumb/";
+  private final static String NEWTAB_MESSAGE = "_/chrome/newtab?";
 
   private List<IStreamListener> listeners = new ArrayList<IStreamListener>();
 
@@ -53,26 +54,9 @@ class WebkitStreamMonitor implements IStreamMonitor, WebkitConsole.ConsoleListen
     listeners.add(listener);
   }
 
-  protected void connectTo(WebkitConnection connection) throws IOException {
-    if (this.connection != null) {
-      messagesCleared();
-
-      this.connection.getConsole().removeConsoleListener(this);
-    }
-
-    this.connection = connection;
-
-    connection.getConsole().addConsoleListener(this);
-    connection.getConsole().enable();
-  }
-
   @Override
   public String getContents() {
     return buffer.toString();
-  }
-
-  protected void messageAdded(String message) {
-    messageAdded(message, null, -1, null);
   }
 
   @Override
@@ -93,18 +77,20 @@ class WebkitStreamMonitor implements IStreamMonitor, WebkitConsole.ConsoleListen
         }
       }
 
-      text += "\n";
+      //   Rodent.toString (file:///Users/foo.../debuggertest/pets.dart:79:7)
+      if (stackTrace != null && stackTrace.size() > 0) {
+        // If we're not printing out a blank line.
+        if (text.trim().length() > 0) {
+          CallFrame topFrame = stackTrace.get(0);
 
-      // TODO(devoncarew): add a test to ensure that when an application throws an exception,
-      // we get that back as a payload in a log message.
-      if (stackTrace != null) {
-        //   Rodent.toString (file:///Users/foo.../debuggertest/pets.dart:79:7)
-
-        for (CallFrame frame : stackTrace) {
-          text += "  " + frame.functionName + " (" + frame.url + ":" + frame.lineNumber + ":"
-              + frame.columnNumber + ")\n";
+          // dartbug.com/16805
+          if (!"undefined".equals(topFrame.url)) {
+            text += " (" + topFrame.url + ":" + topFrame.lineNumber + ")";
+          }
         }
       }
+
+      text += "\n";
 
       buffer.append(text);
 
@@ -130,21 +116,40 @@ class WebkitStreamMonitor implements IStreamMonitor, WebkitConsole.ConsoleListen
     listeners.remove(listener);
   }
 
+  protected void connectTo(WebkitConnection connection) throws IOException {
+    if (this.connection != null) {
+      messagesCleared();
+
+      this.connection.getConsole().removeConsoleListener(this);
+    }
+
+    this.connection = connection;
+
+    connection.getConsole().addConsoleListener(this);
+    connection.getConsole().enable();
+  }
+
+  protected void messageAdded(String message) {
+    messageAdded(message, null, -1, null);
+  }
+
   boolean shouldIgnoreMessage(String message, String url) {
     if (message == null || url == null) {
       return false;
     }
 
     // Ignore all "failed to load" messages from chrome://thumb/... urls.
-    if (message.startsWith(FAILED_TO_LOAD) && url.startsWith(CHROME_THUMB)) {
+    if (message.startsWith(FAILED_TO_LOAD)
+        && (url.startsWith(CHROME_THUMB) || url.startsWith(CHROME_SEARCH_THUMB))) {
+      return true;
+    }
+
+    // Ignore "Application Cache Checking event" messages.
+    if (url.contains(NEWTAB_MESSAGE)) {
       return true;
     }
 
     // Ignore invalid -webkit property messages.
-    // {"method":"Console.messageAdded","params":{"message":{"timestamp":1.382876131132117E9,
-    //   "text":"Invalid CSS property name: -webkit-touch-callout","level":"warning","source":"css",
-    //   "column":1,"line":1886,"repeatCount":1,"type":"log","url":"chrome://newtab/"}}}
-    // && url.startsWith(CHROME_NEW_TAB)) {
     if (message.indexOf("Invalid CSS property name: -webkit") != -1
         || message.indexOf("Invalid CSS property value: -webkit") != -1) {
       return true;

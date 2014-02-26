@@ -48,10 +48,11 @@ import org.eclipse.debug.core.model.ILineBreakpoint;
 /**
  * Handle adding a removing breakpoints to the WebKit connection for the WebkitDebugTarget class.
  */
-public class BreakpointManager implements IBreakpointListener {
+public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointManager {
   private WebkitDebugTarget debugTarget;
 
   private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
+
   private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
 
   private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
@@ -60,6 +61,18 @@ public class BreakpointManager implements IBreakpointListener {
 
   public BreakpointManager(WebkitDebugTarget debugTarget) {
     this.debugTarget = debugTarget;
+  }
+
+  @Override
+  public void addBreakpointsConcerningScript(IStorage script) {
+    SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
+    for (String path : sourceMapManager.getSourcePaths(script)) {
+      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+        if (!isJSBreakpoint(breakpoint) && path.equals(getBreakpointPath(breakpoint))) {
+          breakpointAdded(breakpoint);
+        }
+      }
+    }
   }
 
   @Override
@@ -113,6 +126,7 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
+  @Override
   public void connect() throws IOException {
     IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
     for (IBreakpoint breakpoint : breakpoints) {
@@ -124,6 +138,7 @@ public class BreakpointManager implements IBreakpointListener {
     DebugPlugin.getDefault().getBreakpointManager().addBreakpointListener(this);
   }
 
+  @Override
   public void dispose(boolean deleteAll) {
     // Null check for when the editor is shutting down.
     if (DebugPlugin.getDefault() != null) {
@@ -147,6 +162,7 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
+  @Override
   public IBreakpoint getBreakpointFor(WebkitLocation location) {
     try {
       IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
@@ -183,18 +199,8 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-  void addBreakpointsConcerningScript(IStorage script) {
-    SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-    for (String path : sourceMapManager.getSourcePaths(script)) {
-      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
-        if (!isJSBreakpoint(breakpoint) && path.equals(getBreakpointPath(breakpoint))) {
-          breakpointAdded(breakpoint);
-        }
-      }
-    }
-  }
-
-  void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
+  @Override
+  public void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint) {
     try {
       IBreakpoint bp = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
 
@@ -218,12 +224,14 @@ public class BreakpointManager implements IBreakpointListener {
     }
   }
 
-  void handleGlobalObjectCleared() {
+  @Override
+  public void handleGlobalObjectCleared() {
     // TODO: Breakpoints' cleanup code should be present here?!
     Trace.trace("Global object cleared");
   }
 
-  void removeBreakpointsConcerningScript(IStorage script) {
+  @Override
+  public void removeBreakpointsConcerningScript(IStorage script) {
     SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
     for (String path : sourceMapManager.getSourcePaths(script)) {
       for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
@@ -373,5 +381,64 @@ public class BreakpointManager implements IBreakpointListener {
 
   private boolean isJSBreakpoint(IBreakpoint breakpoint) {
     return breakpoint instanceof SDBGBreakpoint; // TODO: Extend IBreakpointPathResolver so that it has a say on that as well 
+  }
+}
+
+interface ISDBGBreakpointManager {
+
+  public void addBreakpointsConcerningScript(IStorage script);
+
+  public void connect() throws IOException;
+
+  public void dispose(boolean deleteAll);
+
+  public IBreakpoint getBreakpointFor(WebkitLocation location);
+
+  public void handleBreakpointResolved(WebkitBreakpoint breakpoint);
+
+  public void handleGlobalObjectCleared();
+
+  public void removeBreakpointsConcerningScript(IStorage script);
+}
+
+class NullBreakpointManager implements ISDBGBreakpointManager {
+
+  public NullBreakpointManager() {
+
+  }
+
+  @Override
+  public void addBreakpointsConcerningScript(IStorage script) {
+
+  }
+
+  @Override
+  public void connect() throws IOException {
+
+  }
+
+  @Override
+  public void dispose(boolean deleteAll) {
+
+  }
+
+  @Override
+  public IBreakpoint getBreakpointFor(WebkitLocation location) {
+    return null;
+  }
+
+  @Override
+  public void handleBreakpointResolved(WebkitBreakpoint breakpoint) {
+
+  }
+
+  @Override
+  public void handleGlobalObjectCleared() {
+
+  }
+
+  @Override
+  public void removeBreakpointsConcerningScript(IStorage script) {
+
   }
 }

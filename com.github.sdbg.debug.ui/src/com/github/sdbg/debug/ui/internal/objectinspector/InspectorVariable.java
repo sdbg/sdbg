@@ -14,15 +14,15 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.DebugElement;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 /**
  * An IVariable implementation used specifically for the object inspector. It is used to display the
@@ -75,6 +75,11 @@ public class InspectorVariable extends DebugElement implements ISDBGVariable, IV
 
   @Override
   public boolean isLibraryObject() {
+    return false;
+  }
+
+  @Override
+  public boolean isLocal() {
     return false;
   }
 

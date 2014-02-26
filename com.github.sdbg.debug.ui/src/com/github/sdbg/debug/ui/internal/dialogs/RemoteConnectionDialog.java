@@ -14,6 +14,13 @@
 
 package com.github.sdbg.debug.ui.internal.dialogs;
 
+import com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.model.IRemoteConnectionDelegate;
+import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabInfo;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -45,13 +52,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ListDialog;
 
-import com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.model.IRemoteConnectionDelegate;
-import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
-import com.github.sdbg.debug.core.util.IBrowserTabChooser;
-import com.github.sdbg.debug.core.util.IBrowserTabInfo;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-
 /**
  * A dialog to connect to remote debug instances.
  */
@@ -71,10 +71,24 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
         return null;
       }
 
-      if (tabs.size() == 1) {
-        return tabs.get(0);
-      }
+//&&&      
+//      int tabCount = 0;
 
+//      for (IBrowserTabInfo tab : tabs) {
+//        if (!(tab instanceof ChromiumTabInfo) && !((ChromiumTabInfo) tab).isChromeExtension()) {
+//          tabCount++;
+//        }
+//      }
+//
+//      // If there is exactly one tab that is not a Chrome extension.
+//      if (tabCount == 1) {
+//        for (IBrowserTabInfo tab : tabs) {
+//          if (!(tab instanceof ChromiumTabInfo) && !((ChromiumTabInfo) tab).isChromeExtension()) {
+//            return tab;
+//          }
+//        }
+//      }
+//
       final IBrowserTabInfo[] result = new IBrowserTabInfo[1];
 
       Display.getDefault().syncExec(new Runnable() {
@@ -113,6 +127,31 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
       this.port = port;
     }
 
+    @Override
+    protected IStatus run(IProgressMonitor monitor) {
+      try {
+        connectionDelegate.performRemoteConnection(host, port, monitor);
+
+//&&&        
+//        // Show the debugger view.
+//        Display.getDefault().asyncExec(new Runnable() {
+//          @Override
+//          public void run() {
+//            try {
+//              IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+//              window.getActivePage().showView(DebuggerView.ID);
+//            } catch (PartInitException ex) {
+//              SDBGDebugUIPlugin.logError(ex);
+//            }
+//          }
+//        });
+      } catch (CoreException ce) {
+        displayError(ce);
+      }
+
+      return Status.OK_STATUS;
+    }
+
     private void displayError(final CoreException exception) {
       Display.getDefault().asyncExec(new Runnable() {
         @Override
@@ -124,17 +163,6 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
               exception.getStatus());
         }
       });
-    }
-
-    @Override
-    protected IStatus run(IProgressMonitor monitor) {
-      try {
-        connectionDelegate.performRemoteConnection(host, port, monitor);
-      } catch (CoreException ce) {
-        displayError(ce);
-      }
-
-      return Status.OK_STATUS;
     }
   }
 
@@ -248,6 +276,37 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
     return contents;
   }
 
+  @Override
+  protected void okPressed() {
+    ConnectionType connection = getConnectionType();
+
+    String host = hostText.getText().trim();
+    String port = portText.getText().trim();
+
+    IDialogSettings settings = getDialogSettings();
+
+    settings.put("selected", connection.ordinal());
+    settings.put(connection.name() + ".host", host);
+    settings.put(connection.name() + ".port", port);
+
+    int connectionPort;
+
+    try {
+      connectionPort = Integer.parseInt(port);
+    } catch (NumberFormatException nfe) {
+      ErrorDialog.openError(getShell(), "Invalid Port", null, new Status(
+          IStatus.ERROR,
+          SDBGDebugUIPlugin.PLUGIN_ID,
+          "\"" + port + "\" is an invalid port."));
+
+      return;
+    }
+
+    connection.connection(host, connectionPort);
+
+    super.okPressed();
+  }
+
   private void createDialogUI(Composite parent) {
     GridLayoutFactory.fillDefaults().numColumns(2).margins(12, 6).applyTo(parent);
 
@@ -343,37 +402,6 @@ public class RemoteConnectionDialog extends TitleAreaDialog {
 
   private String notNull(String str) {
     return str == null ? "" : str;
-  }
-
-  @Override
-  protected void okPressed() {
-    ConnectionType connection = getConnectionType();
-
-    String host = hostText.getText().trim();
-    String port = portText.getText().trim();
-
-    IDialogSettings settings = getDialogSettings();
-
-    settings.put("selected", connection.ordinal());
-    settings.put(connection.name() + ".host", host);
-    settings.put(connection.name() + ".port", port);
-
-    int connectionPort;
-
-    try {
-      connectionPort = Integer.parseInt(port);
-    } catch (NumberFormatException nfe) {
-      ErrorDialog.openError(getShell(), "Invalid Port", null, new Status(
-          IStatus.ERROR,
-          SDBGDebugUIPlugin.PLUGIN_ID,
-          "\"" + port + "\" is an invalid port."));
-
-      return;
-    }
-
-    connection.connection(host, connectionPort);
-
-    super.okPressed();
   }
 
 }

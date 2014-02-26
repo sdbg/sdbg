@@ -14,6 +14,20 @@
 
 package com.github.sdbg.debug.core.configs;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.DebugUIHelper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
+import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
+import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
+import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.utilities.NetUtils;
+import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -35,20 +49,6 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.IProcess;
-
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.DebugUIHelper;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
-import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.utilities.NetUtils;
-import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 //[ {
 //  "title": "New Tab",
@@ -211,10 +211,8 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     List<String> commandsList = new ArrayList<String>();
 
     commandsList.add(chromeExe.getAbsolutePath());
-    commandsList.add("--enable-udd-profiles");
     commandsList.add("--user-data-dir="
         + BrowserManager.getCreateUserDataDirectoryPath("chrome-apps"));
-    commandsList.add("--profile-directory=editor");
     commandsList.add("--no-first-run");
     commandsList.add("--no-default-browser-check");
 
@@ -347,6 +345,12 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
         continue;
       }
 
+      // chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/background.html
+      if (tab.getUrl().endsWith("_generated_background_page.html")
+          || tab.getUrl().endsWith("/background.html")) {
+        continue;
+      }
+
       if (tab.getUrl().startsWith("chrome-extension://") && tab.getTitle().length() > 0) {
         return tab;
       }
@@ -376,6 +380,12 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
         ChromiumTabInfo targetTab = findTargetTab(tabs);
 
         if (targetTab != null) {
+          for (ChromiumTabInfo tab : tabs) {
+            SDBGDebugCorePlugin.log("Found: " + tab.toString());
+          }
+
+          SDBGDebugCorePlugin.log("Choosing: " + targetTab);
+
           return targetTab;
         }
       } catch (IOException exception) {

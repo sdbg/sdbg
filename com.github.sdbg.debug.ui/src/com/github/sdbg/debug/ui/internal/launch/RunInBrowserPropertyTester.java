@@ -13,7 +13,11 @@
  */
 package com.github.sdbg.debug.ui.internal.launch;
 
+import com.github.sdbg.core.DartCore;
+
 import org.eclipse.core.expressions.PropertyTester;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.jface.viewers.IStructuredSelection;
 
 /**
  * A {@link PropertyTester} for checking whether the resource can be launched in a non Chrome
@@ -22,69 +26,50 @@ import org.eclipse.core.expressions.PropertyTester;
  */
 public class RunInBrowserPropertyTester extends PropertyTester {
 
+  private static final String CAN_LAUNCH_BROWSER = "canLaunchBrowser";
+  private static final String CAN_PUB_BUILD = "canPubBuild";
+
   public RunInBrowserPropertyTester() {
 
   }
 
   @Override
   public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
+
+    if (CAN_LAUNCH_BROWSER.equalsIgnoreCase(property)) {
+      if (receiver instanceof IStructuredSelection) {
+        Object o = ((IStructuredSelection) receiver).getFirstElement();
+        if (o instanceof IFile) {
+          IFile file = (IFile) o;
+          if (DartCore.isHtmlLikeFileName(file.getName())/*&&&
+                                                         && DartCore.isInBuildDirectory(file.getParent())*/) {
+            return true;
+          }
+        }
+      }
+    }
 //&&&
-//    if ("canLaunchBrowser".equalsIgnoreCase(property)) {
+//    if (CAN_PUB_BUILD.equalsIgnoreCase(property)) {
 //      if (receiver instanceof IStructuredSelection) {
 //        Object o = ((IStructuredSelection) receiver).getFirstElement();
 //        if (o instanceof IFile) {
 //          IFile file = (IFile) o;
-//          if (DartCore.isHtmlLikeFileName(((IFile) o).getName()) && !usesPolymer(file)) {
+//          if (DartCore.isHtmlLikeFileName(file.getName())
+//              && !DartCore.isInBuildDirectory(file.getParent())) {
+//
 //            return true;
 //          }
 //
-//          ProjectManager manager = DartCore.getProjectManager();
-//          if (manager.getSourceKind(file) == SourceKind.LIBRARY
-//              && manager.isClientLibrary(manager.getSource(file))) {
+//          LightweightModel model = LightweightModel.getModel();
+//
+//          if (model.getSourceKind(file) == SourceKind.LIBRARY && model.isClientLibrary(file)
+//              && !DartCore.isInBuildDirectory(file.getParent())) {
 //            return true;
 //          }
-//        }
-//      }
-//    }
-//
-//    if ("canDeployPolymer".equalsIgnoreCase(property)) {
-//      if (receiver instanceof IStructuredSelection) {
-//        Object o = ((IStructuredSelection) receiver).getFirstElement();
-//        if (o instanceof IFile && DartCore.isHtmlLikeFileName(((IFile) o).getName())) {
-//          IFile file = (IFile) o;
-//          return usesPolymer(file);
 //        }
 //      }
 //    }
 //
     return false;
   }
-
-//&&&  
-//  @SuppressWarnings("rawtypes")
-//  private boolean usesPolymer(IFile file) {
-//    // check if there is a polymer transform in pubspec, and if web is sibling pubspec
-//    ProjectManager manager = DartCore.getProjectManager();
-//    PubFolder pubFolder = manager.getPubFolder(file);
-//    try {
-//      if (pubFolder != null && pubFolder.getPubspec() != null) {
-//        List<Object> transformers = pubFolder.getPubspec().getTransformers();
-//        for (Object transform : transformers) {
-//          if (transform instanceof Map && ((Map) transform).containsKey("polymer")) {
-//            IContainer parent = file.getParent();
-//            if (parent.getName().equals("web")
-//                && DartCore.isApplicationDirectory(parent.getParent())) {
-//              return true;
-//            }
-//          }
-//        }
-//      }
-//    } catch (CoreException e) {
-//
-//    } catch (IOException e) {
-//
-//    }
-//    return false;
-//  }
-//
 }

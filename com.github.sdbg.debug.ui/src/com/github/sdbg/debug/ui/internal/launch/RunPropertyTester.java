@@ -30,22 +30,20 @@ public class RunPropertyTester extends PropertyTester {
   @Override
   public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
 //&&&    
-//
 //    if ("canLaunch".equalsIgnoreCase(property)) {
 //      if (receiver instanceof IStructuredSelection) {
 //        Object o = ((IStructuredSelection) receiver).getFirstElement();
 //        if (o instanceof IFile && DartCore.isDartLikeFileName(((IFile) o).getName())) {
-//
 //          IFile file = (IFile) o;
-//          ProjectManager manager = DartCore.getProjectManager();
-//          if (manager.getSourceKind(file) == SourceKind.LIBRARY
-//              && manager.isServerLibrary(manager.getSource(file))) {
+//          LightweightModel model = LightweightModel.getModel();
+//
+//          if (model.getSourceKind(file) == SourceKind.LIBRARY && model.isServerLibrary(file)) {
 //            return true;
 //          }
 //        }
 //      }
 //    }
-//
+
     return false;
   }
 

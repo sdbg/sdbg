@@ -26,6 +26,8 @@ public interface ISDBGVariable extends IVariable {
 
   public boolean isLibraryObject();
 
+  public boolean isLocal();
+
   public boolean isStatic();
 
   public boolean isThisObject();

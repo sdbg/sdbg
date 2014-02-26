@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.ui.internal.launch;
 
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
 import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
 
@@ -26,7 +26,7 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 
 /**
- * Action to generate JavaScript and launch in default browser
+ * Action to launch in default browser
  */
 public class RunInBrowserAction extends RunAbstractAction {
 
@@ -39,9 +39,9 @@ public class RunInBrowserAction extends RunAbstractAction {
   }
 
   public RunInBrowserAction(IWorkbenchWindow window, boolean noMenu) {
-    super(window, "Run as JavaScript", noMenu ? IAction.AS_PUSH_BUTTON : IAction.AS_DROP_DOWN_MENU);
+    super(window, "Run in Browser", noMenu ? IAction.AS_PUSH_BUTTON : IAction.AS_DROP_DOWN_MENU);
 
-    setActionDefinitionId("com.github.sdbg.tools.debug.ui.run.browser");
+    setActionDefinitionId("com.google.dart.tools.debug.ui.run.browser");
     setImageDescriptor(SDBGDebugUIPlugin.getImageDescriptor("obj16/run_exc.png"));
   }
 

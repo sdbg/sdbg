@@ -14,6 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.hover;
 
+import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.objectinspector.ObjectInspectorContentProvider;
 import com.github.sdbg.debug.ui.internal.presentation.SDBGDebugModelPresentation;
@@ -95,8 +96,11 @@ public class DebugTooltipControl extends AbstractInformationControl implements
     @Override
     public void paneChanged(String newPaneID) {
       if (newPaneID.equals(DefaultDetailPane.ID)) {
-        detailPane.getCurrentControl().setBackground(
-            getShell().getDisplay().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
+        // Use the standard tooltip colors on a mac.
+        if (DartCore.isMac()) {
+          detailPane.getCurrentControl().setBackground(
+              getShell().getDisplay().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
+        }
       }
     }
 
@@ -292,7 +296,10 @@ public class DebugTooltipControl extends AbstractInformationControl implements
 
     initSashWeights();
 
-    setBackgroundColor(getShell().getDisplay().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
+    // Use the standard tooltip colors on a mac.
+    if (DartCore.isMac()) {
+      setBackgroundColor(getShell().getDisplay().getSystemColor(SWT.COLOR_INFO_BACKGROUND));
+    }
   }
 
   /**

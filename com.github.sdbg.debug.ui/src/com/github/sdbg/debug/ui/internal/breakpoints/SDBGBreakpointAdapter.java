@@ -13,19 +13,22 @@
  */
 package com.github.sdbg.debug.ui.internal.breakpoints;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
+import org.eclipse.jface.text.BadLocationException;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 
 /**
  * Adapter class in charge of toggling Dart breakpoints.
@@ -56,14 +59,6 @@ public class SDBGBreakpointAdapter implements IToggleBreakpointsTarget {
     return false;
   }
 
-  protected AbstractTextEditor getEditor(IWorkbenchPart part) {
-    if (part instanceof AbstractTextEditor) {
-      return (AbstractTextEditor) part;
-    } else {
-      return null;
-    }
-  }
-
   @Override
   public void toggleLineBreakpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
     AbstractTextEditor editor = getEditor(part);
@@ -89,8 +84,28 @@ public class SDBGBreakpointAdapter implements IToggleBreakpointsTarget {
         }
       }
 
-      SDBGBreakpoint breakpoint = new SDBGBreakpoint(resource, lineNumber);
+      // Check for a whitespace line.
+      try {
+        IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+        IRegion lineInfo = document.getLineInformation(textSelection.getStartLine());
+        String line = document.get(lineInfo.getOffset(), lineInfo.getLength());
 
+        line = line.trim();
+
+        // Disallow setting breakpoints on whitespace lines.
+        if (line.length() == 0) {
+          return;
+        }
+
+        // Or line comment lines.
+        if (line.startsWith("//")) {
+          return;
+        }
+      } catch (BadLocationException e) {
+
+      }
+
+      SDBGBreakpoint breakpoint = new SDBGBreakpoint(resource, lineNumber);
       DebugPlugin.getDefault().getBreakpointManager().addBreakpoint(breakpoint);
     }
   }
@@ -104,6 +119,14 @@ public class SDBGBreakpointAdapter implements IToggleBreakpointsTarget {
   @Override
   public void toggleWatchpoints(IWorkbenchPart part, ISelection selection) throws CoreException {
 
+  }
+
+  protected AbstractTextEditor getEditor(IWorkbenchPart part) {
+    if (part instanceof AbstractTextEditor) {
+      return (AbstractTextEditor) part;
+    } else {
+      return null;
+    }
   }
 
 }

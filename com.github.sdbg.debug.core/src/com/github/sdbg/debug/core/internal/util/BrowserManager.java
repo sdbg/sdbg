@@ -25,6 +25,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.NetUtils;
@@ -88,8 +89,7 @@ public class BrowserManager {
     if (!dataDir.exists()) {
       dataDir.mkdir();
     } else {
-      // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can
-      // cause old tabs to
+      // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can cause old tabs to
       // restore themselves when we launch the browser.
       File defaultDir = new File(dataDir, "Default");
 
@@ -181,9 +181,9 @@ public class BrowserManager {
     monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
 
     try {
-      List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
+      List<? extends IBrowserTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
 
-      ChromiumTabInfo tab = findTargetTab(tabChooser, tabs);
+      ChromiumTabInfo tab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
 
       if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
         throw new DebugException(new Status(
@@ -274,6 +274,12 @@ public class BrowserManager {
     if (!restart) {
       if (!WebkitDebugTarget.getActiveTarget().getLaunch().getLaunchConfiguration().equals(
           launch.getLaunchConfiguration())) {
+        restart = true;
+      }
+    }
+
+    if (!restart) {
+      if (enableDebugging != WebkitDebugTarget.getActiveTarget().getEnableBreakpoints()) {
         restart = true;
       }
     }
@@ -372,10 +378,9 @@ public class BrowserManager {
             "Unable to connect to Chromium"));
       }
 
-      // Even when Chrome has reported all the debuggable tabs to us, the debug
-      // server
+      // Even when Chrome has reported all the debuggable tabs to us, the debug server
       // may not yet have started up. Delay a small fixed amount of time.
-      sleep(1000);
+      sleep(100);
 
       WebkitConnection connection = new WebkitConnection(
           tab.getHost(),
@@ -448,8 +453,8 @@ public class BrowserManager {
     arguments.add("--user-data-dir=" + getCreateUserDataDirectoryPath("chrome"));
 
     if (launchConfig.isEnableExperimentalWebkitFeatures()) {
-      arguments.add("--enable-experimental-webkit-features");
-      arguments.add("--enable-devtools-experiments");
+      arguments.add("--enable-experimental-web-platform-features");
+      arguments.add("--enable-html-imports");
     }
 
     // Whether or not it's actually the first run.
@@ -460,11 +465,6 @@ public class BrowserManager {
 
     // Bypass the error dialog when the profile lock couldn't be attained.
     arguments.add("--no-process-singleton-dialog");
-
-    // TODO(devoncarew): speculative work for redirecting the devtools connection
-    //arguments.add("--remote-debugging-frontend=\"http://localhost:3030/devtools/devtools.html\"");
-    //arguments.add("--remote-debugging-frontend=\"http://localhost:3030/front-end/inspector.html\"");
-    //arguments.add("--debug-devtools-frontend=\"http://localhost:3030/devtools/devtools.html\"");
 
     for (String arg : launchConfig.getArgumentsAsArray()) {
       arguments.add(arg);
@@ -489,18 +489,25 @@ public class BrowserManager {
     }
   }
 
-  private ChromiumTabInfo findTargetTab(IBrowserTabChooser tabChooser, List<ChromiumTabInfo> tabs) {
-    ChromiumTabInfo chromeTab = (ChromiumTabInfo) tabChooser.chooseTab(tabs);
+  private IBrowserTabInfo findTargetTab(IBrowserTabChooser tabChooser,
+      List<? extends IBrowserTabInfo> tabs) {
+    IBrowserTabInfo chosenTab = tabChooser.chooseTab(tabs);
 
-    if (chromeTab != null) {
-      return chromeTab;
+    if (chosenTab != null) {
+      for (IBrowserTabInfo tab : tabs) {
+        SDBGDebugCorePlugin.log("Found: " + tab.toString());
+      }
+
+      SDBGDebugCorePlugin.log("Choosing: " + chosenTab);
+
+      return chosenTab;
     }
 
     StringBuilder builder = new StringBuilder("Unable to locate target Chrome tab [" + tabs.size()
         + " tabs]\n");
 
-    for (ChromiumTabInfo tab : tabs) {
-      builder.append("  " + tab.getUrl() + " [" + tab.getTitle() + "]\n");
+    for (IBrowserTabInfo tab : tabs) {
+      builder.append("  " + tab.toString() + " [" + tab.getTitle() + "]\n");
     }
 
     SDBGDebugCorePlugin.logError(builder.toString().trim());
@@ -528,7 +535,7 @@ public class BrowserManager {
       try {
         List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(port);
 
-        ChromiumTabInfo targetTab = findTargetTab(tabChooser, tabs);
+        ChromiumTabInfo targetTab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
 
         if (targetTab != null) {
           return targetTab;
@@ -725,8 +732,7 @@ public class BrowserManager {
 
     ProcessBuilder builder = new ProcessBuilder();
     Map<String, String> env = builder.environment();
-    // Due to differences in 32bit and 64 bit environments, dartium 32bit launch
-    // does not work on
+    // Due to differences in 32bit and 64 bit environments, dartium 32bit launch does not work on
     // linux with this property.
     env.remove("LD_LIBRARY_PATH");
 
@@ -779,10 +785,8 @@ public class BrowserManager {
   private void terminateExistingBrowserProcess() {
     if (browserProcess != null) {
       if (!isProcessTerminated(browserProcess)) {
-        // TODO(devoncarew): try and use an OS mechanism to send it a graceful
-        // shutdown request?
-        // This could avoid the problem w/ Chrome displaying the crashed message
-        // on the next run.
+        // TODO(devoncarew): try and use an OS mechanism to send it a graceful shutdown request?
+        // This could avoid the problem w/ Chrome displaying the crashed message on the next run.
 
         browserProcess.destroy();
 

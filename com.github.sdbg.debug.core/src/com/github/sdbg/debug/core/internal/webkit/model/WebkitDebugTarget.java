@@ -16,7 +16,6 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
@@ -42,7 +41,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarkerDelta;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
@@ -54,6 +52,8 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.IBreakpointManager;
+import org.eclipse.debug.core.IBreakpointManagerListener;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -66,8 +66,8 @@ import org.eclipse.debug.core.model.IThread;
 /**
  * The IDebugTarget implementation for the Webkit debug elements.
  */
-public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugTarget {
-  //&&&!!!
+public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpointManagerListener,
+    ISDBGDebugTarget {
   private class WebkitScriptStorage extends PlatformObject implements IStorage {
     private WebkitScript script;
     private String source;
@@ -166,17 +166,15 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
   private String debugTargetName;
   private WebkitConnection connection;
   private ILaunch launch;
-  private IProject currentProject;
   private WebkitDebugProcess process;
   private IResourceResolver resourceResolver;
   private boolean enableBreakpoints;
   private WebkitDebugThread debugThread;
-  private BreakpointManager breakpointManager;
+  private ISDBGBreakpointManager breakpointManager;
   private CssScriptManager cssScriptManager;
   private HtmlScriptManager htmlScriptManager;
   private DartCodeManager dartCodeManager;
   private boolean canSetScriptSource;
-
   private SourceMapManager sourceMapManager;
 
   /**
@@ -201,7 +199,11 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       process = new WebkitDebugProcess(this, debugTargetName, javaProcess);
     }
 
-    breakpointManager = new BreakpointManager(this);
+    if (enableBreakpoints) {
+      breakpointManager = new BreakpointManager(this);
+    } else {
+      breakpointManager = new NullBreakpointManager();
+    }
 
     cssScriptManager = new CssScriptManager(this);
 
@@ -213,10 +215,16 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       dartCodeManager = new DartCodeManager(this);
     }
 
-    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(launch.getLaunchConfiguration());
+//&&&    
+//    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(launch.getLaunchConfiguration());
 
-    currentProject = wrapper.getProject();
     sourceMapManager = new SourceMapManager(resourceResolver);
+//&&&    
+//    if (wrapper.getProject() != null) {
+//      sourceMapManager = new SourceMapManager(wrapper.getProject());
+//    } else {
+//      sourceMapManager = new SourceMapManager(ResourcesPlugin.getWorkspace().getRoot());
+//    }
   }
 
   /**
@@ -246,6 +254,15 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
   @Override
   public void breakpointChanged(IBreakpoint breakpoint, IMarkerDelta delta) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void breakpointManagerEnablementChanged(boolean enabled) {
+    try {
+      getConnection().getDebugger().setBreakpointsActive(enableBreakpoints && enabled);
+    } catch (IOException e) {
+      SDBGDebugCorePlugin.logError(e);
+    }
   }
 
   @Override
@@ -317,6 +334,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     return this;
   }
 
+  public boolean getEnableBreakpoints() {
+    return enableBreakpoints;
+  }
+
   @Override
   public ILaunch getLaunch() {
     return launch;
@@ -376,13 +397,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       boolean enableBreakpoints, IResourceResolver resolver) throws IOException {
     this.resourceResolver = resolver;
 
-    if (enableBreakpoints) {
-      connection.getDebugger().setBreakpointsActive(true);
-      connection.getDebugger().setPauseOnExceptions(getPauseType(), null);
-    } else {
-      connection.getDebugger().setBreakpointsActive(false);
-      connection.getDebugger().setPauseOnExceptions(PauseOnExceptionsType.none);
-    }
+    IBreakpointManager eclipseBpManager = DebugPlugin.getDefault().getBreakpointManager();
+
+    connection.getDebugger().setBreakpointsActive(enableBreakpoints && eclipseBpManager.isEnabled());
+    connection.getDebugger().setPauseOnExceptions(getPauseType());
 
     getConnection().getPage().navigate(url);
   }
@@ -484,6 +502,12 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     });
     connection.getDebugger().enable();
 
+    IBreakpointManager eclipseBpManager = DebugPlugin.getDefault().getBreakpointManager();
+    eclipseBpManager.addBreakpointManagerListener(this);
+
+    getConnection().getDebugger().setBreakpointsActive(
+        enableBreakpoints && eclipseBpManager.isEnabled());
+
     connection.getDebugger().canSetScriptSource(new WebkitCallback<Boolean>() {
       @Override
       public void handleResult(WebkitResult<Boolean> result) {
@@ -498,8 +522,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
 
     // Set our existing breakpoints and start listening for new breakpoints.
     breakpointManager.connect();
-
-    connection.getDebugger().setBreakpointsActive(enableBreakpoints);
 
     // TODO(devoncarew): listen for changes to DartDebugCorePlugin.PREFS_BREAK_ON_EXCEPTIONS
 
@@ -551,12 +573,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       return false;
     }
 
-//&&&    
-//    if (currentProject == null) {
     return true;
-//    } else {
-//      return currentProject.equals(breakpoint.getMarker().getResource().getProject());
-//    }
   }
 
   public boolean supportsSetScriptSource() {
@@ -603,7 +620,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     };
   }
 
-  protected BreakpointManager getBreakpointManager() {
+  protected ISDBGBreakpointManager getBreakpointManager() {
     return breakpointManager;
   }
 
@@ -611,7 +628,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
     return resourceResolver;
   }
 
-  //&&&!!!
   protected IStorage getScriptStorage(WebkitScript script) {
     if (script != null) {
       String url = script.getUrl();
@@ -653,14 +669,14 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
       // When the user opens the Webkit inspector our debug connection is closed.
       // We warn the user when this happens, since it otherwise isn't apparent to them
       // when the debugger connection is closing.
-//      DebugUIHelper.getHelper().showError(
-//          "Debugger Connection Closed",
-//          "The debugger connection has been closed by the remote host.");
-      DebugUIHelper.getHelper().showDevtoolsDisconnectError("Debugger Connection Closed", this);
+      if (enableBreakpoints) {
+        // Only show this message if the user launched Dartium with debugging enabled.
+        DebugUIHelper.getHelper().showDevtoolsDisconnectError("Debugger Connection Closed", this);
+      }
     }
   }
 
-  protected void printExceptionToStdout(WebkitRemoteObject exception) {
+  protected void printExceptionToStdout(final WebkitRemoteObject exception) {
     try {
       getConnection().getRuntime().callToString(
           exception.getObjectId(),
@@ -669,6 +685,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
             public void handleResult(WebkitResult<String> result) {
               if (!result.isError()) {
                 String text = result.getResult();
+
+                if (exception.isPrimitive()) {
+                  text = exception.getValue();
+                }
 
                 int index = text.indexOf('\n');
 
@@ -713,6 +733,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements ISDBGDebugT
   }
 
   private PauseOnExceptionsType getPauseType() {
+    if (!enableBreakpoints) {
+      return PauseOnExceptionsType.none;
+    }
+
     final BreakOnExceptions boe = SDBGDebugCorePlugin.getPlugin().getBreakOnExceptions();
     PauseOnExceptionsType pauseType = PauseOnExceptionsType.none;
 

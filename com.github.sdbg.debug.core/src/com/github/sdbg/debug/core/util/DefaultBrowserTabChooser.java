@@ -38,7 +38,7 @@ public class DefaultBrowserTabChooser implements IBrowserTabChooser {
       }
 
       if (tab instanceof ChromiumTabInfo
-          || ((ChromiumTabInfo) tab).getUrl().contains(CHROMIUM_INITIAL_PAGE_FRAGMENT)) {
+          && ((ChromiumTabInfo) tab).getUrl().contains(CHROMIUM_INITIAL_PAGE_FRAGMENT)) {
         return tab;
       }
     }

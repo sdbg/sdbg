@@ -13,6 +13,10 @@
  */
 package com.github.sdbg.debug.ui.internal.chrome;
 
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
+
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -30,14 +34,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
-
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
-import com.github.sdbg.ui.internal.util.ExternalBrowserUtil;
 
 /**
  * The main launch configuration UI for running applications in Chrome.
@@ -50,8 +48,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
       notifyPanelChanged();
     }
   };
-
-  private Button checkedModeButton;
 
   private Button showOutputButton;
 
@@ -88,26 +84,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
-
-    checkedModeButton = new Button(group, SWT.CHECK);
-    checkedModeButton.setText("Run in checked mode");
-    checkedModeButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        notifyPanelChanged();
-      }
-    });
-    GridDataFactory.swtDefaults().span(2, 1).grab(true, false).applyTo(checkedModeButton);
-
-    Link infoLink = new Link(group, SWT.NONE);
-    infoLink.setText("<a href=\"" + SDBGDebugUIPlugin.CHECK_MODE_DESC_URL
-        + "\">what is checked mode?</a>");
-    infoLink.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        ExternalBrowserUtil.openInExternalBrowser(SDBGDebugUIPlugin.CHECK_MODE_DESC_URL);
-      }
-    });
 
     useWebComponentsButton = new Button(group, SWT.CHECK);
     useWebComponentsButton.setText("Enable experimental browser features (Web Components)");
@@ -181,10 +157,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
       launchTargetGroup.setHtmlButtonSelection(false);
     }
 
-    if (checkedModeButton != null) {
-      checkedModeButton.setSelection(dartLauncher.getCheckedMode());
-    }
-
     if (showOutputButton != null) {
       showOutputButton.setSelection(dartLauncher.getShowLaunchOutput());
     }
@@ -201,12 +173,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
   @Override
   public boolean isValid(ILaunchConfiguration launchConfig) {
     return getErrorMessage() == null;
-  }
-
-  private void notifyPanelChanged() {
-    setDirty(true);
-
-    updateLaunchConfigurationDialog();
   }
 
   @Override
@@ -229,10 +195,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     dartLauncher.setUrl(launchTargetGroup.getUrlString());
     dartLauncher.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
 
-    if (checkedModeButton != null) {
-      dartLauncher.setCheckedMode(checkedModeButton.getSelection());
-    }
-
     if (showOutputButton != null) {
       dartLauncher.setShowLaunchOutput(showOutputButton.getSelection());
     }
@@ -245,6 +207,19 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     }
   }
 
+  @Override
+  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
+    dartLauncher.setShouldLaunchFile(true);
+    dartLauncher.setApplicationName(""); //$NON-NLS-1$
+  }
+
+  private void notifyPanelChanged() {
+    setDirty(true);
+
+    updateLaunchConfigurationDialog();
+  }
+
   private String performSdkCheck() {
 //&&&    
 //    if (!DartSdkManager.getManager().hasSdk()) {
@@ -253,13 +228,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 //    } else {
     return null;
 //    }
-  }
-
-  @Override
-  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setShouldLaunchFile(true);
-    dartLauncher.setApplicationName(""); //$NON-NLS-1$
   }
 
 }

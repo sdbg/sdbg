@@ -736,12 +736,6 @@ public class BrowserManager {
     // linux with this property.
     env.remove("LD_LIBRARY_PATH");
 
-    // Add the environment variable DART_FLAGS="--enable-checked-mode"
-    // to enable asserts and type checks
-    if (launchConfig.getCheckedMode()) {
-      env.put("DART_FLAGS", "--enable-checked-mode");
-    }
-
     devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
 
     if (enableDebugging) {

@@ -120,10 +120,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public String getErrorMessage() {
-    if (performSdkCheck() != null) {
-      return performSdkCheck();
-    }
-
     return launchTargetGroup.getErrorMessage();
   }
 
@@ -144,29 +140,29 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void initializeFrom(ILaunchConfiguration configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
 
-    launchTargetGroup.setHtmlTextValue(dartLauncher.appendQueryParams(dartLauncher.getApplicationName()));
-    launchTargetGroup.setUrlTextValue(dartLauncher.getUrl());
+    launchTargetGroup.setHtmlTextValue(chromeLauncher.appendQueryParams(chromeLauncher.getApplicationName()));
+    launchTargetGroup.setUrlTextValue(chromeLauncher.getUrl());
 
-    launchTargetGroup.setSourceDirectoryTextValue(dartLauncher.getSourceDirectoryName());
+    launchTargetGroup.setSourceDirectoryTextValue(chromeLauncher.getSourceDirectoryName());
 
-    if (dartLauncher.getShouldLaunchFile()) {
+    if (chromeLauncher.getShouldLaunchFile()) {
       launchTargetGroup.setHtmlButtonSelection(true);
     } else {
       launchTargetGroup.setHtmlButtonSelection(false);
     }
 
     if (showOutputButton != null) {
-      showOutputButton.setSelection(dartLauncher.getShowLaunchOutput());
+      showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
     }
 
     if (useWebComponentsButton != null) {
-      useWebComponentsButton.setSelection(dartLauncher.isEnableExperimentalWebkitFeatures());
+      useWebComponentsButton.setSelection(chromeLauncher.isEnableExperimentalWebkitFeatures());
     }
 
     if (argumentText != null) {
-      argumentText.setText(dartLauncher.getArguments());
+      argumentText.setText(chromeLauncher.getArguments());
     }
   }
 
@@ -177,41 +173,41 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setShouldLaunchFile(launchTargetGroup.getHtmlButtonSelection());
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setShouldLaunchFile(launchTargetGroup.getHtmlButtonSelection());
 
     String fileUrl = launchTargetGroup.getHtmlFileName();
 
     if (fileUrl.indexOf('?') == -1) {
-      dartLauncher.setApplicationName(fileUrl);
-      dartLauncher.setUrlQueryParams("");
+      chromeLauncher.setApplicationName(fileUrl);
+      chromeLauncher.setUrlQueryParams("");
     } else {
       int index = fileUrl.indexOf('?');
 
-      dartLauncher.setApplicationName(fileUrl.substring(0, index));
-      dartLauncher.setUrlQueryParams(fileUrl.substring(index + 1));
+      chromeLauncher.setApplicationName(fileUrl.substring(0, index));
+      chromeLauncher.setUrlQueryParams(fileUrl.substring(index + 1));
     }
 
-    dartLauncher.setUrl(launchTargetGroup.getUrlString());
-    dartLauncher.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
+    chromeLauncher.setUrl(launchTargetGroup.getUrlString());
+    chromeLauncher.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
 
     if (showOutputButton != null) {
-      dartLauncher.setShowLaunchOutput(showOutputButton.getSelection());
+      chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
     }
 
     if (useWebComponentsButton != null) {
-      dartLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
+      chromeLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
     }
     if (argumentText != null) {
-      dartLauncher.setArguments(argumentText.getText().trim());
+      chromeLauncher.setArguments(argumentText.getText().trim());
     }
   }
 
   @Override
   public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setShouldLaunchFile(true);
-    dartLauncher.setApplicationName(""); //$NON-NLS-1$
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setShouldLaunchFile(true);
+    chromeLauncher.setApplicationName(""); //$NON-NLS-1$
   }
 
   private void notifyPanelChanged() {
@@ -219,15 +215,4 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
     updateLaunchConfigurationDialog();
   }
-
-  private String performSdkCheck() {
-//&&&    
-//    if (!DartSdkManager.getManager().hasSdk()) {
-//      return "Dartium is not installed ("
-//          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
-//    } else {
-    return null;
-//    }
-  }
-
 }

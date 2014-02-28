@@ -136,10 +136,6 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public String getErrorMessage() {
-    if (performSdkCheck() != null) {
-      return performSdkCheck();
-    }
-
     if (fileText.getText().length() == 0) {
       return "manifest.json file not specified";
     }
@@ -159,11 +155,11 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void initializeFrom(ILaunchConfiguration configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
 
-    fileText.setText(dartLauncher.getApplicationName());
-    argumentText.setText(dartLauncher.getArguments());
-    envText.setText(dartLauncher.getEnvironmentString());
+    fileText.setText(chromeLauncher.getApplicationName());
+    argumentText.setText(chromeLauncher.getArguments());
+    envText.setText(chromeLauncher.getEnvironmentString());
   }
 
   @Override
@@ -173,17 +169,17 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setApplicationName(fileText.getText());
-    dartLauncher.setArguments(argumentText.getText().trim());
-    dartLauncher.setEnvironmentString(envText.getText().trim());
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setApplicationName(fileText.getText());
+    chromeLauncher.setArguments(argumentText.getText().trim());
+    chromeLauncher.setEnvironmentString(envText.getText().trim());
   }
 
   @Override
   public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setApplicationName("");
-    dartLauncher.setEnvironmentString("");
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setApplicationName("");
+    chromeLauncher.setEnvironmentString("");
   }
 
   protected void handleBrowseButton() {
@@ -219,15 +215,4 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
     updateLaunchConfigurationDialog();
   }
-
-  protected String performSdkCheck() {
-//&&&    
-//    if (!DartSdkManager.getManager().hasSdk()) {
-//      return "Dartium is not installed ("
-//          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
-//    } else {
-    return null;
-//    }
-  }
-
 }

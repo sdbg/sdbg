@@ -210,9 +210,11 @@ public class SDBGLaunchConfigWrapper {
    * @return the last time this config was launched, or 0 or no such
    */
   public long getLastLaunchTime() {
-//    try {
+    // TODO: The persistence of the last launch time should ideally be done outside of the .launch file itself
+    // or else the launch file will constantly be dirty, which is annoying when it is stored in a source control prepository
     return 0;
-//&&&      
+//    try {
+//    return 0;
 //      String value = launchConfig.getAttribute(LAST_LAUNCH_TIME, "0");
 //      return Long.parseLong(value);
 //    } catch (NumberFormatException ex) {
@@ -390,7 +392,8 @@ public class SDBGLaunchConfigWrapper {
    * Indicate that this launch configuration was just launched.
    */
   public void markAsLaunched() {
-//&&& 
+// TODO: The persistence of the last launch time should ideally be done outside of the .launch file itself
+// or else the launch file will constantly be dirty, which is annoying when it is stored in a source control prepository    
 //    try {
 //      ILaunchConfigurationWorkingCopy workingCopy = launchConfig.getWorkingCopy();
 //

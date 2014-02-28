@@ -189,7 +189,7 @@ public class BrowserManager {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chromium"));
+            "Unable to connect to Chrome"));
       }
 
       monitor.worked(1);
@@ -375,7 +375,7 @@ public class BrowserManager {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chromium"));
+            "Unable to connect to Chrome"));
       }
 
       // Even when Chrome has reported all the debuggable tabs to us, the debug server

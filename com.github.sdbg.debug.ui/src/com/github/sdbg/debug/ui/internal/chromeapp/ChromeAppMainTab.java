@@ -14,6 +14,12 @@
 
 package com.github.sdbg.debug.ui.internal.chromeapp;
 
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchMessages;
+import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog;
+import com.github.sdbg.debug.ui.internal.util.IResourceFilter;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
@@ -40,12 +46,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.FilteredItemsSelectionDialog;
 
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchMessages;
-import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog;
-import com.github.sdbg.debug.ui.internal.util.IResourceFilter;
-
 /**
  * The main UI tab for Chrome app launches.
  */
@@ -62,8 +62,6 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
   protected Text argumentText;
 
   protected Text envText;
-
-  private Button checkedModeButton;
 
   protected ModifyListener textModifyListener = new ModifyListener() {
     @Override
@@ -114,16 +112,6 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(2).applyTo(group);
 
-    checkedModeButton = new Button(group, SWT.CHECK);
-    checkedModeButton.setText("Run in checked mode");
-    checkedModeButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        notifyPanelChanged();
-      }
-    });
-    GridDataFactory.swtDefaults().span(2, 1).grab(true, false).applyTo(checkedModeButton);
-
     Label argsLabel = new Label(group, SWT.NONE);
     argsLabel.setText("Browser arguments:");
 
@@ -148,10 +136,6 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public String getErrorMessage() {
-    if (performSdkCheck() != null) {
-      return performSdkCheck();
-    }
-
     if (fileText.getText().length() == 0) {
       return "manifest.json file not specified";
     }
@@ -167,6 +151,35 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
   @Override
   public String getName() {
     return "Main";
+  }
+
+  @Override
+  public void initializeFrom(ILaunchConfiguration configuration) {
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+
+    fileText.setText(chromeLauncher.getApplicationName());
+    argumentText.setText(chromeLauncher.getArguments());
+    envText.setText(chromeLauncher.getEnvironmentString());
+  }
+
+  @Override
+  public boolean isValid(ILaunchConfiguration launchConfig) {
+    return getErrorMessage() == null;
+  }
+
+  @Override
+  public void performApply(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setApplicationName(fileText.getText());
+    chromeLauncher.setArguments(argumentText.getText().trim());
+    chromeLauncher.setEnvironmentString(envText.getText().trim());
+  }
+
+  @Override
+  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setApplicationName("");
+    chromeLauncher.setEnvironmentString("");
   }
 
   protected void handleBrowseButton() {
@@ -197,51 +210,9 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     }
   }
 
-  @Override
-  public void initializeFrom(ILaunchConfiguration configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-
-    fileText.setText(dartLauncher.getApplicationName());
-    argumentText.setText(dartLauncher.getArguments());
-    envText.setText(dartLauncher.getEnvironmentString());
-    checkedModeButton.setSelection(dartLauncher.getCheckedMode());
-  }
-
-  @Override
-  public boolean isValid(ILaunchConfiguration launchConfig) {
-    return getErrorMessage() == null;
-  }
-
   protected void notifyPanelChanged() {
     setDirty(true);
 
     updateLaunchConfigurationDialog();
   }
-
-  @Override
-  public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setApplicationName(fileText.getText());
-    dartLauncher.setArguments(argumentText.getText().trim());
-    dartLauncher.setEnvironmentString(envText.getText().trim());
-    dartLauncher.setCheckedMode(checkedModeButton.getSelection());
-  }
-
-  protected String performSdkCheck() {
-//&&&    
-//    if (!DartSdkManager.getManager().hasSdk()) {
-//      return "Dartium is not installed ("
-//          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
-//    } else {
-    return null;
-//    }
-  }
-
-  @Override
-  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setApplicationName("");
-    dartLauncher.setEnvironmentString("");
-  }
-
 }

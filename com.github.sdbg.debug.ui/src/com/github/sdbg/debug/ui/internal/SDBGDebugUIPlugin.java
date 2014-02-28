@@ -16,6 +16,9 @@ package com.github.sdbg.debug.ui.internal;
 import com.github.sdbg.debug.ui.internal.objectinspector.InspectorActionFilter;
 import com.github.sdbg.debug.ui.internal.presentation.SDBGElementAdapterFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -23,17 +26,12 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * The activator class controls the plug-in life cycle
  */
 public class SDBGDebugUIPlugin extends AbstractUIPlugin {
 
-	public static final String PLUGIN_ID = "com.github.sdbg.debug.ui"; //$NON-NLS-1$
-
-  public static final String CHECK_MODE_DESC_URL = "http://www.dartlang.org/articles/optional-types/#checked-mode";
+  public static final String PLUGIN_ID = "com.github.sdbg.debug.ui"; //$NON-NLS-1$
 
   private static Map<ImageDescriptor, Image> imageCache = new HashMap<ImageDescriptor, Image>();
 

@@ -166,9 +166,9 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
       return false;
     }
 
-      IResource launchAbleResource = getLaunchableResource(resource);
+    IResource launchAbleResource = getLaunchableResource(resource);
 
-      return configResource.equals(launchAbleResource);
+    return configResource.equals(launchAbleResource);
   }
 
   /**

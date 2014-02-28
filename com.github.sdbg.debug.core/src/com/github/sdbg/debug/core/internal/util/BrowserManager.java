@@ -189,7 +189,7 @@ public class BrowserManager {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chromium"));
+            "Unable to connect to Chrome"));
       }
 
       monitor.worked(1);
@@ -375,7 +375,7 @@ public class BrowserManager {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chromium"));
+            "Unable to connect to Chrome"));
       }
 
       // Even when Chrome has reported all the debuggable tabs to us, the debug server
@@ -735,12 +735,6 @@ public class BrowserManager {
     // Due to differences in 32bit and 64 bit environments, dartium 32bit launch does not work on
     // linux with this property.
     env.remove("LD_LIBRARY_PATH");
-
-    // Add the environment variable DART_FLAGS="--enable-checked-mode"
-    // to enable asserts and type checks
-    if (launchConfig.getCheckedMode()) {
-      env.put("DART_FLAGS", "--enable-checked-mode");
-    }
 
     devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
 

@@ -13,6 +13,10 @@
  */
 package com.github.sdbg.debug.ui.internal.chrome;
 
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
+
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
@@ -30,14 +34,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
-
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
-import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
-import com.github.sdbg.ui.internal.util.ExternalBrowserUtil;
 
 /**
  * The main launch configuration UI for running applications in Chrome.
@@ -50,8 +48,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
       notifyPanelChanged();
     }
   };
-
-  private Button checkedModeButton;
 
   private Button showOutputButton;
 
@@ -89,26 +85,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
 
-    checkedModeButton = new Button(group, SWT.CHECK);
-    checkedModeButton.setText("Run in checked mode");
-    checkedModeButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        notifyPanelChanged();
-      }
-    });
-    GridDataFactory.swtDefaults().span(2, 1).grab(true, false).applyTo(checkedModeButton);
-
-    Link infoLink = new Link(group, SWT.NONE);
-    infoLink.setText("<a href=\"" + SDBGDebugUIPlugin.CHECK_MODE_DESC_URL
-        + "\">what is checked mode?</a>");
-    infoLink.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        ExternalBrowserUtil.openInExternalBrowser(SDBGDebugUIPlugin.CHECK_MODE_DESC_URL);
-      }
-    });
-
     useWebComponentsButton = new Button(group, SWT.CHECK);
     useWebComponentsButton.setText("Enable experimental browser features (Web Components)");
     useWebComponentsButton.setToolTipText("--enable-experimental-webkit-features"
@@ -144,10 +120,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public String getErrorMessage() {
-    if (performSdkCheck() != null) {
-      return performSdkCheck();
-    }
-
     return launchTargetGroup.getErrorMessage();
   }
 
@@ -168,33 +140,29 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public void initializeFrom(ILaunchConfiguration configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
 
-    launchTargetGroup.setHtmlTextValue(dartLauncher.appendQueryParams(dartLauncher.getApplicationName()));
-    launchTargetGroup.setUrlTextValue(dartLauncher.getUrl());
+    launchTargetGroup.setHtmlTextValue(chromeLauncher.appendQueryParams(chromeLauncher.getApplicationName()));
+    launchTargetGroup.setUrlTextValue(chromeLauncher.getUrl());
 
-    launchTargetGroup.setSourceDirectoryTextValue(dartLauncher.getSourceDirectoryName());
+    launchTargetGroup.setSourceDirectoryTextValue(chromeLauncher.getSourceDirectoryName());
 
-    if (dartLauncher.getShouldLaunchFile()) {
+    if (chromeLauncher.getShouldLaunchFile()) {
       launchTargetGroup.setHtmlButtonSelection(true);
     } else {
       launchTargetGroup.setHtmlButtonSelection(false);
     }
 
-    if (checkedModeButton != null) {
-      checkedModeButton.setSelection(dartLauncher.getCheckedMode());
-    }
-
     if (showOutputButton != null) {
-      showOutputButton.setSelection(dartLauncher.getShowLaunchOutput());
+      showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
     }
 
     if (useWebComponentsButton != null) {
-      useWebComponentsButton.setSelection(dartLauncher.isEnableExperimentalWebkitFeatures());
+      useWebComponentsButton.setSelection(chromeLauncher.isEnableExperimentalWebkitFeatures());
     }
 
     if (argumentText != null) {
-      argumentText.setText(dartLauncher.getArguments());
+      argumentText.setText(chromeLauncher.getArguments());
     }
   }
 
@@ -203,63 +171,48 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     return getErrorMessage() == null;
   }
 
+  @Override
+  public void performApply(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setShouldLaunchFile(launchTargetGroup.getHtmlButtonSelection());
+
+    String fileUrl = launchTargetGroup.getHtmlFileName();
+
+    if (fileUrl.indexOf('?') == -1) {
+      chromeLauncher.setApplicationName(fileUrl);
+      chromeLauncher.setUrlQueryParams("");
+    } else {
+      int index = fileUrl.indexOf('?');
+
+      chromeLauncher.setApplicationName(fileUrl.substring(0, index));
+      chromeLauncher.setUrlQueryParams(fileUrl.substring(index + 1));
+    }
+
+    chromeLauncher.setUrl(launchTargetGroup.getUrlString());
+    chromeLauncher.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
+
+    if (showOutputButton != null) {
+      chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
+    }
+
+    if (useWebComponentsButton != null) {
+      chromeLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
+    }
+    if (argumentText != null) {
+      chromeLauncher.setArguments(argumentText.getText().trim());
+    }
+  }
+
+  @Override
+  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
+    SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+    chromeLauncher.setShouldLaunchFile(true);
+    chromeLauncher.setApplicationName(""); //$NON-NLS-1$
+  }
+
   private void notifyPanelChanged() {
     setDirty(true);
 
     updateLaunchConfigurationDialog();
   }
-
-  @Override
-  public void performApply(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setShouldLaunchFile(launchTargetGroup.getHtmlButtonSelection());
-
-    String fileUrl = launchTargetGroup.getHtmlFileName();
-
-    if (fileUrl.indexOf('?') == -1) {
-      dartLauncher.setApplicationName(fileUrl);
-      dartLauncher.setUrlQueryParams("");
-    } else {
-      int index = fileUrl.indexOf('?');
-
-      dartLauncher.setApplicationName(fileUrl.substring(0, index));
-      dartLauncher.setUrlQueryParams(fileUrl.substring(index + 1));
-    }
-
-    dartLauncher.setUrl(launchTargetGroup.getUrlString());
-    dartLauncher.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
-
-    if (checkedModeButton != null) {
-      dartLauncher.setCheckedMode(checkedModeButton.getSelection());
-    }
-
-    if (showOutputButton != null) {
-      dartLauncher.setShowLaunchOutput(showOutputButton.getSelection());
-    }
-
-    if (useWebComponentsButton != null) {
-      dartLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
-    }
-    if (argumentText != null) {
-      dartLauncher.setArguments(argumentText.getText().trim());
-    }
-  }
-
-  private String performSdkCheck() {
-//&&&    
-//    if (!DartSdkManager.getManager().hasSdk()) {
-//      return "Dartium is not installed ("
-//          + DartSdkManager.getManager().getSdk().getDartiumWorkingDirectory() + ")";
-//    } else {
-    return null;
-//    }
-  }
-
-  @Override
-  public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
-    SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
-    dartLauncher.setShouldLaunchFile(true);
-    dartLauncher.setApplicationName(""); //$NON-NLS-1$
-  }
-
 }

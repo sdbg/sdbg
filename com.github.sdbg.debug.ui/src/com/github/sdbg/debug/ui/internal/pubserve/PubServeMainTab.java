@@ -14,10 +14,8 @@
 package com.github.sdbg.debug.ui.internal.pubserve;
 
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog;
 import com.github.sdbg.debug.ui.internal.util.AppSelectionDialog.HtmlWebResourceFilter;
-import com.github.sdbg.ui.internal.util.ExternalBrowserUtil;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -46,7 +44,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Link;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.FilteredItemsSelectionDialog;
 
@@ -70,7 +67,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
     return italicFont;
   }
 
-  private Button checkedModeButton;
   private Button useWebComponentsButton;
   private Text argumentText;
   private Text htmlText;
@@ -124,26 +120,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
 
-    checkedModeButton = new Button(group, SWT.CHECK);
-    checkedModeButton.setText("Run in checked mode");
-    checkedModeButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        notifyPanelChanged();
-      }
-    });
-    GridDataFactory.swtDefaults().span(2, 1).grab(true, false).applyTo(checkedModeButton);
-
-    Link infoLink = new Link(group, SWT.NONE);
-    infoLink.setText("<a href=\"" + SDBGDebugUIPlugin.CHECK_MODE_DESC_URL
-        + "\">what is checked mode?</a>");
-    infoLink.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        ExternalBrowserUtil.openInExternalBrowser(SDBGDebugUIPlugin.CHECK_MODE_DESC_URL);
-      }
-    });
-
     useWebComponentsButton = new Button(group, SWT.CHECK);
     useWebComponentsButton.setText("Enable experimental browser features (Web Components)");
     useWebComponentsButton.setToolTipText("--enable-experimental-webkit-features"
@@ -191,7 +167,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
     SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
 
     htmlText.setText(dartLauncher.appendQueryParams(dartLauncher.getApplicationName()));
-    checkedModeButton.setSelection(dartLauncher.getCheckedMode());
     useWebComponentsButton.setSelection(dartLauncher.isEnableExperimentalWebkitFeatures());
     argumentText.setText(dartLauncher.getArguments());
   }
@@ -213,7 +188,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
       dartLauncher.setUrlQueryParams(fileUrl.substring(index + 1));
     }
 
-    dartLauncher.setCheckedMode(checkedModeButton.getSelection());
     dartLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
     dartLauncher.setArguments(argumentText.getText().trim());
 

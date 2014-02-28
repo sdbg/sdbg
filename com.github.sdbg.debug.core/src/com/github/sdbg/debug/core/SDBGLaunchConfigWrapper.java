@@ -15,15 +15,6 @@ package com.github.sdbg.debug.core;
 
 import com.github.sdbg.utilities.StringUtilities;
 
-import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -32,6 +23,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.ILaunchConfiguration;
+import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 
 /**
  * A wrapper class around ILaunchConfiguration and ILaunchConfigurationWorkingCopy objects. It adds
@@ -46,7 +46,6 @@ public class SDBGLaunchConfigWrapper {
   private static final String DART2JS_FLAGS = "dart2jsFlags";
   private static final String COMPILE_BEFORE_LAUNCH = "runDart2js";
 
-  private static final String VM_CHECKED_MODE = "vmCheckedMode";
   private static final String SHOW_LAUNCH_OUTPUT = "showLaunchOutput";
 
   // --enable-experimental-webkit-features and --enable-devtools-experiments
@@ -61,7 +60,6 @@ public class SDBGLaunchConfigWrapper {
   private static final String PROJECT_NAME = "projectName";
   private static final String WORKING_DIRECTORY = "workingDirectory";
 
-  private static final String LAST_LAUNCH_TIME = "launchTime";
   private static final String VM_ARGUMENTS = "vmArguments";
 
   private ILaunchConfiguration launchConfig;
@@ -135,20 +133,6 @@ public class SDBGLaunchConfigWrapper {
     }
 
     return StringUtilities.parseArgumentString(command);
-  }
-
-  public boolean getCheckedMode() {
-    return getCheckedMode(true);
-  }
-
-  public boolean getCheckedMode(boolean defaultValue) {
-    try {
-      return launchConfig.getAttribute(VM_CHECKED_MODE, defaultValue);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return false;
-    }
   }
 
   /**
@@ -226,17 +210,20 @@ public class SDBGLaunchConfigWrapper {
    * @return the last time this config was launched, or 0 or no such
    */
   public long getLastLaunchTime() {
-    try {
-      String value = launchConfig.getAttribute(LAST_LAUNCH_TIME, "0");
-
-      return Long.parseLong(value);
-    } catch (NumberFormatException ex) {
-      return 0;
-    } catch (CoreException ce) {
-      SDBGDebugCorePlugin.logError(ce);
-
-      return 0;
-    }
+    // TODO: The persistence of the last launch time should ideally be done outside of the .launch file itself
+    // or else the launch file will constantly be dirty, which is annoying when it is stored in a source control prepository
+    return 0;
+//    try {
+//    return 0;
+//      String value = launchConfig.getAttribute(LAST_LAUNCH_TIME, "0");
+//      return Long.parseLong(value);
+//    } catch (NumberFormatException ex) {
+//      return 0;
+//    } catch (CoreException ce) {
+//      SDBGDebugCorePlugin.logError(ce);
+//
+//      return 0;
+//    }
   }
 
   /**
@@ -354,16 +341,6 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
-  public boolean isEnableExperimentalWebkitFeatures() {
-    try {
-      return launchConfig.getAttribute(ENABLE_EXPERIMENTAL_WEBKIT_FEATURES, true);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return true;
-    }
-  }
-
   /**
    * @return the arguments string for the Dart VM
    */
@@ -385,10 +362,6 @@ public class SDBGLaunchConfigWrapper {
     List<String> args = new ArrayList<String>();
     args.addAll(Arrays.asList(StringUtilities.parseArgumentString(getVmArguments())));
 
-    if (getCheckedMode()) {
-      args.add("--enable-checked-mode");
-    }
-
     return args.toArray(new String[args.size()]);
   }
 
@@ -405,21 +378,33 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
+  public boolean isEnableExperimentalWebkitFeatures() {
+    try {
+      return launchConfig.getAttribute(ENABLE_EXPERIMENTAL_WEBKIT_FEATURES, true);
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+
+      return true;
+    }
+  }
+
   /**
    * Indicate that this launch configuration was just launched.
    */
   public void markAsLaunched() {
-    try {
-      ILaunchConfigurationWorkingCopy workingCopy = launchConfig.getWorkingCopy();
-
-      long launchTime = System.currentTimeMillis();
-
-      workingCopy.setAttribute(LAST_LAUNCH_TIME, Long.toString(launchTime));
-
-      workingCopy.doSave();
-    } catch (CoreException ce) {
-      SDBGDebugCorePlugin.logError(ce);
-    }
+// TODO: The persistence of the last launch time should ideally be done outside of the .launch file itself
+// or else the launch file will constantly be dirty, which is annoying when it is stored in a source control prepository    
+//    try {
+//      ILaunchConfigurationWorkingCopy workingCopy = launchConfig.getWorkingCopy();
+//
+//      long launchTime = System.currentTimeMillis();
+//
+//      workingCopy.setAttribute(LAST_LAUNCH_TIME, Long.toString(launchTime));
+//
+//      workingCopy.doSave();
+//    } catch (CoreException ce) {
+//      SDBGDebugCorePlugin.logError(ce);
+//    }
   }
 
   /**
@@ -436,10 +421,6 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setArguments(String value) {
     getWorkingCopy().setAttribute(APPLICATION_ARGUMENTS, value);
-  }
-
-  public void setCheckedMode(boolean value) {
-    getWorkingCopy().setAttribute(VM_CHECKED_MODE, value);
   }
 
   /**

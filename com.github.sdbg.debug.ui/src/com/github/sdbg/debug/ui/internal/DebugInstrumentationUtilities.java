@@ -11,6 +11,19 @@ import org.eclipse.debug.core.ILaunchConfiguration;
  */
 public class DebugInstrumentationUtilities {
 
+  public static void recordLaunchConfiguration(ILaunchConfiguration launch,
+      InstrumentationBuilder instrumentation) {
+
+    try {
+      instrumentation.metric("launchConfig-getCategory", launch.getCategory());
+      instrumentation.metric("launchConfig-getClass", launch.getClass().toString());
+
+      instrumentation.data("launchConfig-getName", launch.getName());
+
+    } catch (Exception e) {
+    }
+  }
+
   public static void recordLaunchConfiguration(SDBGLaunchConfigWrapper launch,
       InstrumentationBuilder instrumentation) {
 
@@ -23,7 +36,6 @@ public class DebugInstrumentationUtilities {
     instrumentation.metric(
         "LaunchConfig-getBrowserName",
         SDBGDebugCorePlugin.getPlugin().getBrowserName());
-    instrumentation.metric("LaunchConfig-getCheckedMode", String.valueOf(launch.getCheckedMode()));
     instrumentation.metric("LaunchConfig-getLastLaunchTime", launch.getLastLaunchTime());
     instrumentation.metric(
         "LaunchConfig-getShouldLaunchFile",
@@ -39,19 +51,6 @@ public class DebugInstrumentationUtilities {
         String.valueOf(launch.isEnableExperimentalWebkitFeatures()));
     instrumentation.metric("LaunchConfig-getVmArgumentsAsArray", launch.getVmArgumentsAsArray());
 
-  }
-
-  public static void recordLaunchConfiguration(ILaunchConfiguration launch,
-      InstrumentationBuilder instrumentation) {
-
-    try {
-      instrumentation.metric("launchConfig-getCategory", launch.getCategory());
-      instrumentation.metric("launchConfig-getClass", launch.getClass().toString());
-
-      instrumentation.data("launchConfig-getName", launch.getName());
-
-    } catch (Exception e) {
-    }
   }
 
 }

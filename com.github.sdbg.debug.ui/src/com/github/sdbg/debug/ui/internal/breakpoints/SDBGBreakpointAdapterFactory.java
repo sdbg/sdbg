@@ -14,6 +14,8 @@
 
 package com.github.sdbg.debug.ui.internal.breakpoints;
 
+import com.github.sdbg.core.DartCore;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
@@ -43,8 +45,7 @@ public class SDBGBreakpointAdapterFactory implements IAdapterFactory {
       if (resource != null) {
         String name = resource.getName().toLowerCase();
 
-        if (/*&&&DartCore.isDartLikeFileName(name)*/name.endsWith(".html")
-            || name.endsWith(".htm")) {
+        if (DartCore.isHtmlLikeFileName(name) || DartCore.isJSLikeFileName(name)) {
           return new SDBGBreakpointAdapter();
         }
       }

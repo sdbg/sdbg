@@ -146,7 +146,7 @@ public class SourceMapManager {
 
     @Override
     public String getName() {
-      return url.toString();
+      return getFullPath().lastSegment();
     }
 
     public URL getURL() {
@@ -280,6 +280,37 @@ public class SourceMapManager {
     }
 
     return mappings;
+  }
+
+  public IStorage getSource(String targetPath) { //&&&!!! There can be race conditions because of that method
+    if (targetPath != null) {
+      if (Trace.TRACING) {
+        Trace.trace("Get source storage: " + targetPath);
+      }
+
+      synchronized (sourceMaps) {
+        for (IStorage mapStorage : sourceMaps.keySet()) {
+          SourceMap map = sourceMaps.get(mapStorage);
+          for (String path : map.getSourceNames()) {
+            String relativePath = relativisePath(mapStorage, path);
+            if (Trace.TRACING
+                && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
+              Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+            }
+
+            if (targetPath.equals(relativePath)) {
+              if (Trace.TRACING) {
+                Trace.trace("Confirmed - source storage");
+              }
+
+              return resolveStorage(mapStorage, path);
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public List<String> getSourcePaths(IStorage storage) {
@@ -521,17 +552,22 @@ public class SourceMapManager {
     } else {
       try {
         URI uri = URIUtil.fromString(path);
-        if (relativeStorage instanceof URLStorage) {
-          IPath newPath = Path.fromPortableString(((URLStorage) relativeStorage).getURL().getPath()).removeLastSegments(
-              1).append(uri.getPath());
-          uri = new URI(
-              uri.getScheme(),
-              null,
-              uri.getHost(),
-              uri.getPort(),
-              newPath.toPortableString(),
-              null,
-              null);
+        if (uri.getScheme() == null || !uri.getScheme().equals("http")
+            && !uri.getScheme().equals("https") || uri.getHost() == null) {
+          // The source path is not a downloadable URI, try to build a downloadable URI by using the sourcemap URI 
+          if (relativeStorage instanceof URLStorage) {
+            URI relativeUri = ((URLStorage) relativeStorage).getURL().toURI();
+            IPath newPath = Path.fromPortableString(relativeUri.getPath()).removeLastSegments(1).append(
+                uri.getPath());
+            uri = new URI(
+                relativeUri.getScheme(),
+                null,
+                relativeUri.getHost(),
+                relativeUri.getPort(),
+                newPath.toPortableString(),
+                null,
+                null);
+          }
         }
 
         IResource resource = resourceResolver.resolveUrl(uri.toString());
@@ -543,7 +579,7 @@ public class SourceMapManager {
         if (uri.getScheme() != null
             && (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
             && uri.getHost() != null) {
-          return new URLStorage(new URL(path));
+          return new URLStorage(uri.toURL());
         }
 
         return null;

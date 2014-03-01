@@ -1,5 +1,8 @@
 package com.github.sdbg.core;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.StringUtilities;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -7,9 +10,6 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.Platform;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.utilities.StringUtilities;
 
 /***
  * &&& Just the minimum possible from the original DartCore. Most likely these functions should not
@@ -20,6 +20,11 @@ public class DartCore {
    * Cached extensions for HTML files.
    */
   private static final String[] HTML_FILE_EXTENSIONS = {"html", "htm"};
+
+  /**
+   * Cached extension for JavaScript files.
+   */
+  private static final String JS_FILE_EXTENSION = "js";
 
   public static File getEclipseInstallationDirectory() {
     return new File(Platform.getInstallLocation().getURL().getFile());
@@ -69,24 +74,13 @@ public class DartCore {
   }
 
   /**
-   * Return <code>true</code> if the given file name's extension matches one of the passed
-   * extensions.
+   * Return <code>true</code> if the given file name's extension is an HTML-like extension.
    * 
    * @param fileName the file name being tested
-   * @param extensions an array of file extensions to test against
-   * @return <code>true</code> if the given file name's extension matches one of the passed
-   *         extensions
+   * @return <code>true</code> if the given file name's extension is an HTML-like extension
    */
-  private static boolean isLikeFileName(String fileName, String[] extensions) {
-    if (fileName == null || fileName.length() == 0) {
-      return false;
-    }
-    for (String extension : extensions) {
-      if (StringUtilities.endsWithIgnoreCase(fileName, '.' + extension)) {
-        return true;
-      }
-    }
-    return false;
+  public static boolean isJSLikeFileName(String fileName) {
+    return isLikeFileName(fileName, JS_FILE_EXTENSION);
   }
 
   public static boolean isLinux() {
@@ -106,6 +100,27 @@ public class DartCore {
   public static boolean isWindowsXp() {
     // Look for the "Windows XP" OS name.
     return System.getProperty("os.name").toLowerCase().equals("windows xp");
+  }
+
+  /**
+   * Return <code>true</code> if the given file name's extension matches one of the passed
+   * extensions.
+   * 
+   * @param fileName the file name being tested
+   * @param extensions an array of file extensions to test against
+   * @return <code>true</code> if the given file name's extension matches one of the passed
+   *         extensions
+   */
+  private static boolean isLikeFileName(String fileName, String... extensions) {
+    if (fileName == null || fileName.length() == 0) {
+      return false;
+    }
+    for (String extension : extensions) {
+      if (StringUtilities.endsWithIgnoreCase(fileName, '.' + extension)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private DartCore() {

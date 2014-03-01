@@ -126,7 +126,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
     @Override
     public String getName() {
-      return script.getScriptId();
+      return getFullPath().lastSegment();
     }
 
     @Override

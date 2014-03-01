@@ -17,6 +17,13 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -24,13 +31,6 @@ import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.sourcelookup.ISourceContainerType;
 import org.eclipse.debug.core.sourcelookup.containers.AbstractSourceContainer;
 import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.Charset;
 
 /**
  * An ISourceContainer that searches in active debug connections and returns remote script objects.
@@ -123,13 +123,16 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
         url = url.substring(url.lastIndexOf('\\') + 1);
       }
 
-      //&&&!!! File file = File.createTempFile(sanitizeFileName(url) + "$$", ".dart");
-      File file = File.createTempFile("$$$", sanitizeFileName(url));
+      File file = File.createTempFile("TMP", sanitizeFileName(url));
       file.deleteOnExit();
 
       Writer out = new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF8"));
-      out.write(script.getScriptSource());
-      out.close();
+
+      try {
+        out.write(script.getScriptSource());
+      } finally {
+        out.close();
+      }
 
       file.setReadOnly();
 

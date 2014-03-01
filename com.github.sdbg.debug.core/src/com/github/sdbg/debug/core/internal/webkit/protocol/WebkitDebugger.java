@@ -14,6 +14,11 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
+import com.github.sdbg.utilities.URIUtilities;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,11 +31,6 @@ import java.util.concurrent.CountDownLatch;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
-import com.github.sdbg.utilities.URIUtilities;
 
 /**
  * A WIP debugger domain object.
@@ -221,24 +221,6 @@ public class WebkitDebugger extends WebkitDomain {
     });
   }
 
-  private void clearGlobalObjects() {
-    breakpointMap.clear();
-    scriptMap.clear();
-  }
-
-  private void clearRemoteObjects() {
-    if (remoteObjectCount > 0) {
-      remoteObjectCount = 0;
-
-      try {
-        getConnection().getRuntime().releaseObjectGroup(OBJECT_GROUP_KEY);
-      } catch (IOException e) {
-        // This is a best-effort call.
-
-      }
-    }
-  }
-
   /**
    * Continues execution until specific location is reached.
    * 
@@ -256,128 +238,6 @@ public class WebkitDebugger extends WebkitDomain {
     } catch (JSONException exception) {
       throw new IOException(exception);
     }
-  }
-
-  private WebkitResult<Boolean> convertCanSetScriptSourceResult(JSONObject object)
-      throws JSONException {
-    WebkitResult<Boolean> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      result.setResult(Boolean.valueOf(object.getJSONObject("result").getBoolean("result")));
-    }
-
-    return result;
-  }
-
-  private WebkitResult<WebkitRemoteObject> convertEvaluateOnCallFrameResult(JSONObject object)
-      throws JSONException {
-    WebkitResult<WebkitRemoteObject> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      object = object.getJSONObject("result");
-
-      WebkitRemoteObject remoteObject = WebkitRemoteObject.createFrom(object.getJSONObject("result"));
-
-      if (object.optBoolean("wasThrown", false)) {
-        result.setError(remoteObject);
-      } else {
-        result.setResult(remoteObject);
-      }
-    }
-
-    return result;
-  }
-
-  private WebkitResult<FunctionDetails> convertGetFunctionDetailsResult(JSONObject object)
-      throws JSONException {
-    WebkitResult<FunctionDetails> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      object = object.getJSONObject("result");
-
-      FunctionDetails details = FunctionDetails.createFrom(object.getJSONObject("details"));
-
-      result.setResult(details);
-    }
-
-    return result;
-  }
-
-  private WebkitResult<String> convertGetScriptSourceResult(JSONObject object) throws JSONException {
-    WebkitResult<String> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      result.setResult(JsonUtils.getString(object.getJSONObject("result"), "scriptSource"));
-    }
-
-    return result;
-  }
-
-  private WebkitResult<String> convertSetBreakpointByUrlResult(JSONObject object,
-      List<WebkitBreakpoint> resolvedBreakpoints) throws JSONException {
-    // "result":{
-    //   "locations":[{"lineNumber":9,"scriptId":"-1","columnNumber":0}],
-    //   "breakpointId":"http://0.0.0.0:3030/webapp/webapp.dart:9:0"
-    // }
-
-    WebkitResult<String> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      JSONObject temp = object.getJSONObject("result");
-
-      String breakpointId = temp.optString("breakpointId");
-
-      result.setResult(breakpointId);
-
-      if (temp.has("locations")) {
-        JSONArray arr = temp.getJSONArray("locations");
-
-        if (arr.length() > 0) {
-          WebkitLocation location = WebkitLocation.createFrom(arr.getJSONObject(0));
-
-          WebkitBreakpoint breakpoint = WebkitBreakpoint.createFrom(breakpointId, location);
-
-          resolvedBreakpoints.add(breakpoint);
-        }
-      }
-    }
-
-    return result;
-  }
-
-  private WebkitResult<WebkitBreakpoint> convertSetBreakpointResult(JSONObject object)
-      throws JSONException {
-    // "result": {
-    //   "breakpointId": <BreakpointId>,
-    //   "actualLocation": <Location> 
-    // }
-
-    WebkitResult<WebkitBreakpoint> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      WebkitBreakpoint breakpoint = WebkitBreakpoint.createFromActual(object.getJSONObject("result"));
-
-      result.setResult(breakpoint);
-    }
-
-    return result;
-  }
-
-  private WebkitResult<WebkitCallFrame[]> convertSetScriptSourceResult(JSONObject object)
-      throws JSONException {
-    WebkitResult<WebkitCallFrame[]> result = WebkitResult.createFrom(object);
-
-    if (object.has("result")) {
-      JSONObject obj = object.getJSONObject("result");
-
-      if (obj.has("callFrames")) {
-        List<WebkitCallFrame> frames = WebkitCallFrame.createFrom(obj.getJSONArray("callFrames"));
-
-        result.setResult(frames.toArray(new WebkitCallFrame[frames.size()]));
-      }
-    }
-
-    return result;
   }
 
   public void disable() throws IOException {
@@ -498,86 +358,6 @@ public class WebkitDebugger extends WebkitDomain {
     } catch (JSONException exception) {
       throw new IOException(exception);
     }
-  }
-
-  protected void handleDebuggerNotification(String method, JSONObject params) throws JSONException {
-    if (method.equals(DEBUGGER_RESUMED)) {
-      for (DebuggerListener listener : listeners) {
-        listener.debuggerResumed();
-      }
-
-      handleResumed();
-    } else if (method.equals(DEBUGGER_GLOBAL_OBJECT_CLEARED)) {
-      clearGlobalObjects();
-
-      for (DebuggerListener listener : listeners) {
-        listener.debuggerGlobalObjectCleared();
-      }
-    } else if (method.equals(DEBUGGER_SCRIPT_PARSED)) {
-      WebkitScript script = WebkitScript.createFrom(params);
-
-      // We get a blizzard of empty script parsed events from Webkit due to the way they integrated
-      // the Dart VM into the Webkit debugger.
-      if (script.getUrl().length() > 0) {
-        scriptMap.put(script.getScriptId(), script);
-
-        for (DebuggerListener listener : listeners) {
-          listener.debuggerScriptParsed(script);
-        }
-      }
-    } else if (method.equals(DEBUGGER_BREAKPOINT_RESOLVED)) {
-      WebkitBreakpoint breakpoint = WebkitBreakpoint.createFrom(params);
-
-      for (DebuggerListener listener : listeners) {
-        listener.debuggerBreakpointResolved(breakpoint);
-      }
-    } else if (method.equals(DEBUGGER_PAUSED)) {
-      PausedReasonType reason = PausedReasonType.value(params.getString("reason"));
-
-      List<WebkitCallFrame> frames = WebkitCallFrame.createFrom(params.getJSONArray("callFrames"));
-
-      WebkitRemoteObject exception = null;
-
-      // The data field contains exception info.
-      if (reason == PausedReasonType.exception && params.has("data")) {
-        // {"value":"ssdfsdfd","type":"string"}
-        exception = WebkitRemoteObject.createFrom(params.getJSONObject("data"));
-      }
-
-      boolean restep = true;
-
-      if (exception != null || reason != PausedReasonType.other) {
-        restep = false;
-      }
-
-      WebkitLocation newLocation = frames.size() > 0 ? frames.get(0).getLocation() : null;
-
-      if (newLocation == null || !newLocation.isSameSourceLine(stepLocation)) {
-        restep = false;
-      }
-
-      currentLocation = newLocation;
-
-      if (restep) {
-        try {
-          sendSimpleCommand(stepCommand);
-        } catch (IOException e) {
-          throw new JSONException(e);
-        }
-      } else {
-        stepLocation = null;
-
-        for (DebuggerListener listener : listeners) {
-          listener.debuggerPaused(reason, frames, exception);
-        }
-      }
-    } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
-    }
-  }
-
-  private void handleResumed() {
-    clearRemoteObjects();
   }
 
   public void pause() throws IOException {
@@ -879,6 +659,227 @@ public class WebkitDebugger extends WebkitDomain {
     stepCommand = "Debugger.stepOver";
 
     sendSimpleCommand(stepCommand);
+  }
+
+  protected void handleDebuggerNotification(String method, JSONObject params) throws JSONException {
+    if (method.equals(DEBUGGER_RESUMED)) {
+      for (DebuggerListener listener : listeners) {
+        listener.debuggerResumed();
+      }
+
+      handleResumed();
+    } else if (method.equals(DEBUGGER_GLOBAL_OBJECT_CLEARED)) {
+      clearGlobalObjects();
+
+      for (DebuggerListener listener : listeners) {
+        listener.debuggerGlobalObjectCleared();
+      }
+    } else if (method.equals(DEBUGGER_SCRIPT_PARSED)) {
+      WebkitScript script = WebkitScript.createFrom(params);
+
+      // We get a blizzard of empty script parsed events from Webkit due to the way they integrated
+      // the Dart VM into the Webkit debugger.
+      if (script.getUrl().length() > 0) {
+        scriptMap.put(script.getScriptId(), script);
+
+        for (DebuggerListener listener : listeners) {
+          listener.debuggerScriptParsed(script);
+        }
+      }
+    } else if (method.equals(DEBUGGER_BREAKPOINT_RESOLVED)) {
+      WebkitBreakpoint breakpoint = WebkitBreakpoint.createFrom(params);
+
+      for (DebuggerListener listener : listeners) {
+        listener.debuggerBreakpointResolved(breakpoint);
+      }
+    } else if (method.equals(DEBUGGER_PAUSED)) {
+      PausedReasonType reason = PausedReasonType.value(params.getString("reason"));
+
+      List<WebkitCallFrame> frames = WebkitCallFrame.createFrom(params.getJSONArray("callFrames"));
+
+      WebkitRemoteObject exception = null;
+
+      // The data field contains exception info.
+      if (reason == PausedReasonType.exception && params.has("data")) {
+        // {"value":"ssdfsdfd","type":"string"}
+        exception = WebkitRemoteObject.createFrom(params.getJSONObject("data"));
+      }
+
+      boolean restep = true;
+
+      if (exception != null || reason != PausedReasonType.other) {
+        restep = false;
+      }
+
+      WebkitLocation newLocation = frames.size() > 0 ? frames.get(0).getLocation() : null;
+
+// TODO: We want the same behavior as the commented out one, but on the *sourcemapped* location      
+//      if (newLocation == null || !newLocation.isSameSourceLine(stepLocation)) {
+      restep = false;
+//      }
+
+      currentLocation = newLocation;
+
+      if (restep) {
+        try {
+          sendSimpleCommand(stepCommand);
+        } catch (IOException e) {
+          throw new JSONException(e);
+        }
+      } else {
+        stepLocation = null;
+
+        for (DebuggerListener listener : listeners) {
+          listener.debuggerPaused(reason, frames, exception);
+        }
+      }
+    } else {
+      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+    }
+  }
+
+  private void clearGlobalObjects() {
+    breakpointMap.clear();
+    scriptMap.clear();
+  }
+
+  private void clearRemoteObjects() {
+    if (remoteObjectCount > 0) {
+      remoteObjectCount = 0;
+
+      try {
+        getConnection().getRuntime().releaseObjectGroup(OBJECT_GROUP_KEY);
+      } catch (IOException e) {
+        // This is a best-effort call.
+
+      }
+    }
+  }
+
+  private WebkitResult<Boolean> convertCanSetScriptSourceResult(JSONObject object)
+      throws JSONException {
+    WebkitResult<Boolean> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      result.setResult(Boolean.valueOf(object.getJSONObject("result").getBoolean("result")));
+    }
+
+    return result;
+  }
+
+  private WebkitResult<WebkitRemoteObject> convertEvaluateOnCallFrameResult(JSONObject object)
+      throws JSONException {
+    WebkitResult<WebkitRemoteObject> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      object = object.getJSONObject("result");
+
+      WebkitRemoteObject remoteObject = WebkitRemoteObject.createFrom(object.getJSONObject("result"));
+
+      if (object.optBoolean("wasThrown", false)) {
+        result.setError(remoteObject);
+      } else {
+        result.setResult(remoteObject);
+      }
+    }
+
+    return result;
+  }
+
+  private WebkitResult<FunctionDetails> convertGetFunctionDetailsResult(JSONObject object)
+      throws JSONException {
+    WebkitResult<FunctionDetails> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      object = object.getJSONObject("result");
+
+      FunctionDetails details = FunctionDetails.createFrom(object.getJSONObject("details"));
+
+      result.setResult(details);
+    }
+
+    return result;
+  }
+
+  private WebkitResult<String> convertGetScriptSourceResult(JSONObject object) throws JSONException {
+    WebkitResult<String> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      result.setResult(JsonUtils.getString(object.getJSONObject("result"), "scriptSource"));
+    }
+
+    return result;
+  }
+
+  private WebkitResult<String> convertSetBreakpointByUrlResult(JSONObject object,
+      List<WebkitBreakpoint> resolvedBreakpoints) throws JSONException {
+    // "result":{
+    //   "locations":[{"lineNumber":9,"scriptId":"-1","columnNumber":0}],
+    //   "breakpointId":"http://0.0.0.0:3030/webapp/webapp.dart:9:0"
+    // }
+
+    WebkitResult<String> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      JSONObject temp = object.getJSONObject("result");
+
+      String breakpointId = temp.optString("breakpointId");
+
+      result.setResult(breakpointId);
+
+      if (temp.has("locations")) {
+        JSONArray arr = temp.getJSONArray("locations");
+
+        if (arr.length() > 0) {
+          WebkitLocation location = WebkitLocation.createFrom(arr.getJSONObject(0));
+
+          WebkitBreakpoint breakpoint = WebkitBreakpoint.createFrom(breakpointId, location);
+
+          resolvedBreakpoints.add(breakpoint);
+        }
+      }
+    }
+
+    return result;
+  }
+
+  private WebkitResult<WebkitBreakpoint> convertSetBreakpointResult(JSONObject object)
+      throws JSONException {
+    // "result": {
+    //   "breakpointId": <BreakpointId>,
+    //   "actualLocation": <Location> 
+    // }
+
+    WebkitResult<WebkitBreakpoint> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      WebkitBreakpoint breakpoint = WebkitBreakpoint.createFromActual(object.getJSONObject("result"));
+
+      result.setResult(breakpoint);
+    }
+
+    return result;
+  }
+
+  private WebkitResult<WebkitCallFrame[]> convertSetScriptSourceResult(JSONObject object)
+      throws JSONException {
+    WebkitResult<WebkitCallFrame[]> result = WebkitResult.createFrom(object);
+
+    if (object.has("result")) {
+      JSONObject obj = object.getJSONObject("result");
+
+      if (obj.has("callFrames")) {
+        List<WebkitCallFrame> frames = WebkitCallFrame.createFrom(obj.getJSONArray("callFrames"));
+
+        result.setResult(frames.toArray(new WebkitCallFrame[frames.size()]));
+      }
+    }
+
+    return result;
+  }
+
+  private void handleResumed() {
+    clearRemoteObjects();
   }
 
 }

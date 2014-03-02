@@ -26,6 +26,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseO
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
@@ -33,23 +34,12 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.PlatformObject;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IBreakpointManager;
@@ -68,91 +58,6 @@ import org.eclipse.debug.core.model.IThread;
  */
 public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpointManagerListener,
     ISDBGDebugTarget {
-  private class WebkitScriptStorage extends PlatformObject implements IStorage {
-    private WebkitScript script;
-    private String source;
-
-    public WebkitScriptStorage(WebkitScript script, String source) {
-      this.script = script;
-      this.source = source;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      WebkitScriptStorage other = (WebkitScriptStorage) obj;
-      if (!getOuterType().equals(other.getOuterType())) {
-        return false;
-      }
-      if (script == null) {
-        if (other.script != null) {
-          return false;
-        }
-      } else if (!script.equals(other.script)) {
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public InputStream getContents() throws CoreException {
-      try {
-        return new ByteArrayInputStream(source != null ? source.getBytes("UTF-8") : new byte[0]);
-      } catch (UnsupportedEncodingException e) {
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            e.toString(),
-            e));
-      }
-    }
-
-    @Override
-    public IPath getFullPath() {
-      try {
-        return Path.fromPortableString(URIUtil.fromString(script.getUrl()).getPath());
-      } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    @Override
-    public String getName() {
-      return getFullPath().lastSegment();
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + getOuterType().hashCode();
-      result = prime * result + ((script == null) ? 0 : script.hashCode());
-      return result;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      return script.toString();
-    }
-
-    private WebkitDebugTarget getOuterType() {
-      return WebkitDebugTarget.this;
-    }
-  }
-
   private static WebkitDebugTarget activeTarget;
 
   public static WebkitDebugTarget getActiveTarget() {
@@ -225,6 +130,8 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 //    } else {
 //      sourceMapManager = new SourceMapManager(ResourcesPlugin.getWorkspace().getRoot());
 //    }
+
+    connection.getDebugger().setResteppingManager(new WebkitResteppingManagerImpl(this));
   }
 
   /**
@@ -624,6 +531,21 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     return breakpointManager;
   }
 
+  protected SourceMapManager.SourceLocation getMappedLocationFor(WebkitCallFrame webkitFrame) {
+    IStorage storage = getScriptStorageFor(webkitFrame);
+
+    if (getSourceMapManager().isMapSource(storage)) {
+      WebkitLocation location = webkitFrame.getLocation();
+
+      return getSourceMapManager().getMappingFor(
+          storage,
+          location.getLineNumber(),
+          location.getColumnNumber());
+    } else {
+      return null;
+    }
+  }
+
   protected IResourceResolver getResourceResolver() {
     return resourceResolver;
   }
@@ -650,6 +572,12 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     }
 
     return null;
+  }
+
+  protected IStorage getScriptStorageFor(WebkitCallFrame webkitFrame) {
+    WebkitScript script = getConnection().getDebugger().getScript(
+        webkitFrame.getLocation().getScriptId());
+    return getScriptStorage(script);
   }
 
   protected SourceMapManager getSourceMapManager() {

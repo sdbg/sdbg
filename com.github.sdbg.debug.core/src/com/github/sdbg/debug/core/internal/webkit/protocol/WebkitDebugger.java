@@ -178,17 +178,14 @@ public class WebkitDebugger extends WebkitDomain {
 
   private static final String OBJECT_GROUP_KEY = "objectGroup";
 
+  private WebkitResteppingManager resteppingManager;
+
   private List<DebuggerListener> listeners = new ArrayList<DebuggerListener>();
 
   private Map<String, WebkitScript> scriptMap = new HashMap<String, WebkitScript>();
   private Map<String, WebkitBreakpoint> breakpointMap = new HashMap<String, WebkitBreakpoint>();
 
   private int remoteObjectCount;
-
-  private WebkitLocation stepLocation;
-  private String stepCommand;
-
-  private WebkitLocation currentLocation;
 
   public WebkitDebugger(WebkitConnection connection) {
     super(connection);
@@ -605,6 +602,10 @@ public class WebkitDebugger extends WebkitDomain {
     }
   }
 
+  public void setResteppingManager(WebkitResteppingManager resteppingManager) {
+    this.resteppingManager = resteppingManager;
+  }
+
   /**
    * Edits source live.
    * <p>
@@ -642,23 +643,24 @@ public class WebkitDebugger extends WebkitDomain {
   }
 
   public void stepInto() throws IOException {
-    // the VM steps by expression; we step by line
-    stepLocation = currentLocation;
-    stepCommand = "Debugger.stepInto";
-
-    sendSimpleCommand(stepCommand);
+    if (resteppingManager != null) {
+      resteppingManager.onStepping("Debugger.stepInto");
+    }
+    sendSimpleCommand("Debugger.stepInto");
   }
 
   public void stepOut() throws IOException {
+    if (resteppingManager != null) {
+      resteppingManager.onStepping("Debugger.stepOut");
+    }
     sendSimpleCommand("Debugger.stepOut");
   }
 
   public void stepOver() throws IOException {
-    // the VM steps by expression; we step by line
-    stepLocation = currentLocation;
-    stepCommand = "Debugger.stepOver";
-
-    sendSimpleCommand(stepCommand);
+    if (resteppingManager != null) {
+      resteppingManager.onStepping("Debugger.stepOver");
+    }
+    sendSimpleCommand("Debugger.stepOver");
   }
 
   protected void handleDebuggerNotification(String method, JSONObject params) throws JSONException {
@@ -705,30 +707,17 @@ public class WebkitDebugger extends WebkitDomain {
         exception = WebkitRemoteObject.createFrom(params.getJSONObject("data"));
       }
 
-      boolean restep = true;
-
-      if (exception != null || reason != PausedReasonType.other) {
-        restep = false;
+      if (resteppingManager != null) {
+        resteppingManager.onDebuggerPaused(frames, reason, exception);
       }
 
-      WebkitLocation newLocation = frames.size() > 0 ? frames.get(0).getLocation() : null;
-
-// TODO: We want the same behavior as the commented out one, but on the *sourcemapped* location      
-//      if (newLocation == null || !newLocation.isSameSourceLine(stepLocation)) {
-      restep = false;
-//      }
-
-      currentLocation = newLocation;
-
-      if (restep) {
+      if (resteppingManager != null && resteppingManager.isResteppingNeeded()) {
         try {
-          sendSimpleCommand(stepCommand);
+          sendSimpleCommand(resteppingManager.getRestepCommand());
         } catch (IOException e) {
           throw new JSONException(e);
         }
       } else {
-        stepLocation = null;
-
         for (DebuggerListener listener : listeners) {
           listener.debuggerPaused(reason, frames, exception);
         }
@@ -881,5 +870,4 @@ public class WebkitDebugger extends WebkitDomain {
   private void handleResumed() {
     clearRemoteObjects();
   }
-
 }

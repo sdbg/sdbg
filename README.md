@@ -8,12 +8,19 @@ The current implementation can be considered alpha quality.
 
 Any comments, bugs or issues should be directed to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg).
 
-## Usage Instructions
+## Installation
 
 Eclipse 3.7 or later is required.
 
-Download the latest [SDBG P2 repository ZIP](https://github.com/sdbg/sdbg/releases) and install it by using the following sequence of Eclipse commands:
+To install SDBG, use the following sequence of Eclipse commands: Help menu -> Install New Software... -> Add...
+- (The "Add Repository" dialog will appear)
+- For "Name", enter "SDBG" or something similar
+- For "Location", fill-in the following URL: [https://raw.github.com/sdbg/sdbg/master/p2repo](https://raw.github.com/sdbg/sdbg/master/p2repo)
+
+Alternatively, you can download the latest [SDBG P2 repository ZIP](https://github.com/sdbg/sdbg/releases) and install it by using the following sequence of Eclipse commands:
 Help menu -> Install New Software... -> Add... -> Archive...
+
+## Testing
 
 Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository: 
 - Import the project into your Eclipse workspace by using the following commands: File -> Import... -> Existing Projects into Workspace -> Next -> Select Archive file;

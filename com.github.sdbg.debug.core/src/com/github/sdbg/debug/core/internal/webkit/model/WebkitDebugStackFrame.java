@@ -544,6 +544,17 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   }
 
   private SourceMapManager.SourceLocation getMappedLocation() {
-    return getTarget().getMappedLocationFor(webkitFrame);
+    IStorage storage = getTarget().getScriptStorageFor(webkitFrame);
+
+    if (getTarget().getSourceMapManager().isMapSource(storage)) {
+      WebkitLocation location = webkitFrame.getLocation();
+
+      return getTarget().getSourceMapManager().getMappingFor(
+          storage,
+          location.getLineNumber(),
+          location.getColumnNumber());
+    } else {
+      return null;
+    }
   }
 }

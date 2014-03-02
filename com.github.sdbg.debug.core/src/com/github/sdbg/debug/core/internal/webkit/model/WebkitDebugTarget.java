@@ -26,7 +26,6 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseO
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
@@ -529,21 +528,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
   protected ISDBGBreakpointManager getBreakpointManager() {
     return breakpointManager;
-  }
-
-  protected SourceMapManager.SourceLocation getMappedLocationFor(WebkitCallFrame webkitFrame) {
-    IStorage storage = getScriptStorageFor(webkitFrame);
-
-    if (getSourceMapManager().isMapSource(storage)) {
-      WebkitLocation location = webkitFrame.getLocation();
-
-      return getSourceMapManager().getMappingFor(
-          storage,
-          location.getLineNumber(),
-          location.getColumnNumber());
-    } else {
-      return null;
-    }
   }
 
   protected IResourceResolver getResourceResolver() {

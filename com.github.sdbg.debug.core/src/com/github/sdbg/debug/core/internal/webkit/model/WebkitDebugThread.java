@@ -310,5 +310,4 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
   private boolean isDisconnected() {
     return getDebugTarget().isDisconnected();
   }
-
 }

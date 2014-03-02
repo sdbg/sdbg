@@ -6,6 +6,8 @@ It has been adapted from the [Dart](http://dartlang.org) project, and modified f
 
 The current implementation can be considered alpha quality.
 
+Any comments, bugs or issues should be directed to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg).
+
 ## Usage Instructions
 
 Eclipse 3.7 or later is required.
@@ -13,14 +15,12 @@ Eclipse 3.7 or later is required.
 Download the latest [SDBG P2 repository ZIP](https://github.com/sdbg/sdbg/releases) and install it by using the following sequence of Eclipse commands:
 Help menu -> Install New Software... -> Add... -> Archive...
 
-Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository.  
-Simply unzip this project into your workspace, and import it.  
-Next, create a new "Chrome launch" configuration with project = gwtproject and URL = http://gwtproject.org;  
-Put a breakpoint in the method called "toggleMenu", in the (only) Java file in the gwtproject project - GWTProjectEntryPoint.java;  
-Click on "Articles" or "Documentation" in the "Table of contents" tree at http://gwtproject.org;  
-Observe the breakpoint being hit
-
-Any comments, bugs or issues should be directed to the [SDBG Google Group](https://groups.google.com/d/forum/sdbg).
+Once you are running the plugin, you can test it using the gwtproject.zip file found in the root of the repository: 
+- Import the project into your Eclipse workspace by using the following commands: File -> Import... -> Existing Projects into Workspace -> Next -> Select Archive file;
+- Next, open the "Debug Configurations" dialog and invoke the "gwtproject" launch configuration which will be available under "Chrome launch" in the launchers' tree;
+- Put a breakpoint in the method called "toggleMenu", in the (only) Java file in the gwtproject project - GWTProjectEntryPoint.java;  
+- Click on "Articles" or "Documentation" in the "Table of contents" tree at http://gwtproject.org;
+- Observe the breakpoint being hit
 
 ## Status
 

@@ -5,7 +5,7 @@ import com.github.sdbg.debug.core.ISourceLookupExtensions;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant;
-import org.eclipse.debug.core.sourcelookup.ISourcePathComputer;
+import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
 
 public class JDTSourceLookupExtensions implements ISourceLookupExtensions {
   public JDTSourceLookupExtensions() {
@@ -22,9 +22,10 @@ public class JDTSourceLookupExtensions implements ISourceLookupExtensions {
   }
 
   @Override
-  public ISourcePathComputer getSourcePathComputer(IProject project) throws CoreException {
+  public ISourcePathComputerDelegate getSourcePathComputerDelegate(IProject project)
+      throws CoreException {
     if (isJavaProject(project)) {
-      return new JDTSourcePathComputer();
+      return new JDTSourcePathComputerDelegate();
     } else {
       return null;
     }

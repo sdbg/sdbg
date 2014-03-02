@@ -16,6 +16,7 @@ package com.github.sdbg.debug.core.internal.source;
 import com.github.sdbg.debug.core.ISourceLookupExtensions;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.webkit.model.WebkitSourcePathComputerDelegate;
 import com.github.sdbg.debug.core.util.SDBGNoSourceFoundElement;
 import com.github.sdbg.utilities.AdapterUtilities;
 
@@ -33,7 +34,7 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector;
 import org.eclipse.debug.core.sourcelookup.ISourceLookupParticipant;
-import org.eclipse.debug.core.sourcelookup.ISourcePathComputer;
+import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
 
 /**
  * A collection of SDBG specific source lookup participants.
@@ -84,18 +85,21 @@ public class SDBGSourceLookupDirector extends AbstractSourceLookupDirector {
 
     IProject project = new SDBGLaunchConfigWrapper(getLaunchConfiguration()).getProject();
 
-    ISourcePathComputer computer = null;
+    List<ISourcePathComputerDelegate> computerDelegates = new ArrayList<ISourcePathComputerDelegate>();
     for (ISourceLookupExtensions extensions : getSourceLookupExtensions()) {
       try {
-        computer = extensions.getSourcePathComputer(project);
-        if (computer != null) {
-          setSourcePathComputer(computer);
-          break;
+        ISourcePathComputerDelegate computerDelegate = extensions.getSourcePathComputerDelegate(project);
+        if (computerDelegate != null) {
+          computerDelegates.add(computerDelegate);
         }
       } catch (CoreException e) {
         SDBGDebugCorePlugin.logError(e);
       }
     }
+
+    computerDelegates.add(new WebkitSourcePathComputerDelegate());
+    setSourcePathComputer(new SDBGSourcePathComputer(
+        computerDelegates.toArray(new ISourcePathComputerDelegate[0])));
   }
 
   private Collection<ISourceLookupExtensions> getSourceLookupExtensions() {

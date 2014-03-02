@@ -4,16 +4,11 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.sourcelookup.ISourceContainer;
-import org.eclipse.debug.core.sourcelookup.ISourcePathComputer;
+import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
 import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
 import org.eclipse.jdt.launching.JavaRuntime;
 
-public class JDTSourcePathComputer implements ISourcePathComputer {
-  /**
-   * Unique identifier for the source path computer
-   */
-  public static final String ID = JDTSourcePathComputer.class.getName(); //$NON-NLS-1$
-
+public class JDTSourcePathComputerDelegate implements ISourcePathComputerDelegate {
   /* (non-Javadoc)
    * @see org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate#computeSourceContainers(org.eclipse.debug.core.ILaunchConfiguration, org.eclipse.core.runtime.IProgressMonitor)
    */
@@ -24,14 +19,5 @@ public class JDTSourcePathComputer implements ISourcePathComputer {
         new JDTSourcePathProvider().computeUnresolvedClasspath(configuration),
         configuration);
     return JavaRuntime.getSourceContainers(resolved);
-  }
-
-  /* (non-Javadoc)
-   * @see org.eclipse.debug.core.sourcelookup.ISourcePathComputer#getId()
-   * 
-   */
-  @Override
-  public String getId() {
-    return ID;
   }
 }

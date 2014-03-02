@@ -13,8 +13,6 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
-import com.github.sdbg.debug.core.internal.source.WorkspaceSourceContainer;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -26,19 +24,13 @@ import org.eclipse.debug.core.sourcelookup.ISourcePathComputerDelegate;
  * considered) for a launch configuration.
  */
 public class WebkitSourcePathComputerDelegate implements ISourcePathComputerDelegate {
-
   public WebkitSourcePathComputerDelegate() {
-
   }
 
   @Override
   public ISourceContainer[] computeSourceContainers(ILaunchConfiguration launchConfig,
       IProgressMonitor monitor) throws CoreException {
-
     return new ISourceContainer[] {
-        new WorkspaceSourceContainer(), new DartiumPackageSourceContainer(launchConfig),
-        new ChromeAppSourceContainer(), new WebkitRemoteScriptSourceContainer(),
-        new DartiumUrlScriptSourceContainer()};
+        new WebkitRemoteScriptSourceContainer(), new SourceMapSourceContainer()};
   }
-
 }

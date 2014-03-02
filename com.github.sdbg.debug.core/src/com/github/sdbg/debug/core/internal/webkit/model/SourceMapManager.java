@@ -18,18 +18,17 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.source.WorkspaceSourceContainer;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMap;
 import com.github.sdbg.debug.core.internal.sourcemaps.SourceMapInfo;
+import com.github.sdbg.debug.core.internal.util.URLStorage;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +41,6 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.core.runtime.URIUtil;
 
 // TODO(devoncarew): use the symbol name information in the maps?
@@ -98,77 +96,6 @@ public class SourceMapManager {
     public String toString() {
       return "[" + (storage != null ? storage : "") + "," + path + "," + line + "," + column + ","
           + name + "]";
-    }
-  }
-
-  private static class URLStorage extends PlatformObject implements IStorage {
-    private URL url;
-
-    public URLStorage(URL url) {
-      this.url = url;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-      if (obj == null) {
-        return false;
-      }
-      if (getClass() != obj.getClass()) {
-        return false;
-      }
-      URLStorage other = (URLStorage) obj;
-      if (url == null) {
-        if (other.url != null) {
-          return false;
-        }
-      } else if (!url.equals(other.url)) {
-        return false;
-      }
-      return true;
-    }
-
-    @Override
-    public InputStream getContents() throws CoreException {
-      try {
-        return url.openStream();
-      } catch (IOException e) {
-        throw new CoreException(null); // FIXME
-      }
-    }
-
-    @Override
-    public IPath getFullPath() {
-      return Path.fromPortableString(url.getPath());
-    }
-
-    @Override
-    public String getName() {
-      return url.toString();
-    }
-
-    public URL getURL() {
-      return url;
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((url == null) ? 0 : url.hashCode());
-      return result;
-    }
-
-    @Override
-    public boolean isReadOnly() {
-      return true;
-    }
-
-    @Override
-    public String toString() {
-      return "URLStorage[" + url + "]";
     }
   }
 
@@ -280,6 +207,37 @@ public class SourceMapManager {
     }
 
     return mappings;
+  }
+
+  public IStorage getSource(String targetPath) { //&&&!!! There can be race conditions because of that method
+    if (targetPath != null) {
+      if (Trace.TRACING) {
+        Trace.trace("Get source storage: " + targetPath);
+      }
+
+      synchronized (sourceMaps) {
+        for (IStorage mapStorage : sourceMaps.keySet()) {
+          SourceMap map = sourceMaps.get(mapStorage);
+          for (String path : map.getSourceNames()) {
+            String relativePath = relativisePath(mapStorage, path);
+            if (Trace.TRACING
+                && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
+              Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+            }
+
+            if (targetPath.equals(relativePath)) {
+              if (Trace.TRACING) {
+                Trace.trace("Confirmed - source storage");
+              }
+
+              return resolveStorage(mapStorage, path);
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   public List<String> getSourcePaths(IStorage storage) {
@@ -521,17 +479,22 @@ public class SourceMapManager {
     } else {
       try {
         URI uri = URIUtil.fromString(path);
-        if (relativeStorage instanceof URLStorage) {
-          IPath newPath = Path.fromPortableString(((URLStorage) relativeStorage).getURL().getPath()).removeLastSegments(
-              1).append(uri.getPath());
-          uri = new URI(
-              uri.getScheme(),
-              null,
-              uri.getHost(),
-              uri.getPort(),
-              newPath.toPortableString(),
-              null,
-              null);
+        if (uri.getScheme() == null || !uri.getScheme().equals("http")
+            && !uri.getScheme().equals("https") || uri.getHost() == null) {
+          // The source path is not a downloadable URI, try to build a downloadable URI by using the sourcemap URI 
+          if (relativeStorage instanceof URLStorage) {
+            URI relativeUri = ((URLStorage) relativeStorage).getURL().toURI();
+            IPath newPath = Path.fromPortableString(relativeUri.getPath()).removeLastSegments(1).append(
+                uri.getPath());
+            uri = new URI(
+                relativeUri.getScheme(),
+                null,
+                relativeUri.getHost(),
+                relativeUri.getPort(),
+                newPath.toPortableString(),
+                null,
+                null);
+          }
         }
 
         IResource resource = resourceResolver.resolveUrl(uri.toString());
@@ -543,7 +506,7 @@ public class SourceMapManager {
         if (uri.getScheme() != null
             && (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
             && uri.getHost() != null) {
-          return new URLStorage(new URL(path));
+          return new URLStorage(uri.toURL());
         }
 
         return null;

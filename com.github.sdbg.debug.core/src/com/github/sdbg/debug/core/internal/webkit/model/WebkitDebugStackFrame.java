@@ -305,7 +305,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
       if (getTarget().shouldUseSourceMapping() && isUsingSourceMaps()) {
         return getMappedLocationPath();
       } else {
-        IStorage storage = getActualLocationStorage();
+        IStorage storage = getTarget().getScriptStorageFor(webkitFrame);
         if (storage != null) {
           return storage.getFullPath().toPortableString();
         } else {
@@ -414,14 +414,6 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   @Override
   public String toString() {
     return getShortName();
-  }
-
-  protected IStorage getActualLocationStorage() {
-    String scriptId = webkitFrame.getLocation().getScriptId();
-
-    WebkitScript script = getConnection().getDebugger().getScript(scriptId);
-
-    return getTarget().getScriptStorage(script);
   }
 
   protected IValue getClassValue() throws DebugException {
@@ -552,14 +544,12 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   }
 
   private SourceMapManager.SourceLocation getMappedLocation() {
-    SourceMapManager sourceMapManager = getTarget().getSourceMapManager();
+    IStorage storage = getTarget().getScriptStorageFor(webkitFrame);
 
-    IStorage storage = getActualLocationStorage();
-
-    if (sourceMapManager.isMapSource(storage)) {
+    if (getTarget().getSourceMapManager().isMapSource(storage)) {
       WebkitLocation location = webkitFrame.getLocation();
 
-      return sourceMapManager.getMappingFor(
+      return getTarget().getSourceMapManager().getMappingFor(
           storage,
           location.getLineNumber(),
           location.getColumnNumber());
@@ -567,5 +557,4 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
       return null;
     }
   }
-
 }

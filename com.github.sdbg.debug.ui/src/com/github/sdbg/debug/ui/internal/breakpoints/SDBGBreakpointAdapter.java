@@ -31,7 +31,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.texteditor.AbstractTextEditor;
 
 /**
- * Adapter class in charge of toggling Dart breakpoints.
+ * Adapter class in charge of toggling SDBG breakpoints.
  * 
  * @see IToggleBreakpointsTarget
  */

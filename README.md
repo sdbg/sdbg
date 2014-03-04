@@ -42,7 +42,7 @@ What is mostly working:
 
 Future work:
 - Prio A: Deobfuscating the Variable tabs. Currently, Eclipse will display the Variables tab with your JavaScript objects in them (not yet translated back to Java);
-- Prio A-B: Support for other source languages besides Java (e.g. CoffeeScript, TypeScript etc.); should require relatively little effort, as the interfaces for implementing such support are now qwell defined;
+- Prio A-B: Support for other source languages besides Java (e.g. CoffeeScript, TypeScript etc.); should require relatively little effort, as the interfaces for implementing such support are now well defined;
 - Prio A-B: Support for Safari, Opera and Mobile Safari; should be easy as all these currently use the same Remote Debugging protocol as Chrome;
 - Prio B: Support for Internet Explorer and Firefox;
 

@@ -67,13 +67,13 @@ public class BrowserManager {
 
   private static IResourceResolver resourceResolver;
 
-  private static File chromeExe;
+  private static File chromeExecutable;
 
   public static File findChrome() {
-    if (chromeExe == null) {
-      chromeExe = manager.searchForChrome();
+    if (chromeExecutable == null) {
+      chromeExecutable = manager.findChromeExecutable();
     }
-    return chromeExe;
+    return chromeExecutable;
   }
 
   /**
@@ -113,18 +113,6 @@ public class BrowserManager {
 
   public static BrowserManager getManager() {
     return manager;
-  }
-
-  private static File findChromeInDirectory(File f) {
-    File exe = new File(f, "google-chrome");
-    if (exe.exists()) {
-      return exe;
-    }
-    exe = new File(f, "chrome");
-    if (exe.exists()) {
-      return exe;
-    }
-    return new File(f, "chrome.exe");
   }
 
   private static IResourceResolver getResourceServer() throws CoreException {
@@ -489,6 +477,132 @@ public class BrowserManager {
     }
   }
 
+  private File findChromeExecutable() {
+    // First, try the system property, as user-specified value is preferred
+    String chromeLocationStr = System.getProperty(
+        CHROME_EXECUTABLE_PROPERTY,
+        System.getenv(CHROME_EXECUTABLE_PROPERTY));
+    if (chromeLocationStr != null) {
+      File chromeLocation = new File(chromeLocationStr);
+      if (chromeLocation.exists()) {
+        if (chromeLocation.isDirectory()) {
+          chromeLocation = findChromeExecutable(chromeLocation);
+        }
+
+        if (chromeLocation != null) {
+          return chromeLocation;
+        }
+      }
+    }
+
+    // On Windows, try to locate Chrome using the Uninstall windows Registry setting
+    // If unsuccessful, try a heuristics in the user home directory
+    if (DartCore.isWindows()) {
+      File chromeDirectory = null;
+
+      try {
+        String installLocation = WinReg.readRegistry(
+            "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome",
+            "InstallLocation");
+        if (installLocation != null) {
+          chromeDirectory = new File(installLocation);
+        }
+      } catch (IOException e) {
+        // Stay silent
+        SDBGDebugCorePlugin.logError(e);
+      }
+
+      if (!isExistingDirectory(chromeDirectory)) {
+        // Heuristically search in user's home directory
+        File userHome = new File(System.getProperty("user.home"));
+
+        // Windows 7
+        chromeDirectory = new File(userHome, "AppData\\Local\\Google\\Chrome\\Application");
+        if (!isExistingDirectory(chromeDirectory)) {
+          // XP
+          chromeDirectory = new File(
+              userHome,
+              "Local Settings\\Application Data\\Google\\Chrome\\Application");
+        }
+      }
+
+      File chromeExecutable = findChromeExecutable(chromeDirectory);
+      if (chromeExecutable != null) {
+        return chromeExecutable;
+      }
+    } else if (DartCore.isMac()) {
+      return findChromeExecutable(new File("/Applications"));
+    } else {
+      // Search $PATH
+      String path = System.getenv("PATH");
+      if (path != null) {
+        for (String dirStr : path.split(File.pathSeparator)) {
+          File dir = new File(dirStr);
+          if (dir.isDirectory()) {
+            File chromeExecutable = findChromeExecutable(dir);
+            if (chromeExecutable != null) {
+              return chromeExecutable;
+            }
+          }
+        }
+      }
+    }
+
+    throw new RuntimeException("Uable to locate the Chrome executable at the usual locations.\n"
+        + "Please append at the end of your eclipse.ini file the following property:\n" + "-D"
+        + CHROME_EXECUTABLE_PROPERTY + "=<path-to-chrome-executable>");
+  }
+
+  private File findChromeExecutable(File dir) {
+    if (!isExistingDirectory(dir)) {
+      return null;
+    }
+
+    if (DartCore.isWindows()) {
+      File exe = new File(dir, "chrome.exe");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+    } else if (DartCore.isMac()) {
+      // In case the directory just points to the parent of Google Chrome.app
+      File exe = new File(dir, "Google Chrome.app/Contents/MacOS/Google Chrome");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+
+      // In case the directory just points to Google Chrome.app
+      exe = new File(dir, "Contents/MacOS/Google Chrome");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+
+      // User was smart enough to enter inside the Google Chrome.app package
+      exe = new File(dir, "Google Chrome");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+    } else {
+      // Linux, Unix...
+
+      File exe = new File(dir, "google-chrome");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+
+      exe = new File(dir, "chrome");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+
+      exe = new File(dir, "chromium");
+      if (exe.exists() && exe.isFile()) {
+        return exe;
+      }
+    }
+
+    return null;
+  }
+
   private IBrowserTabInfo findTargetTab(IBrowserTabChooser tabChooser,
       List<? extends IBrowserTabInfo> tabs) {
     IBrowserTabInfo chosenTab = tabChooser.chooseTab(tabs);
@@ -583,6 +697,10 @@ public class BrowserManager {
     return msg.toString();
   }
 
+  private boolean isExistingDirectory(File dir) {
+    return dir != null && dir.exists() && dir.isDirectory();
+  }
+
   private boolean isProcessTerminated(Process process) {
     try {
       if (process != null) {
@@ -643,67 +761,6 @@ public class BrowserManager {
     }
 
     return url;
-  }
-
-  private File searchForChrome() {
-    // First, try the system property, as user-specified value is preferred
-    String location = System.getProperty(
-        CHROME_EXECUTABLE_PROPERTY,
-        System.getenv(CHROME_EXECUTABLE_PROPERTY));
-    if (location != null) {
-      File f = new File(location);
-      if (f.isDirectory()) {
-        f = findChromeInDirectory(f);
-      }
-      if (f.exists()) {
-        return f;
-      }
-    }
-
-    // No luck on explicitly set chrome exe; search $PATH
-    String path = System.getenv("PATH");
-    if (path != null) {
-      for (String dir : path.split(File.pathSeparator)) {
-        File f = new File(dir);
-        if (f.isDirectory()) {
-          f = findChromeInDirectory(f);
-          if (f.exists()) {
-            return f;
-          }
-        }
-      }
-    }
-
-    // On Windows, try to locate Chrome inside the user's home directory
-    // TODO: Also handle the case when the Chrome executable is installed in Program Files
-    // TODO: Use the registry for finding the installation directory
-    if (DartCore.isWindows()) {
-      File userHome = new File(System.getProperty("user.home"));
-
-      // Windows 7
-      File chromeAppData = new File(userHome, "AppData\\Local\\Google\\Chrome\\Application");
-      if (chromeAppData.exists()) {
-        File f = findChromeInDirectory(chromeAppData);
-        if (f.exists()) {
-          return f;
-        }
-      }
-
-      // XP
-      File xpChromeAppData = new File(
-          userHome,
-          "Local Settings\\Application Data\\Google\\Chrome\\Application");
-      if (xpChromeAppData.exists()) {
-        File f = findChromeInDirectory(xpChromeAppData);
-        if (f.exists()) {
-          return f;
-        }
-      }
-    }
-
-    throw new RuntimeException(
-        "Uable to locate the Chrome executable at the usual locations.\nPlease append at the end of your eclipse.ini file the following property:\n-D"
-            + CHROME_EXECUTABLE_PROPERTY + "=<path-to-chrome-executable>");
   }
 
   private void sleep(int millis) {

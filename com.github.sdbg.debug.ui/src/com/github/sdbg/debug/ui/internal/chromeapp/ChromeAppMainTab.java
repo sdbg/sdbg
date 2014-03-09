@@ -94,7 +94,7 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(fileText);
 
     Button browseButton = new Button(group, SWT.PUSH);
-    browseButton.setText(ChromeLaunchMessages.ChromeMainTab_Browse);
+    browseButton.setText(ChromeLaunchMessages.ChromeMainTab_SelectHtmlFile);
     PixelConverter converter = new PixelConverter(browseButton);
     int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(

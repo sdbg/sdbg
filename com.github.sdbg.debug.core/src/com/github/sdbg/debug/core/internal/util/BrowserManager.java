@@ -63,19 +63,6 @@ public class BrowserManager {
 
   private static BrowserManager manager = new BrowserManager();
 
-  private static Process browserProcess = null;
-
-  private static IResourceResolver resourceResolver;
-
-  private static File chromeExecutable;
-
-  public static File findChrome() {
-    if (chromeExecutable == null) {
-      chromeExecutable = manager.findChromeExecutable();
-    }
-    return chromeExecutable;
-  }
-
   /**
    * Create a Chrome user data directory, and return the path to that directory.
    * 
@@ -115,21 +102,11 @@ public class BrowserManager {
     return manager;
   }
 
-  private static IResourceResolver getResourceServer() throws CoreException {
-    if (resourceResolver == null) {
-      try {
-        resourceResolver = ResourceServerManager.getServer();
-      } catch (IOException ioe) {
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            ioe.getMessage(),
-            ioe));
-      }
-    }
+  private Process browserProcess = null;
 
-    return resourceResolver;
-  }
+  private IResourceResolver resourceResolver;
+
+  private File chromeExecutable;
 
   private int devToolsPortNumber;
 
@@ -143,6 +120,13 @@ public class BrowserManager {
     if (!isProcessTerminated(browserProcess)) {
       browserProcess.destroy();
     }
+  }
+
+  public File findChrome() {
+    if (chromeExecutable == null) {
+      chromeExecutable = manager.findChromeExecutable();
+    }
+    return chromeExecutable;
   }
 
   /**
@@ -695,6 +679,22 @@ public class BrowserManager {
     }
 
     return msg.toString();
+  }
+
+  private IResourceResolver getResourceServer() throws CoreException {
+    if (resourceResolver == null) {
+      try {
+        resourceResolver = ResourceServerManager.getServer();
+      } catch (IOException ioe) {
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            ioe.getMessage(),
+            ioe));
+      }
+    }
+
+    return resourceResolver;
   }
 
   private boolean isExistingDirectory(File dir) {

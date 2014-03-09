@@ -20,19 +20,23 @@ import org.eclipse.osgi.util.NLS;
  */
 public class ChromeLaunchMessages extends NLS {
   private static final String BUNDLE_NAME = "com.github.sdbg.debug.ui.internal.chrome.messages"; //$NON-NLS-1$
-  public static String ChromeMainTab_Browse;
+  public static String ChromeMainTab_SelectHtmlFile;
   public static String ChromeMainTab_HtmlFileLabel;
   public static String ChromeMainTab_LaunchTarget;
   public static String ChromeMainTab_Message;
   public static String ChromeMainTab_Name;
   public static String ChromeMainTab_NoHtmlFile;
   public static String ChromeMainTab_NoProject;
+  public static String ChromeMainTab_InvalidProject;
   public static String ChromeMainTab_NoUrl;
   public static String ChromeMainTab_InvalidURL;
-  public static String ChromeMainTab_SourceDirectoryLabel;
+  public static String ChromeMainTab_ProjectLabel;
   public static String ChromeMainTab_SelectHtml;
   public static String ChromeMainTab_SelectProject;
+  public static String ChromeMainTab_SelectProjectTitle;
+  public static String ChromeMainTab_SelectProjectMessage;
   public static String ChromeMainTab_UrlLabel;
+
   static {
     // initialize resource bundle
     NLS.initializeMessages(BUNDLE_NAME, ChromeLaunchMessages.class);

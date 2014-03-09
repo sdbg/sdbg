@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -41,17 +40,19 @@ public class SDBGLaunchConfigWrapper {
   private static final String APPLICATION_ARGUMENTS = "applicationArguments";
   private static final String APPLICATION_ENVIRONMENT = "applicationEnvironment";
   private static final String APPLICATION_NAME = "applicationName";
-  private static final String SOURCE_DIRECTORY = "sourceDirectory";
   private static final String URL_QUERY_PARAMS = "urlQueryParams";
-  private static final String DART2JS_FLAGS = "dart2jsFlags";
-  private static final String COMPILE_BEFORE_LAUNCH = "runDart2js";
 
   private static final String SHOW_LAUNCH_OUTPUT = "showLaunchOutput";
 
   // --enable-experimental-webkit-features and --enable-devtools-experiments
   private static final String ENABLE_EXPERIMENTAL_WEBKIT_FEATURES = "enableExperimentalWebkitFeatures";
 
-  private static final String IS_FILE = "launchHtmlFile";
+  private static final String IS_FILE = "launchFile";
+
+  private static final String ATTACH = "attach";
+  private static final String ATTACH_HOST = "attachHost";
+  private static final String ATTACH_PORT = "attachPort";
+
   private static final String URL = "url";
 
   private static final String CONNECTION_HOST = "connectionHost";
@@ -135,37 +136,38 @@ public class SDBGLaunchConfigWrapper {
     return StringUtilities.parseArgumentString(command);
   }
 
-  /**
-   * @return the launch configuration that this DartLaucnConfigWrapper wraps
-   */
-  public ILaunchConfiguration getConfig() {
-    return launchConfig;
-  }
-
-  /**
-   * @return the string for additional flags to Dart2js
-   */
-  public String getDart2jsFlags() {
+  public boolean getAttach() {
     try {
-      return launchConfig.getAttribute(DART2JS_FLAGS, "");
+      return launchConfig.getAttribute(ATTACH, true);
     } catch (CoreException e) {
       SDBGDebugCorePlugin.logError(e);
+      return false;
+    }
+  }
 
+  public String getAttachHost() {
+    try {
+      return launchConfig.getAttribute(ATTACH_HOST, "localhost");
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
       return "";
     }
   }
 
-  /**
-   * @return the string for additional flags to Dart2js
-   */
-  public String[] getDart2jsFlagsAsArray() {
-    String command = getDart2jsFlags();
-
-    if (command == null || command.length() == 0) {
-      return new String[0];
+  public int getAttachPort() {
+    try {
+      return launchConfig.getAttribute(ATTACH_HOST, 9222);
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+      return 9222;
     }
+  }
 
-    return StringUtilities.parseArgumentString(command);
+  /**
+   * @return the launch configuration that this SDBGLaucnConfigWrapper wraps
+   */
+  public ILaunchConfiguration getConfig() {
+    return launchConfig;
   }
 
   /**
@@ -236,16 +238,9 @@ public class SDBGLaunchConfigWrapper {
       if (resource != null) {
         return resource.getProject();
       }
-    } else {
-      IContainer container = getSourceDirectory();
-
-      if (container != null) {
-        return container.getProject();
-      }
     }
 
     String projectName = getProjectName();
-
     if (projectName.length() > 0) {
       return ResourcesPlugin.getWorkspace().getRoot().getProject(getProjectName());
     }
@@ -266,16 +261,6 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
-  public boolean getRunDart2js() {
-    try {
-      return launchConfig.getAttribute(COMPILE_BEFORE_LAUNCH, true);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return false;
-    }
-  }
-
   public boolean getShouldLaunchFile() {
     try {
       return launchConfig.getAttribute(IS_FILE, true);
@@ -293,28 +278,6 @@ public class SDBGLaunchConfigWrapper {
       SDBGDebugCorePlugin.logError(e);
 
       return false;
-    }
-  }
-
-  public IContainer getSourceDirectory() {
-    String path = getSourceDirectoryName();
-
-    if (path == null || path.length() == 0) {
-      return null;
-    } else {
-      IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(path);
-
-      return (resource instanceof IContainer ? (IContainer) resource : null);
-    }
-  }
-
-  public String getSourceDirectoryName() {
-    try {
-      return launchConfig.getAttribute(SOURCE_DIRECTORY, "");
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return "";
     }
   }
 
@@ -423,6 +386,18 @@ public class SDBGLaunchConfigWrapper {
     getWorkingCopy().setAttribute(APPLICATION_ARGUMENTS, value);
   }
 
+  public void setAttach(boolean value) {
+    getWorkingCopy().setAttribute(ATTACH, value);
+  }
+
+  public void setAttachHost(String value) {
+    getWorkingCopy().setAttribute(ATTACH_HOST, value);
+  }
+
+  public void setAttachPort(int value) {
+    getWorkingCopy().setAttribute(ATTACH_PORT, value);
+  }
+
   /**
    * @see #getConnectionHost()
    */
@@ -435,13 +410,6 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setConnectionPort(int value) {
     getWorkingCopy().setAttribute(CONNECTION_PORT, value);
-  }
-
-  /**
-   * @see #getDart2jsFlags()
-   */
-  public void setDart2jsFlags(String value) {
-    getWorkingCopy().setAttribute(DART2JS_FLAGS, value);
   }
 
   public void setEnvironmentString(String value) {
@@ -459,23 +427,12 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
-  public void setRunDart2js(boolean value) {
-    getWorkingCopy().setAttribute(COMPILE_BEFORE_LAUNCH, value);
-  }
-
   public void setShouldLaunchFile(boolean value) {
     getWorkingCopy().setAttribute(IS_FILE, value);
   }
 
   public void setShowLaunchOutput(boolean value) {
     getWorkingCopy().setAttribute(SHOW_LAUNCH_OUTPUT, value);
-  }
-
-  /**
-   * @see #getSourceDirectoryName()
-   */
-  public void setSourceDirectoryName(String value) {
-    getWorkingCopy().setAttribute(SOURCE_DIRECTORY, value);
   }
 
   /**

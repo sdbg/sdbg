@@ -186,7 +186,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
     boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
 
-    File chromeExe = BrowserManager.findChrome();
+    File chromeExe = BrowserManager.getManager().findChrome();
 
     if (chromeExe == null) {
       throw new CoreException(new Status(

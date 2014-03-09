@@ -57,11 +57,13 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     }
   }
 
+  private Button showOutputButton;
+
+  private Button useWebComponentsButton;
+
   private Text fileText;
 
   protected Text argumentText;
-
-  protected Text envText;
 
   protected ModifyListener textModifyListener = new ModifyListener() {
     @Override
@@ -112,6 +114,28 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(2).applyTo(group);
 
+    useWebComponentsButton = new Button(group, SWT.CHECK);
+    useWebComponentsButton.setText("Enable experimental browser features (Web Components)");
+    useWebComponentsButton.setToolTipText("--enable-experimental-webkit-features"
+        + " and --enable-devtools-experiments");
+    GridDataFactory.swtDefaults().span(3, 1).applyTo(useWebComponentsButton);
+    useWebComponentsButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        notifyPanelChanged();
+      }
+    });
+
+    showOutputButton = new Button(group, SWT.CHECK);
+    showOutputButton.setText("Show browser stdout and stderr output");
+    GridDataFactory.swtDefaults().span(3, 1).applyTo(showOutputButton);
+    showOutputButton.addSelectionListener(new SelectionAdapter() {
+      @Override
+      public void widgetSelected(SelectionEvent e) {
+        notifyPanelChanged();
+      }
+    });
+
     Label argsLabel = new Label(group, SWT.NONE);
     argsLabel.setText("Browser arguments:");
 
@@ -119,17 +143,6 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     argumentText.addModifyListener(textModifyListener);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
         argumentText);
-
-    // additional browser arguments
-    group = new Group(composite, SWT.NONE);
-    group.setText("Environment variables");
-    GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
-    GridLayoutFactory.swtDefaults().applyTo(group);
-
-    envText = new Text(group, SWT.BORDER | SWT.MULTI);
-    envText.addModifyListener(textModifyListener);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.FILL).grab(true, true).hint(-1, 75).applyTo(
-        envText);
 
     setControl(composite);
   }
@@ -158,8 +171,16 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
     SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
 
     fileText.setText(chromeLauncher.getApplicationName());
+
+    if (showOutputButton != null) {
+      showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
+    }
+
+    if (useWebComponentsButton != null) {
+      useWebComponentsButton.setSelection(chromeLauncher.isEnableExperimentalWebkitFeatures());
+    }
+
     argumentText.setText(chromeLauncher.getArguments());
-    envText.setText(chromeLauncher.getEnvironmentString());
   }
 
   @Override
@@ -170,16 +191,24 @@ public class ChromeAppMainTab extends AbstractLaunchConfigurationTab {
   @Override
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
     SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
+
     chromeLauncher.setApplicationName(fileText.getText());
+
+    if (showOutputButton != null) {
+      chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
+    }
+
+    if (useWebComponentsButton != null) {
+      chromeLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
+    }
+
     chromeLauncher.setArguments(argumentText.getText().trim());
-    chromeLauncher.setEnvironmentString(envText.getText().trim());
   }
 
   @Override
   public void setDefaults(ILaunchConfigurationWorkingCopy configuration) {
     SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
     chromeLauncher.setApplicationName("");
-    chromeLauncher.setEnvironmentString("");
   }
 
   protected void handleBrowseButton() {

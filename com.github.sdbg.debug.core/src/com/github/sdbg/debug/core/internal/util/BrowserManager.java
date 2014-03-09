@@ -789,9 +789,17 @@ public class BrowserManager {
 
     ProcessBuilder builder = new ProcessBuilder();
     Map<String, String> env = builder.environment();
+
     // Due to differences in 32bit and 64 bit environments, dartium 32bit launch does not work on
     // linux with this property.
     env.remove("LD_LIBRARY_PATH");
+
+    Map<String, String> wrapperEnv = launchConfig.getEnvironment();
+    if (!wrapperEnv.isEmpty()) {
+      for (String key : wrapperEnv.keySet()) {
+        env.put(key, wrapperEnv.get(key));
+      }
+    }
 
     devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
 

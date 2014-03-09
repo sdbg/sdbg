@@ -15,20 +15,18 @@ package com.github.sdbg.debug.core;
 
 import com.github.sdbg.utilities.StringUtilities;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 
@@ -38,7 +36,6 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
  */
 public class SDBGLaunchConfigWrapper {
   private static final String APPLICATION_ARGUMENTS = "applicationArguments";
-  private static final String APPLICATION_ENVIRONMENT = "applicationEnvironment";
   private static final String APPLICATION_NAME = "applicationName";
   private static final String URL_QUERY_PARAMS = "urlQueryParams";
 
@@ -48,10 +45,6 @@ public class SDBGLaunchConfigWrapper {
   private static final String ENABLE_EXPERIMENTAL_WEBKIT_FEATURES = "enableExperimentalWebkitFeatures";
 
   private static final String IS_FILE = "launchFile";
-
-  private static final String ATTACH = "attach";
-  private static final String ATTACH_HOST = "attachHost";
-  private static final String ATTACH_PORT = "attachPort";
 
   private static final String URL = "url";
 
@@ -136,33 +129,6 @@ public class SDBGLaunchConfigWrapper {
     return StringUtilities.parseArgumentString(command);
   }
 
-  public boolean getAttach() {
-    try {
-      return launchConfig.getAttribute(ATTACH, true);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-      return false;
-    }
-  }
-
-  public String getAttachHost() {
-    try {
-      return launchConfig.getAttribute(ATTACH_HOST, "localhost");
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-      return "";
-    }
-  }
-
-  public int getAttachPort() {
-    try {
-      return launchConfig.getAttribute(ATTACH_HOST, 9222);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-      return 9222;
-    }
-  }
-
   /**
    * @return the launch configuration that this SDBGLaucnConfigWrapper wraps
    */
@@ -170,42 +136,41 @@ public class SDBGLaunchConfigWrapper {
     return launchConfig;
   }
 
+  public String getConnectionHost() {
+    try {
+      return launchConfig.getAttribute(CONNECTION_HOST, "localhost");
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+      return "";
+    }
+  }
+
+  public int getConnectionPort() {
+    try {
+      return launchConfig.getAttribute(CONNECTION_PORT, 9222);
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+      return 9222;
+    }
+  }
+
   /**
    * @return any configured environment variables
    */
-  public Map<String, String> getEnvironment() {
-    String env = getEnvironmentString();
-
+  public Map<String, String> getEnvironment() throws CoreException {
     Map<String, String> map = new HashMap<String, String>();
 
-    if (env.isEmpty()) {
-      return map;
-    }
-
-    Properties props = new Properties();
-
-    try {
-      props.load(new StringReader(env));
-    } catch (IOException e) {
-
-    }
-
-    for (Object key : props.keySet()) {
-      String strKey = (String) key;
-      map.put(strKey, props.getProperty(strKey));
+    for (String envProperty : DebugPlugin.getDefault().getLaunchManager().getEnvironment(
+        launchConfig)) {
+      int index = envProperty.indexOf('=');
+      if (index > 0) {
+        String key = envProperty.substring(0, index);
+        String value = envProperty.substring(index + 1);
+        map.put(key, value);
+      }
     }
 
     return map;
-  }
-
-  public String getEnvironmentString() {
-    try {
-      return launchConfig.getAttribute(APPLICATION_ENVIRONMENT, "");
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return "";
-    }
   }
 
   /**
@@ -386,18 +351,6 @@ public class SDBGLaunchConfigWrapper {
     getWorkingCopy().setAttribute(APPLICATION_ARGUMENTS, value);
   }
 
-  public void setAttach(boolean value) {
-    getWorkingCopy().setAttribute(ATTACH, value);
-  }
-
-  public void setAttachHost(String value) {
-    getWorkingCopy().setAttribute(ATTACH_HOST, value);
-  }
-
-  public void setAttachPort(int value) {
-    getWorkingCopy().setAttribute(ATTACH_PORT, value);
-  }
-
   /**
    * @see #getConnectionHost()
    */
@@ -410,10 +363,6 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setConnectionPort(int value) {
     getWorkingCopy().setAttribute(CONNECTION_PORT, value);
-  }
-
-  public void setEnvironmentString(String value) {
-    getWorkingCopy().setAttribute(APPLICATION_ENVIRONMENT, value);
   }
 
   /**
@@ -477,5 +426,4 @@ public class SDBGLaunchConfigWrapper {
       getWorkingCopy().setMappedResources(null);
     }
   }
-
 }

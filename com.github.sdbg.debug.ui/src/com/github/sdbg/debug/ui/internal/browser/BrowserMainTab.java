@@ -40,9 +40,8 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     Composite composite = new Composite(parent, SWT.NONE);
     GridLayoutFactory.swtDefaults().spacing(1, 3).applyTo(composite);
 
-    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE);
+    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, true/*allowHtmlFile*/);
     launchTargetGroup.addListener(SWT.Modify, new Listener() {
-
       @Override
       public void handleEvent(Event event) {
         notifyPanelChanged();

@@ -178,6 +178,60 @@
       </shortcut>
    </extension>
    
+   <!-- Chrome connection launch configuration -->
+   
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.chromeConnLaunchConfig"
+            icon="icons/chrome_app.png"
+            id="com.github.sdbg.debug.core.chromeConnLaunchConfigImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.chromeconn.ChromeConnTabGroup"
+            id="com.github.sdbg.debug.core.chromeConnLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.chromeConnLaunchConfig"
+            description="Connect to a running chrome instance">
+      </launchConfigurationTabGroup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.chromeconn.ChromeConnLaunchShortcut"
+            id="com.github.sdbg.debug.ui.chromeConnLaunchShortcut"
+            label="%chrome.chromeConnlaunch.shortcut.label"
+            icon="icons/chrome_app.png"
+            modes="run,debug">
+         <configurationType
+               id="com.github.sdbg.debug.core.chromeConnLaunchConfig">
+         </configurationType>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <test property="org.eclipse.core.resources.name" value="manifest.json"/>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   
    <!-- Browser launch configuration -->
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">

@@ -32,6 +32,7 @@ public class JDTSourceLookupExtensions implements ISourceLookupExtensions {
   }
 
   private boolean isJavaProject(IProject project) throws CoreException {
-    return project != null && project.hasNature("org.eclipse.jdt.core.javanature");
+    return project != null && project.exists() && project.isAccessible()
+        && project.hasNature("org.eclipse.jdt.core.javanature");
   }
 }

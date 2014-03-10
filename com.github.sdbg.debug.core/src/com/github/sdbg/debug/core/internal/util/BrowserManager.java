@@ -47,6 +47,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IProcess;
 
@@ -114,6 +115,58 @@ public class BrowserManager {
 
   public BrowserManager() {
     this.tabChooser = new DefaultBrowserTabChooser();
+  }
+
+// TODO: Unfinished
+  public void connect(ILaunch launch, ILaunchConfiguration configuration,
+      IBrowserTabChooser tabChooser, String host, int port, IProgressMonitor monitor)
+      throws CoreException {
+    monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
+
+    try {
+      List<? extends IBrowserTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
+
+      ChromiumTabInfo tab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
+
+      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
+        throw new DebugException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "Unable to connect to Chrome"));
+      }
+
+      monitor.worked(1);
+
+      WebkitConnection connection = new WebkitConnection(
+          tab.getHost(),
+          tab.getPort(),
+          tab.getWebSocketDebuggerFile());
+
+      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
+          "Remote",
+          connection,
+          launch,
+          null,
+          getResourceServer(),
+          true,
+          true);
+
+      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+      launch.addDebugTarget(debugTarget);
+      launch.addProcess(debugTarget.getProcess());
+
+      debugTarget.openConnection();
+
+      monitor.worked(1);
+    } catch (IOException e) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          e.toString(),
+          e));
+    } finally {
+      monitor.done();
+    }
   }
 
   public void dispose() {

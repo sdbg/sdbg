@@ -23,14 +23,15 @@
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
-      <!--&&&launchConfigurationType
-            delegate="com.github.sdbg.debug.core.pubserve.PubServeLaunchConfigurationDelegate"
-            id="com.github.sdbg.debug.core.pubServeLaunchConfig"
-            modes="run"
-            name="Pub serve launch"
+      
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.ChromeConnLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.chromeConnLaunchConfig"
+            modes="debug"
+            name="%launchconfig.chromeConn.name"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
-      </launchConfigurationType-->
+      </launchConfigurationType>
    </extension>
 
    <!-- breakpoints -->

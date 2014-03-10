@@ -68,7 +68,7 @@ public class LaunchTargetComposite extends Composite {
 
   private Label projectLabel;
 
-  public LaunchTargetComposite(Composite parent, int style) {
+  public LaunchTargetComposite(Composite parent, int style, boolean allowHtmlFile) {
     super(parent, style);
 
     GridLayout layout = new GridLayout(1, false);
@@ -82,12 +82,14 @@ public class LaunchTargetComposite extends Composite {
     GridDataFactory.fillDefaults().grab(true, false).align(SWT.FILL, SWT.TOP).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
 
-    createHtmlField(group);
+    if (allowHtmlFile) {
+      createHtmlField(group);
+    }
 
     Label filler = new Label(group, SWT.NONE);
     GridDataFactory.swtDefaults().span(3, 1).hint(-1, 4).applyTo(filler);
 
-    createUrlField(group);
+    createUrlField(group, allowHtmlFile);
   }
 
   public int getButtonWidthHint() {
@@ -95,18 +97,18 @@ public class LaunchTargetComposite extends Composite {
   }
 
   public String getErrorMessage() {
-    if (htmlButton.getSelection() && htmlText.getText().length() == 0) {
+    if (htmlButton != null && htmlButton.getSelection() && htmlText.getText().length() == 0) {
       return ChromeLaunchMessages.ChromeMainTab_NoHtmlFile;
     }
 
-    if (urlButton.getSelection()) {
+    if (urlButton == null || urlButton.getSelection()) {
       String url = urlText.getText();
 
-      if (url.length() == 0) {
+      if (urlButton != null && url.length() == 0) {
         return ChromeLaunchMessages.ChromeMainTab_NoUrl;
       }
 
-      if (!isValidUrl(url)) {
+      if (url.length() > 0 && !isValidUrl(url)) {
         return ChromeLaunchMessages.ChromeMainTab_InvalidURL;
       }
 
@@ -129,11 +131,11 @@ public class LaunchTargetComposite extends Composite {
   }
 
   public boolean getHtmlButtonSelection() {
-    return htmlButton.getSelection();
+    return htmlButton != null ? htmlButton.getSelection() : false;
   }
 
   public String getHtmlFileName() {
-    return htmlText.getText().trim();
+    return htmlText != null ? htmlText.getText().trim() : "";
   }
 
   public int getLabelColumnWidth() {
@@ -150,14 +152,17 @@ public class LaunchTargetComposite extends Composite {
   }
 
   public void setHtmlButtonSelection(boolean state) {
-    htmlButton.setSelection(state);
-    urlButton.setSelection(!state);
-    updateEnablements(state);
-
+    if (htmlButton != null) {
+      htmlButton.setSelection(state);
+      urlButton.setSelection(!state);
+      updateEnablements(state);
+    }
   }
 
   public void setHtmlTextValue(String string) {
-    htmlText.setText(string);
+    if (htmlText != null) {
+      htmlText.setText(string);
+    }
   }
 
   public void setProjectTextValue(String sourceDirectoryName) {
@@ -200,16 +205,22 @@ public class LaunchTargetComposite extends Composite {
     });
   }
 
-  protected void createUrlField(Composite composite) {
-    urlButton = new Button(composite, SWT.RADIO);
-    urlButton.setText(ChromeLaunchMessages.ChromeMainTab_UrlLabel);
-    urlButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        updateEnablements(false);
-        notifyPanelChanged();
-      }
-    });
+  protected void createUrlField(Composite composite, boolean allowHtmlFile) {
+    if (allowHtmlFile) {
+      urlButton = new Button(composite, SWT.RADIO);
+      urlButton.setText(ChromeLaunchMessages.ChromeMainTab_UrlLabel);
+      urlButton.addSelectionListener(new SelectionAdapter() {
+        @Override
+        public void widgetSelected(SelectionEvent e) {
+          updateEnablements(false);
+          notifyPanelChanged();
+        }
+      });
+    } else {
+      Label urlLabel = new Label(composite, SWT.NONE);
+      urlLabel.setText(ChromeLaunchMessages.ChromeMainTab_UrlRegexpLabel);
+      GridDataFactory.swtDefaults().applyTo(urlLabel);
+    }
 
     urlText = new Text(composite, SWT.BORDER | SWT.SINGLE);
     urlText.addModifyListener(textModifyListener);
@@ -220,7 +231,11 @@ public class LaunchTargetComposite extends Composite {
 
     projectLabel = new Label(composite, SWT.NONE);
     projectLabel.setText(ChromeLaunchMessages.ChromeMainTab_ProjectLabel);
-    GridDataFactory.swtDefaults().indent(20, 0).applyTo(projectLabel);
+    if (allowHtmlFile) {
+      GridDataFactory.swtDefaults().indent(20, 0).applyTo(projectLabel);
+    } else {
+      GridDataFactory.swtDefaults().applyTo(projectLabel);
+    }
 
     projectText = new Text(composite, SWT.BORDER | SWT.SINGLE);
     projectText.addModifyListener(textModifyListener);
@@ -229,7 +244,7 @@ public class LaunchTargetComposite extends Composite {
 
     projectBrowseButton = new Button(composite, SWT.PUSH);
     projectBrowseButton.setText(ChromeLaunchMessages.ChromeMainTab_SelectProject);
-    PixelConverter converter = new PixelConverter(htmlBrowseButton);
+    PixelConverter converter = new PixelConverter(projectBrowseButton);
     widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.BEGINNING).hint(widthHint, -1).applyTo(
         projectBrowseButton);

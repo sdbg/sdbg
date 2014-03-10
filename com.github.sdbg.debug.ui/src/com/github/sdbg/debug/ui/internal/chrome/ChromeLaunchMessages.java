@@ -36,6 +36,7 @@ public class ChromeLaunchMessages extends NLS {
   public static String ChromeMainTab_SelectProjectTitle;
   public static String ChromeMainTab_SelectProjectMessage;
   public static String ChromeMainTab_UrlLabel;
+  public static String ChromeMainTab_UrlRegexpLabel;
 
   static {
     // initialize resource bundle

@@ -41,9 +41,8 @@ What is mostly working:
 - Connecting to a running Chrome instance; works but is well hidden. Go in Eclipse Preferences and assign a shortcut to the Chrome Remote Connection Dialog
 
 Future work:
-- Prio A: Stepping into or over the code does not follow the Java/source language statements, but the JavaScript ones;
 - Prio A: Deobfuscating the Variable tabs. Currently, Eclipse will display the Variables tab with your JavaScript objects in them (not yet translated back to Java);
-- Prio A-B: Support for other source languages besides Java (e.g. CoffeeScript, TypeScript etc.); should require relatively little effort, as the interfaces for implementing such support are now qwell defined;
+- Prio A-B: Support for other source languages besides Java (e.g. CoffeeScript, TypeScript etc.); should require relatively little effort, as the interfaces for implementing such support are now well defined;
 - Prio A-B: Support for Safari, Opera and Mobile Safari; should be easy as all these currently use the same Remote Debugging protocol as Chrome;
 - Prio B: Support for Internet Explorer and Firefox;
 

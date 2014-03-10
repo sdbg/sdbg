@@ -184,7 +184,7 @@
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
             configTypeID="com.github.sdbg.debug.core.chromeConnLaunchConfig"
-            icon="icons/chrome_app.png"
+            icon="icons/chrome_conn.png"
             id="com.github.sdbg.debug.core.chromeConnLaunchConfigImage">
       </launchConfigurationTypeImage>
    </extension>
@@ -195,7 +195,7 @@
             class="com.github.sdbg.debug.ui.internal.chromeconn.ChromeConnTabGroup"
             id="com.github.sdbg.debug.core.chromeConnLaunchConfigTabGroup"
             type="com.github.sdbg.debug.core.chromeConnLaunchConfig"
-            description="Connect to a running chrome instance">
+            description="Connect to a running Chrome instance">
       </launchConfigurationTabGroup>
    </extension>
    
@@ -205,7 +205,7 @@
             class="com.github.sdbg.debug.ui.internal.chromeconn.ChromeConnLaunchShortcut"
             id="com.github.sdbg.debug.ui.chromeConnLaunchShortcut"
             label="%chrome.chromeConnlaunch.shortcut.label"
-            icon="icons/chrome_app.png"
+            icon="icons/chrome_conn.png"
             modes="run,debug">
          <configurationType
                id="com.github.sdbg.debug.core.chromeConnLaunchConfig">
@@ -848,6 +848,12 @@
             <objectState name="canInspectObject" value="true"></objectState>
          </visibility>
       </objectContribution>      
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.core.uiBrowserTabChooser">
+      <chooser
+            class="com.github.sdbg.debug.ui.internal.util.UIBrowserTabChooser">
+      </chooser>
    </extension>
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution

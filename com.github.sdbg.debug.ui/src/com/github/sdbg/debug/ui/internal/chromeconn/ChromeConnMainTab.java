@@ -59,7 +59,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
   };
 
   public ChromeConnMainTab() {
-    setMessage("Create a configuration to attach to a running Chrome instance");
+    setMessage("Create a configuration to connect to a running Chrome");
   }
 
   @Override
@@ -96,7 +96,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     label = new Label(composite, SWT.NONE);
 
     final Label instructionsLabel = new Label(composite, SWT.WRAP);
-    instructionsLabel.setText("To start Chrome with remote connections enabled, use the --remote-debugging-port=<port> command-line flag.");
+    instructionsLabel.setText("To start Chrome with remote connections enabled, use the following flag(s):\n--remote-debugging-port=<port> [--user-data-dir=<remote-profile>]");
     GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(
         instructionsLabel);
 
@@ -124,7 +124,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public Image getImage() {
-    return SDBGDebugUIPlugin.getImage("chrome_app.png");
+    return SDBGDebugUIPlugin.getImage("chrome_conn.png");
   }
 
   @Override

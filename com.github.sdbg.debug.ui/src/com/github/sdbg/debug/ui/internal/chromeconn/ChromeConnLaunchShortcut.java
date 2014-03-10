@@ -38,11 +38,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A launch shortcut to attach to a running Chrome instance.
+ * A launch shortcut to connect to a running Chrome.
  */
 public class ChromeConnLaunchShortcut extends AbstractLaunchShortcut implements ILaunchShortcutExt {
   public ChromeConnLaunchShortcut() {
-    super("Attach to a Chrome instance");
+    super("Connect to a running Chrome");
   }
 
   @Override

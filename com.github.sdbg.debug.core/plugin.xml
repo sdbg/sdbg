@@ -4,6 +4,7 @@
    <extension-point id="debugUIHelper" name="Debug UI Helper" schema="schema/debugUIHelper.exsd"/>
    <extension-point id="breakpointPathResolver" name="Breakpoint Path Resolver" schema="schema/breakpointPathResolver.exsd"/>
    <extension-point id="sourceLookupExtensions" name="Source Lookup Extensions" schema="schema/sourceLookupExtensions.exsd"/>
+   <extension-point id="uiBrowserTabChooser" name="Browser Tab Chooser UI" schema="schema/uiBrowserTabChooser.exsd"/>
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType

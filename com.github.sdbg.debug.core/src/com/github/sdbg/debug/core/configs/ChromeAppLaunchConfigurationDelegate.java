@@ -176,6 +176,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
   }
 
+  // TODO XXX FIXME: 90%+ of the code below is duplicate with code in BrowserManager. Move it over to BrowserManager
   @Override
   public void doLaunch(ILaunchConfiguration configuration, String mode, ILaunch launch,
       IProgressMonitor monitor, InstrumentationBuilder instrumentation) throws CoreException {

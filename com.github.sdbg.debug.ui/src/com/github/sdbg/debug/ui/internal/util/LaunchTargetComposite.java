@@ -104,12 +104,14 @@ public class LaunchTargetComposite extends Composite {
     if (urlButton == null || urlButton.getSelection()) {
       String url = urlText.getText();
 
-      if (urlButton != null && url.length() == 0) {
-        return ChromeLaunchMessages.ChromeMainTab_NoUrl;
-      }
+      if (urlButton != null) {
+        if (url.length() == 0) {
+          return ChromeLaunchMessages.ChromeMainTab_NoUrl;
+        }
 
-      if (url.length() > 0 && !isValidUrl(url)) {
-        return ChromeLaunchMessages.ChromeMainTab_InvalidURL;
+        if (!isValidUrl(url)) {
+          return ChromeLaunchMessages.ChromeMainTab_InvalidURL;
+        }
       }
 
       if (projectText.getText().length() == 0) {
@@ -218,7 +220,7 @@ public class LaunchTargetComposite extends Composite {
       });
     } else {
       Label urlLabel = new Label(composite, SWT.NONE);
-      urlLabel.setText(ChromeLaunchMessages.ChromeMainTab_UrlRegexpLabel);
+      urlLabel.setText(ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel);
       GridDataFactory.swtDefaults().applyTo(urlLabel);
     }
 

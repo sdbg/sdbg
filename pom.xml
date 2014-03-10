@@ -47,7 +47,7 @@
 		   <artifact>  
 		    <groupId>com.github.sdbg</groupId>  
 		    <artifactId>com.github.sdbg.releng.targetplatform</artifactId>  
-		    <version>0.0.0.qualifier</version>  
+		    <version>0.2.0.qualifier</version>  
 		   </artifact>  
 		  </target>  
         </configuration>  

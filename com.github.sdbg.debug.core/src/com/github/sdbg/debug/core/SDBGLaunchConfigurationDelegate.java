@@ -62,10 +62,14 @@ public abstract class SDBGLaunchConfigurationDelegate extends LaunchConfiguratio
       throws CoreException {
     // indicate which project to save before launch
     SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
-    IResource resource = launchConfig.getApplicationResource();
 
+    IResource resource = launchConfig.getApplicationResource();
     if (resource != null) {
       return new IProject[] {resource.getProject()};
+    }
+
+    if (launchConfig.getProject() != null) {
+      return new IProject[] {launchConfig.getProject()};
     }
 
     return null;

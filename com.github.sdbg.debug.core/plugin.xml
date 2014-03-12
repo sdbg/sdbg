@@ -4,6 +4,7 @@
    <extension-point id="debugUIHelper" name="Debug UI Helper" schema="schema/debugUIHelper.exsd"/>
    <extension-point id="breakpointPathResolver" name="Breakpoint Path Resolver" schema="schema/breakpointPathResolver.exsd"/>
    <extension-point id="sourceLookupExtensions" name="Source Lookup Extensions" schema="schema/sourceLookupExtensions.exsd"/>
+   <extension-point id="uiBrowserTabChooser" name="Browser Tab Chooser UI" schema="schema/uiBrowserTabChooser.exsd"/>
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
@@ -23,14 +24,15 @@
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
-      <!--&&&launchConfigurationType
-            delegate="com.github.sdbg.debug.core.pubserve.PubServeLaunchConfigurationDelegate"
-            id="com.github.sdbg.debug.core.pubServeLaunchConfig"
-            modes="run"
-            name="Pub serve launch"
+      
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.ChromeConnLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.chromeConnLaunchConfig"
+            modes="debug"
+            name="%launchconfig.chromeConn.name"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
-      </launchConfigurationType-->
+      </launchConfigurationType>
    </extension>
 
    <!-- breakpoints -->

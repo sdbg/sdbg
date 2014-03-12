@@ -47,6 +47,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
+import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IProcess;
 
@@ -62,19 +63,6 @@ public class BrowserManager {
   private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location";
 
   private static BrowserManager manager = new BrowserManager();
-
-  private static Process browserProcess = null;
-
-  private static IResourceResolver resourceResolver;
-
-  private static File chromeExecutable;
-
-  public static File findChrome() {
-    if (chromeExecutable == null) {
-      chromeExecutable = manager.findChromeExecutable();
-    }
-    return chromeExecutable;
-  }
 
   /**
    * Create a Chrome user data directory, and return the path to that directory.
@@ -115,21 +103,11 @@ public class BrowserManager {
     return manager;
   }
 
-  private static IResourceResolver getResourceServer() throws CoreException {
-    if (resourceResolver == null) {
-      try {
-        resourceResolver = ResourceServerManager.getServer();
-      } catch (IOException ioe) {
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            ioe.getMessage(),
-            ioe));
-      }
-    }
+  private Process browserProcess = null;
 
-    return resourceResolver;
-  }
+  private IResourceResolver resourceResolver;
+
+  private File chromeExecutable;
 
   private int devToolsPortNumber;
 
@@ -139,10 +117,69 @@ public class BrowserManager {
     this.tabChooser = new DefaultBrowserTabChooser();
   }
 
+// TODO: Unfinished
+  public void connect(ILaunch launch, ILaunchConfiguration configuration,
+      IBrowserTabChooser tabChooser, String host, int port, IProgressMonitor monitor)
+      throws CoreException {
+    monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
+
+    try {
+      List<? extends IBrowserTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
+
+      ChromiumTabInfo tab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
+
+      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
+        throw new DebugException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "Unable to connect to Chrome"));
+      }
+
+      monitor.worked(1);
+
+      WebkitConnection connection = new WebkitConnection(
+          tab.getHost(),
+          tab.getPort(),
+          tab.getWebSocketDebuggerFile());
+
+      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
+          "Remote",
+          connection,
+          launch,
+          null,
+          getResourceServer(),
+          true,
+          true);
+
+      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+      launch.addDebugTarget(debugTarget);
+      launch.addProcess(debugTarget.getProcess());
+
+      debugTarget.openConnection();
+
+      monitor.worked(1);
+    } catch (IOException e) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          e.toString(),
+          e));
+    } finally {
+      monitor.done();
+    }
+  }
+
   public void dispose() {
     if (!isProcessTerminated(browserProcess)) {
       browserProcess.destroy();
     }
+  }
+
+  public File findChrome() {
+    if (chromeExecutable == null) {
+      chromeExecutable = manager.findChromeExecutable();
+    }
+    return chromeExecutable;
   }
 
   /**
@@ -697,6 +734,22 @@ public class BrowserManager {
     return msg.toString();
   }
 
+  private IResourceResolver getResourceServer() throws CoreException {
+    if (resourceResolver == null) {
+      try {
+        resourceResolver = ResourceServerManager.getServer();
+      } catch (IOException ioe) {
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            ioe.getMessage(),
+            ioe));
+      }
+    }
+
+    return resourceResolver;
+  }
+
   private boolean isExistingDirectory(File dir) {
     return dir != null && dir.exists() && dir.isDirectory();
   }
@@ -789,9 +842,17 @@ public class BrowserManager {
 
     ProcessBuilder builder = new ProcessBuilder();
     Map<String, String> env = builder.environment();
+
     // Due to differences in 32bit and 64 bit environments, dartium 32bit launch does not work on
     // linux with this property.
     env.remove("LD_LIBRARY_PATH");
+
+    Map<String, String> wrapperEnv = launchConfig.getEnvironment();
+    if (!wrapperEnv.isEmpty()) {
+      for (String key : wrapperEnv.keySet()) {
+        env.put(key, wrapperEnv.get(key));
+      }
+    }
 
     devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
 

@@ -15,21 +15,18 @@ package com.github.sdbg.debug.core;
 
 import com.github.sdbg.utilities.StringUtilities;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 
@@ -39,19 +36,16 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
  */
 public class SDBGLaunchConfigWrapper {
   private static final String APPLICATION_ARGUMENTS = "applicationArguments";
-  private static final String APPLICATION_ENVIRONMENT = "applicationEnvironment";
   private static final String APPLICATION_NAME = "applicationName";
-  private static final String SOURCE_DIRECTORY = "sourceDirectory";
   private static final String URL_QUERY_PARAMS = "urlQueryParams";
-  private static final String DART2JS_FLAGS = "dart2jsFlags";
-  private static final String COMPILE_BEFORE_LAUNCH = "runDart2js";
 
   private static final String SHOW_LAUNCH_OUTPUT = "showLaunchOutput";
 
   // --enable-experimental-webkit-features and --enable-devtools-experiments
   private static final String ENABLE_EXPERIMENTAL_WEBKIT_FEATURES = "enableExperimentalWebkitFeatures";
 
-  private static final String IS_FILE = "launchHtmlFile";
+  private static final String IS_FILE = "launchFile";
+
   private static final String URL = "url";
 
   private static final String CONNECTION_HOST = "connectionHost";
@@ -136,74 +130,47 @@ public class SDBGLaunchConfigWrapper {
   }
 
   /**
-   * @return the launch configuration that this DartLaucnConfigWrapper wraps
+   * @return the launch configuration that this SDBGLaucnConfigWrapper wraps
    */
   public ILaunchConfiguration getConfig() {
     return launchConfig;
   }
 
-  /**
-   * @return the string for additional flags to Dart2js
-   */
-  public String getDart2jsFlags() {
+  public String getConnectionHost() {
     try {
-      return launchConfig.getAttribute(DART2JS_FLAGS, "");
+      return launchConfig.getAttribute(CONNECTION_HOST, "localhost");
     } catch (CoreException e) {
       SDBGDebugCorePlugin.logError(e);
-
       return "";
     }
   }
 
-  /**
-   * @return the string for additional flags to Dart2js
-   */
-  public String[] getDart2jsFlagsAsArray() {
-    String command = getDart2jsFlags();
-
-    if (command == null || command.length() == 0) {
-      return new String[0];
+  public int getConnectionPort() {
+    try {
+      return launchConfig.getAttribute(CONNECTION_PORT, 9222);
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+      return 9222;
     }
-
-    return StringUtilities.parseArgumentString(command);
   }
 
   /**
    * @return any configured environment variables
    */
-  public Map<String, String> getEnvironment() {
-    String env = getEnvironmentString();
-
+  public Map<String, String> getEnvironment() throws CoreException {
     Map<String, String> map = new HashMap<String, String>();
 
-    if (env.isEmpty()) {
-      return map;
-    }
-
-    Properties props = new Properties();
-
-    try {
-      props.load(new StringReader(env));
-    } catch (IOException e) {
-
-    }
-
-    for (Object key : props.keySet()) {
-      String strKey = (String) key;
-      map.put(strKey, props.getProperty(strKey));
+    for (String envProperty : DebugPlugin.getDefault().getLaunchManager().getEnvironment(
+        launchConfig)) {
+      int index = envProperty.indexOf('=');
+      if (index > 0) {
+        String key = envProperty.substring(0, index);
+        String value = envProperty.substring(index + 1);
+        map.put(key, value);
+      }
     }
 
     return map;
-  }
-
-  public String getEnvironmentString() {
-    try {
-      return launchConfig.getAttribute(APPLICATION_ENVIRONMENT, "");
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return "";
-    }
   }
 
   /**
@@ -236,16 +203,9 @@ public class SDBGLaunchConfigWrapper {
       if (resource != null) {
         return resource.getProject();
       }
-    } else {
-      IContainer container = getSourceDirectory();
-
-      if (container != null) {
-        return container.getProject();
-      }
     }
 
     String projectName = getProjectName();
-
     if (projectName.length() > 0) {
       return ResourcesPlugin.getWorkspace().getRoot().getProject(getProjectName());
     }
@@ -266,16 +226,6 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
-  public boolean getRunDart2js() {
-    try {
-      return launchConfig.getAttribute(COMPILE_BEFORE_LAUNCH, true);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return false;
-    }
-  }
-
   public boolean getShouldLaunchFile() {
     try {
       return launchConfig.getAttribute(IS_FILE, true);
@@ -293,28 +243,6 @@ public class SDBGLaunchConfigWrapper {
       SDBGDebugCorePlugin.logError(e);
 
       return false;
-    }
-  }
-
-  public IContainer getSourceDirectory() {
-    String path = getSourceDirectoryName();
-
-    if (path == null || path.length() == 0) {
-      return null;
-    } else {
-      IResource resource = ResourcesPlugin.getWorkspace().getRoot().findMember(path);
-
-      return (resource instanceof IContainer ? (IContainer) resource : null);
-    }
-  }
-
-  public String getSourceDirectoryName() {
-    try {
-      return launchConfig.getAttribute(SOURCE_DIRECTORY, "");
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return "";
     }
   }
 
@@ -438,17 +366,6 @@ public class SDBGLaunchConfigWrapper {
   }
 
   /**
-   * @see #getDart2jsFlags()
-   */
-  public void setDart2jsFlags(String value) {
-    getWorkingCopy().setAttribute(DART2JS_FLAGS, value);
-  }
-
-  public void setEnvironmentString(String value) {
-    getWorkingCopy().setAttribute(APPLICATION_ENVIRONMENT, value);
-  }
-
-  /**
    * @see #getProjectName()
    */
   public void setProjectName(String value) {
@@ -459,23 +376,12 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
-  public void setRunDart2js(boolean value) {
-    getWorkingCopy().setAttribute(COMPILE_BEFORE_LAUNCH, value);
-  }
-
   public void setShouldLaunchFile(boolean value) {
     getWorkingCopy().setAttribute(IS_FILE, value);
   }
 
   public void setShowLaunchOutput(boolean value) {
     getWorkingCopy().setAttribute(SHOW_LAUNCH_OUTPUT, value);
-  }
-
-  /**
-   * @see #getSourceDirectoryName()
-   */
-  public void setSourceDirectoryName(String value) {
-    getWorkingCopy().setAttribute(SOURCE_DIRECTORY, value);
   }
 
   /**
@@ -520,5 +426,4 @@ public class SDBGLaunchConfigWrapper {
       getWorkingCopy().setMappedResources(null);
     }
   }
-
 }

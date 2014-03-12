@@ -14,13 +14,13 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import com.github.sdbg.debug.core.util.IBrowserTabInfo;
+
 import java.net.URI;
 import java.util.Comparator;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 
 /**
  * A class used to represent meta-information about an open Chronium tab, including its WIP debugger
@@ -119,6 +119,7 @@ public class ChromiumTabInfo implements IBrowserTabInfo {
     return title;
   }
 
+  @Override
   public String getUrl() {
     return url;
   }

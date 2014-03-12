@@ -69,9 +69,8 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     Composite composite = new Composite(parent, SWT.NONE);
     GridLayoutFactory.swtDefaults().spacing(1, 3).applyTo(composite);
 
-    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE);
+    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, true/*allowHtmlFile*/);
     launchTargetGroup.addListener(SWT.Modify, new Listener() {
-
       @Override
       public void handleEvent(Event event) {
         notifyPanelChanged();
@@ -145,7 +144,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     launchTargetGroup.setHtmlTextValue(chromeLauncher.appendQueryParams(chromeLauncher.getApplicationName()));
     launchTargetGroup.setUrlTextValue(chromeLauncher.getUrl());
 
-    launchTargetGroup.setSourceDirectoryTextValue(chromeLauncher.getSourceDirectoryName());
+    launchTargetGroup.setProjectTextValue(chromeLauncher.getProjectName());
 
     if (chromeLauncher.getShouldLaunchFile()) {
       launchTargetGroup.setHtmlButtonSelection(true);
@@ -189,7 +188,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     }
 
     chromeLauncher.setUrl(launchTargetGroup.getUrlString());
-    chromeLauncher.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
+    chromeLauncher.setProjectName(launchTargetGroup.getProject());
 
     if (showOutputButton != null) {
       chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());

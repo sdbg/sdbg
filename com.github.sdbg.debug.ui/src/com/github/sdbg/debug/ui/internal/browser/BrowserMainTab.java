@@ -40,9 +40,8 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     Composite composite = new Composite(parent, SWT.NONE);
     GridLayoutFactory.swtDefaults().spacing(1, 3).applyTo(composite);
 
-    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE);
+    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, true/*allowHtmlFile*/);
     launchTargetGroup.addListener(SWT.Modify, new Listener() {
-
       @Override
       public void handleEvent(Event event) {
         notifyPanelChanged();
@@ -103,7 +102,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     launchTargetGroup.setHtmlTextValue(wrapper.appendQueryParams(wrapper.getApplicationName()));
     launchTargetGroup.setUrlTextValue(wrapper.getUrl());
 
-    launchTargetGroup.setSourceDirectoryTextValue(wrapper.getSourceDirectoryName());
+    launchTargetGroup.setProjectTextValue(wrapper.getProjectName());
 
     if (wrapper.getShouldLaunchFile()) {
       launchTargetGroup.setHtmlButtonSelection(true);
@@ -134,8 +133,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     }
 
     wrapper.setUrl(launchTargetGroup.getUrlString());
-    wrapper.setSourceDirectoryName(launchTargetGroup.getSourceDirectory());
-
+    wrapper.setProjectName(launchTargetGroup.getProject());
   }
 
   @Override
@@ -143,7 +141,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
     wrapper.setShouldLaunchFile(true);
     wrapper.setApplicationName(""); //$NON-NLS-1$
-    wrapper.setRunDart2js(true);
+    //&&&wrapper.setRunDart2js(true);
   }
 
   private void notifyPanelChanged() {
@@ -157,7 +155,7 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
 //      return "Dart2js is not installed ("
 //          + DartSdkManager.getManager().getSdk().getDart2JsExecutable() + ")";
 //    } else {
-      return null;
+    return null;
 //    }
   }
 

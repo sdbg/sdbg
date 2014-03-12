@@ -12,27 +12,26 @@
  * the License.
  */
 
-package com.github.sdbg.debug.ui.internal.chromeapp;
+package com.github.sdbg.debug.ui.internal.chromeconn;
 
 import org.eclipse.debug.ui.AbstractLaunchConfigurationTabGroup;
 import org.eclipse.debug.ui.CommonTab;
-import org.eclipse.debug.ui.EnvironmentTab;
 import org.eclipse.debug.ui.ILaunchConfigurationDialog;
 import org.eclipse.debug.ui.ILaunchConfigurationTab;
 import org.eclipse.debug.ui.sourcelookup.SourceLookupTab;
 
 /**
- * The launch tab group for Chrome apps.
+ * The launch tab group for connections to running Chrome instances.
  */
-public class ChromeAppTabGroup extends AbstractLaunchConfigurationTabGroup {
+public class ChromeConnTabGroup extends AbstractLaunchConfigurationTabGroup {
 
-  public ChromeAppTabGroup() {
+  public ChromeConnTabGroup() {
 
   }
 
   @Override
   public void createTabs(ILaunchConfigurationDialog dialog, String mode) {
     setTabs(new ILaunchConfigurationTab[] {
-        new ChromeAppMainTab(), new SourceLookupTab(), new EnvironmentTab(), new CommonTab()});
+        new ChromeConnMainTab(), new SourceLookupTab(), new CommonTab()});
   }
 }

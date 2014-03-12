@@ -176,6 +176,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
   }
 
+  // TODO XXX FIXME: 90%+ of the code below is duplicate with code in BrowserManager. Move it over to BrowserManager
   @Override
   public void doLaunch(ILaunchConfiguration configuration, String mode, ILaunch launch,
       IProgressMonitor monitor, InstrumentationBuilder instrumentation) throws CoreException {
@@ -186,7 +187,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
     boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
 
-    File chromeExe = BrowserManager.findChrome();
+    File chromeExe = BrowserManager.getManager().findChrome();
 
     if (chromeExe == null) {
       throw new CoreException(new Status(

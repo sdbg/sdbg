@@ -18,13 +18,13 @@ import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.utilities.URIUtilities;
 
+import java.io.File;
+import java.net.URI;
+
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-
-import java.io.File;
-import java.net.URI;
 
 /**
  * A resource resolver for use with url based Dartium launches.
@@ -143,14 +143,7 @@ public class LaunchConfigResourceResolver implements IResourceResolver {
   private IContainer getSourceContainer() {
     // TODO(devoncarew): remove this if/else logic once most launch configurations have moved over
     // to using source directories.
-
-    IContainer container = wrapper.getSourceDirectory();
-
-    if (container != null) {
-      return container;
-    } else {
-      return wrapper.getProject();
-    }
+    return wrapper.getProject();
   }
 
   private String getUrl() {

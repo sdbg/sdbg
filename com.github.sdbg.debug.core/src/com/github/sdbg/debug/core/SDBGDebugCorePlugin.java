@@ -72,6 +72,8 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   public static final String CHROME_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeLaunchConfig";
 
+  public static final String CHROMECONN_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeConnLaunchConfig";
+
   public static final String CHROMEAPP_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeAppLaunchConfig";
 
   private static IDebugEventSetListener debugEventListener;

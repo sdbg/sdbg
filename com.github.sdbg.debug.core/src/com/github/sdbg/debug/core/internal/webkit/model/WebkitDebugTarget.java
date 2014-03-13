@@ -16,6 +16,8 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
+import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
+import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
@@ -479,7 +481,17 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       return false;
     }
 
-    return true;
+    if (breakpoint instanceof SDBGBreakpoint) {
+      return true;
+    }
+
+    for (IBreakpointPathResolver resolver : BreakpointManager.getBreakpointPathResolvers()) {
+      if (resolver.isSupported(breakpoint)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   public boolean supportsSetScriptSource() {

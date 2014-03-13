@@ -49,6 +49,25 @@ import org.eclipse.debug.core.model.ILineBreakpoint;
  * Handle adding a removing breakpoints to the WebKit connection for the WebkitDebugTarget class.
  */
 public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointManager {
+  static synchronized Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
+    if (breakpointPathResolvers == null) {
+      breakpointPathResolvers = new ArrayList<IBreakpointPathResolver>();
+
+      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
+          IBreakpointPathResolver.EXTENSION_ID);
+      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
+        try {
+          breakpointPathResolvers.add((IBreakpointPathResolver) element.createExecutableExtension("class"));
+        } catch (CoreException e) {
+          SDBGDebugCorePlugin.logError(e);
+        }
+      }
+
+    }
+
+    return breakpointPathResolvers;
+  }
+
   private WebkitDebugTarget debugTarget;
 
   private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
@@ -57,7 +76,7 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
   private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
 
-  private Collection<IBreakpointPathResolver> breakpointPathResolvers;
+  private static Collection<IBreakpointPathResolver> breakpointPathResolvers;
 
   public BreakpointManager(WebkitDebugTarget debugTarget) {
     this.debugTarget = debugTarget;
@@ -354,25 +373,6 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
     }
 
     return path;
-  }
-
-  private Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
-    if (breakpointPathResolvers == null) {
-      breakpointPathResolvers = new ArrayList<IBreakpointPathResolver>();
-
-      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
-          IBreakpointPathResolver.EXTENSION_ID);
-      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
-        try {
-          breakpointPathResolvers.add((IBreakpointPathResolver) element.createExecutableExtension("class"));
-        } catch (CoreException e) {
-          SDBGDebugCorePlugin.logError(e);
-        }
-      }
-
-    }
-
-    return breakpointPathResolvers;
   }
 
   private IResourceResolver getResourceResolver() {

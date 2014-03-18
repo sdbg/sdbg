@@ -440,13 +440,6 @@
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.internal.launch.ManageLaunchesHandler"
-            description="%launchDialogCommandName"
-            id="com.github.sdbg.debug.ui.launchDialog"
-            name="%launchDialogCommandName">
-      </command>
-      <command
-            categoryId="org.eclipse.ui.category.window"
             defaultHandler="com.github.sdbg.debug.ui.internal.util.ShowWebConsoleHandler"
             description="Show Web Server Address"
             id="com.github.sdbg.debug.ui.showWebConsole"
@@ -458,13 +451,6 @@
             description="%removeBreakpointsCommandName"
             id="com.github.sdbg.debug.ui.removeBreakpoints"
             name="%removeBreakpointsCommandName">
-      </command>
-      <command
-            categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.internal.util.RemoteConnectionHandler"
-            description="Connect to remote host"
-            id="com.github.sdbg.debug.ui.remoteConnection"
-            name="Remote Connection...">
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
@@ -873,6 +859,12 @@
             class="com.github.sdbg.debug.ui.internal.util.UIBrowserTabChooser">
       </chooser>
    </extension>
+   <extension
+         point="com.github.sdbg.debug.core.uiDeviceChooser">
+      <chooser
+            class="com.github.sdbg.debug.ui.internal.util.UIDeviceChooser">
+      </chooser>
+   </extension>
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"
@@ -898,5 +890,4 @@
          </action>
       </objectContribution>
    </extension -->
-      
 </plugin>

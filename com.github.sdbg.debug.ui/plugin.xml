@@ -310,11 +310,11 @@
          </adapter>
       </factory>
    </extension>
-
+   
    <extension
          point="org.eclipse.ui.editorActions">
       <editorContribution
-            targetID="com.github.sdbg.ui.text.editor.CompilationUnitEditor"
+            targetID="com.github.sdbg.debug.ui.internal.editors.JsEditor"
             id="com.github.sdbg.debug.ui.breakpointActions">
          <action
                label="%toggleBreakpoints.label"
@@ -384,12 +384,30 @@
          point="org.eclipse.ui.editors">
       <editor
             name="Source not available"
-            icon="icons/obj16/dart.png"
+            icon="icons/chrome.png"
             class="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor"
             id="com.github.sdbg.debug.ui.internal.presentation.SDBGSourceNotFoundEditor">
       </editor>
+      <editor
+        	name="SDBG Fast Javascript Editor"
+        	extensions="sdbgjs,js"
+        	default="true"
+        	icon="icons/chrome.png"
+        	contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+        	class="com.github.sdbg.debug.ui.internal.editors.JsEditor"
+        	id="com.github.sdbg.debug.ui.internal.editors.JsEditor">
+      </editor>
    </extension>
    
+   <extension point="org.eclipse.ui.contexts">
+      <context
+        	name="SDBG Debug"
+        	parentId="org.eclipse.ui.contexts.dialogAndWindow"
+        	description="Debug SDBG JavaScript"
+        	id="com.github.sdbg.debug.ui.internal.editors.JsEditor.context">
+      </context>
+   </extension>
+
    <extension
       point="org.eclipse.ui.commands">
        <command

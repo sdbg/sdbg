@@ -254,8 +254,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
         }
 
         return image;
-      } else if (element instanceof IBreakpoint) {
-        return getBreakpointImage((IBreakpoint) element);
       } else {
         return null;
       }
@@ -434,18 +432,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
       return valueString[0];
     } else {
       return value.getDisplayString();
-    }
-  }
-
-  private Image getBreakpointImage(IBreakpoint bp) {
-    try {
-      if (bp.isEnabled()) {
-        return SDBGDebugUIPlugin.getImage("obj16/brkp_obj.png");
-      } else {
-        return SDBGDebugUIPlugin.getImage("obj16/brkpd_obj.png");
-      }
-    } catch (CoreException e) {
-      throw new RuntimeException(e);
     }
   }
 

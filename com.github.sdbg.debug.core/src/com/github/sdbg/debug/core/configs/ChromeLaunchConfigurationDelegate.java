@@ -69,7 +69,7 @@ public class ChromeLaunchConfigurationDelegate extends SDBGLaunchConfigurationDe
 
   }
 
-  private static BrowserManager browserManager = new BrowserManager(".sdbg-chrome");
+  private static BrowserManager browserManager = new BrowserManager("chrome");
 
   public static void dispose() {
     browserManager.dispose();

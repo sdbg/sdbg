@@ -49,7 +49,7 @@ public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
   };
 
   public ChromeMobileConnMainTab() {
-    setMessage("Create a configuration to connect to a running Mobile Chrome");
+    setMessage("Create a configuration to connect to a running Chrome for Mobile");
   }
 
   @Override

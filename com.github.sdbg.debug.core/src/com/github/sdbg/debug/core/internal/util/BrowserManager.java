@@ -633,10 +633,10 @@ public class BrowserManager {
    * @return the user data directory path
    */
   private File getCreateUserDataDirectory(String baseName) {
-    File dataDir = new File(new File(System.getProperty("user.home")), baseName);
+    File dataDir = new File(new File(new File(System.getProperty("user.home")), ".sdbg"), baseName);
 
     if (!dataDir.exists()) {
-      dataDir.mkdir();
+      dataDir.mkdirs();
     } else {
       // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can cause old tabs to
       // restore themselves when we launch the browser.

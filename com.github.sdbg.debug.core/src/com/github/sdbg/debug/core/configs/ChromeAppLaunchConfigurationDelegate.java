@@ -170,7 +170,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     }
   }
 
-  private static BrowserManager browserManager = new BrowserManager(".sdbg-chrome-app") {
+  private static BrowserManager browserManager = new BrowserManager("chrome-app") {
     @Override
     protected IResourceResolver createResourceResolver(ILaunch launch,
         ILaunchConfiguration configuration, IBrowserTabInfo tab) {

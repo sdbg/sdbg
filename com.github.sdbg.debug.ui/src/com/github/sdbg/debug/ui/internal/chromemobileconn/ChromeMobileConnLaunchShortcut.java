@@ -38,12 +38,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A launch shortcut to connect to a running Chrome.
+ * A launch shortcut to connect to a running Chrome for Mobile.
  */
 public class ChromeMobileConnLaunchShortcut extends AbstractLaunchShortcut implements
     ILaunchShortcutExt {
   public ChromeMobileConnLaunchShortcut() {
-    super("Connect to a running Mobile Chrome");
+    super("Connect to a running Chrome for Mobile");
   }
 
   @Override

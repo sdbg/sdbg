@@ -34,7 +34,7 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 
 /**
- * A ILaunchConfigurationDelegate implementation that can connect to a running Mobile Chrome
+ * A ILaunchConfigurationDelegate implementation that can connect to a running Chrome for Mobile
  * instance.
  */
 public class ChromeMobileConnLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {

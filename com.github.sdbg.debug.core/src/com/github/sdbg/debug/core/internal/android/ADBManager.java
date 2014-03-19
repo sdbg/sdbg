@@ -1,10 +1,15 @@
 package com.github.sdbg.debug.core.internal.android;
 
+import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.utilities.ProcessRunner;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,11 +20,66 @@ import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 
 public class ADBManager {
   private static interface Converter<T> {
     T convert(String line) throws IOException, CoreException;
+  }
+
+  private static File adbExecutable;
+
+  private static void copy(String resource, File toDir) throws IOException {
+    InputStream in = SDBGDebugCorePlugin.getPlugin().getBundle().getResource(resource).openStream();
+
+    try {
+      toDir.mkdirs();
+
+      int pos = resource.lastIndexOf('/');
+      String fileName = pos >= 0 ? resource.substring(pos) : resource;
+
+      OutputStream out = new FileOutputStream(new File(toDir, fileName));
+
+      try {
+        byte[] buf = new byte[4086];
+        for (int read = -1; (read = in.read(buf)) >= 0;) {
+          out.write(buf, 0, read);
+        }
+      } finally {
+        out.close();
+      }
+    } finally {
+      in.close();
+    }
+  }
+
+  private static synchronized File getAdbExecutable() throws IOException {
+    if (adbExecutable == null) {
+      String platform = Platform.getOS() + "_" + Platform.getOSArch();
+      String platformDir = "/resources/adb/" + platform + "/";
+
+      File adbDir = new File(new File(
+          new File(new File(System.getProperty("user.home")), ".sdbg"),
+          "adb"), platform);
+      String adbExecutableName = "adb" + (DartCore.isWindows() ? ".exe" : "");
+
+      if (platform.equals("win32_x86") || platform.equals("win32_x86_64")) {
+        copy(platformDir + adbExecutableName, adbDir);
+        copy(platformDir + "AdbWinApi.dll", adbDir);
+        copy(platformDir + "AdbWinUsbApi.dll", adbDir);
+      } else if (platform.equals("macosx_x86_64") || platform.equals("linux_x86")
+          || platform.equals("linux_x86_64")) {
+        copy(platformDir + adbExecutableName, adbDir);
+        new ProcessRunner(new ProcessBuilder("chmod", "+x", adbExecutable.getAbsolutePath())).runSync(null);
+      } else {
+        throw new IOException("Unsupported platform: " + platform);
+      }
+
+      adbExecutable = new File(adbDir, adbExecutableName);
+    }
+
+    return adbExecutable;
   }
 
   private Collection<String> forwards = new HashSet<String>();
@@ -106,7 +166,7 @@ public class ADBManager {
   private String executeADB(String... arguments) throws CoreException {
     try {
       List<String> cmdLine = new ArrayList<String>();
-      cmdLine.add("C:\\Users\\ivan\\AppData\\Local\\Applications\\adt\\sdk\\platform-tools\\adb.exe");
+      cmdLine.add(getAdbExecutable().getAbsolutePath());
       cmdLine.addAll(Arrays.asList(arguments));
 
       ProcessRunner runner = new ProcessRunner(new ProcessBuilder(cmdLine));

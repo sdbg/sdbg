@@ -24,7 +24,7 @@ public class UIDeviceChooser implements IDeviceChooser {
     public String getText(Object element) {
       if (element instanceof IDeviceInfo) {
         IDeviceInfo device = (IDeviceInfo) element;
-        return device.getName() + " (" + device.getId() + ")";
+        return device.getName() + " (" + device.getId().toUpperCase() + ")";
       } else {
         return null;
       }
@@ -43,8 +43,8 @@ public class UIDeviceChooser implements IDeviceChooser {
         ListDialog dlg = new ListDialog(
             PlatformUI.getWorkbench().getWorkbenchWindows()[0].getShell());
         dlg.setInput(devices);
-        dlg.setTitle("Connect to device");
-        dlg.setMessage("Select device for remote connection");
+        dlg.setTitle("Connect to a device");
+        dlg.setMessage("Select a device for remote connection");
         dlg.setContentProvider(new ArrayContentProvider());
         dlg.setLabelProvider(new DeviceLabelProvider());
         if (dlg.open() == Window.OK) {

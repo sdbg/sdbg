@@ -117,21 +117,14 @@ public class ADBManager {
           StringTokenizer stok = new StringTokenizer(line, " \t");
           if (stok.hasMoreTokens()) {
             String id = stok.nextToken();
-            List<String> data = getData(
-                null,
-                "-s",
-                id,
-                "shell",
-                "getprop",
-                "ro.build.version.release");
+            List<String> data = getData(null, "-s", id, "shell", "getprop", "ro.product.model");
             return new ADBDeviceInfo(id, data.isEmpty() ? null : data.get(0));
           }
         }
 
         return null;
       }
-    },
-        "devices");
+    }, "devices");
   }
 
   public void removeAllForwards() {

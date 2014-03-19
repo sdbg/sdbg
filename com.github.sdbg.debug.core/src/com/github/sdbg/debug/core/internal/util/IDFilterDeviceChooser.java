@@ -31,7 +31,7 @@ public class IDFilterDeviceChooser implements IDeviceChooser {
         }
       }
 
-      if (newDevices.isEmpty()) {
+      if (!devices.isEmpty() && newDevices.isEmpty()) {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,

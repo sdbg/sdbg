@@ -52,7 +52,7 @@ public class UIBrowserTabChooser implements IBrowserTabChooser {
             PlatformUI.getWorkbench().getWorkbenchWindows()[0].getShell());
         dlg.setInput(tabs);
         dlg.setTitle("Connect to a running Chrome");
-        dlg.setMessage("Select tab for remote connection");
+        dlg.setMessage("Select a tab for remote connection");
         dlg.setContentProvider(new ArrayContentProvider());
         dlg.setLabelProvider(new TabLabelProvider());
         if (dlg.open() == Window.OK) {

@@ -31,7 +31,7 @@ public class URLFilterTabChooser implements IBrowserTabChooser {
         }
       }
 
-      if (newTabs.isEmpty()) {
+      if (!tabs.isEmpty() && newTabs.isEmpty()) {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,

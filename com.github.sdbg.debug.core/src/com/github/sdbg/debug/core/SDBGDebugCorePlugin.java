@@ -13,7 +13,8 @@
  */
 package com.github.sdbg.debug.core;
 
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.configs.ChromeAppLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
@@ -73,6 +74,8 @@ public class SDBGDebugCorePlugin extends Plugin {
   public static final String CHROME_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeLaunchConfig";
 
   public static final String CHROMECONN_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeConnLaunchConfig";
+
+  public static final String CHROMEMOBILECONN_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeMobileConnLaunchConfig";
 
   public static final String CHROMEAPP_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeAppLaunchConfig";
 
@@ -357,10 +360,8 @@ public class SDBGDebugCorePlugin extends Plugin {
     ResourceChangeManager.shutdown();
     ResourceServerManager.shutdown();
 
-    BrowserManager.getManager().dispose();
-//&&&    
-//    PubServeManager.getManager().dispose();
-//    PubServeLaunchConfigurationDelegate.dispose();
+    ChromeLaunchConfigurationDelegate.dispose();
+    ChromeAppLaunchConfigurationDelegate.dispose();
 
     if (debugEventListener != null) {
       DebugPlugin.getDefault().removeDebugEventListener(debugEventListener);

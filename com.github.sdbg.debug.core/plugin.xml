@@ -34,6 +34,15 @@
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
+      
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.ChromeMobileConnLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.chromeMobileConnLaunchConfig"
+            modes="debug"
+            name="%launchconfig.chromeMobileConn.name"
+            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
+            sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
+      </launchConfigurationType>
    </extension>
 
    <!-- breakpoints -->

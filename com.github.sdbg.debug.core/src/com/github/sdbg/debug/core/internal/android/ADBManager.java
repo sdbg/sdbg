@@ -7,9 +7,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -44,6 +46,35 @@ public class ADBManager {
   }
 
   public void dispose() {
+    removeAllForwards();
+  }
+
+  public List<ADBDeviceInfo> getDevices() throws CoreException {
+    return getData(new Converter<ADBDeviceInfo>() {
+      @Override
+      public ADBDeviceInfo convert(String line) throws CoreException {
+        if (!line.startsWith("*") && !line.contains("List of devices attached")) {
+          StringTokenizer stok = new StringTokenizer(line, " \t");
+          if (stok.hasMoreTokens()) {
+            String id = stok.nextToken();
+            List<String> data = getData(
+                null,
+                "-s",
+                id,
+                "shell",
+                "getprop",
+                "ro.build.version.release");
+            return new ADBDeviceInfo(id, data.isEmpty() ? null : data.get(0));
+          }
+        }
+
+        return null;
+      }
+    },
+        "devices");
+  }
+
+  public void removeAllForwards() {
     while (!forwards.isEmpty()) {
       String forward = forwards.iterator().next();
       String deviceId = forward.substring(0, forward.indexOf('='));
@@ -55,30 +86,6 @@ public class ADBManager {
         SDBGDebugCorePlugin.logError(e);
       }
     }
-  }
-
-  public List<ADBDeviceInfo> getDevices() throws CoreException {
-    return getData(new Converter<ADBDeviceInfo>() {
-      @Override
-      public ADBDeviceInfo convert(String line) throws CoreException {
-        if (!line.startsWith("*") && !line.contains("List of devices attached")) {
-          String id = line;
-          List<String> data = getData(
-              null,
-              "adb",
-              "-s",
-              id,
-              "shell",
-              "getprop",
-              "ro.build.version.release");
-          return new ADBDeviceInfo(id, data.isEmpty() ? null : data.get(0));
-        } else {
-          return null;
-        }
-      }
-    },
-        "adb",
-        "devices");
   }
 
   public void removeForward(String deviceId, String local) throws CoreException {
@@ -98,8 +105,12 @@ public class ADBManager {
 
   private String executeADB(String... arguments) throws CoreException {
     try {
-      ProcessRunner runner = new ProcessRunner(new ProcessBuilder(arguments));
-      runner.await(null, 0);
+      List<String> cmdLine = new ArrayList<String>();
+      cmdLine.add("C:\\Users\\ivan\\AppData\\Local\\Applications\\adt\\sdk\\platform-tools\\adb.exe");
+      cmdLine.addAll(Arrays.asList(arguments));
+
+      ProcessRunner runner = new ProcessRunner(new ProcessBuilder(cmdLine));
+      runner.runSync(null);
 
       if (runner.getExitCode() != 0) {
         throw new IOException("ADB returned unexpected error code: " + runner.getExitCode()

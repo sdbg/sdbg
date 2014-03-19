@@ -1,10 +1,16 @@
 package com.github.sdbg.debug.core.internal.util;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.util.IDeviceChooser;
 import com.github.sdbg.debug.core.util.IDeviceInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.debug.core.DebugException;
 
 public class IDFilterDeviceChooser implements IDeviceChooser {
   private String idFilter;
@@ -16,13 +22,20 @@ public class IDFilterDeviceChooser implements IDeviceChooser {
   }
 
   @Override
-  public IDeviceInfo chooseDevice(List<? extends IDeviceInfo> devices) {
+  public IDeviceInfo chooseDevice(List<? extends IDeviceInfo> devices) throws CoreException {
     if (idFilter != null && idFilter.length() > 0) {
       List<IDeviceInfo> newDevices = new ArrayList<IDeviceInfo>();
       for (IDeviceInfo device : devices) {
         if (device.getId() != null && device.getId().toLowerCase().contains(idFilter.toLowerCase())) {
           newDevices.add(device);
         }
+      }
+
+      if (newDevices.isEmpty()) {
+        throw new DebugException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "No Android device found with ID matching \"" + idFilter + "\". Connection cancelled."));
       }
 
       devices = newDevices;

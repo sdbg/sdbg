@@ -116,7 +116,16 @@ public class BrowserManager {
   public WebkitDebugTarget connect(ILaunch launch, ILaunchConfiguration configuration,
       IResourceResolver resourceResolver, IDeviceChooser deviceChooser,
       IBrowserTabChooser browserTabChooser, IProgressMonitor monitor) throws CoreException {
-    IDeviceInfo device = deviceChooser.chooseDevice(adbManager.getDevices());
+    List<? extends IDeviceInfo> devices = adbManager.getDevices();
+    if (devices.isEmpty()) {
+      throw new DebugException(
+          new Status(
+              IStatus.ERROR,
+              SDBGDebugCorePlugin.PLUGIN_ID,
+              "No USB-attached Android devices found.\n\nPlease make sure you have enabled USB debugging on your device and you have attached it to the PC via USB."));
+    }
+
+    IDeviceInfo device = deviceChooser.chooseDevice(devices);
     if (device != null) {
       int port = NetUtils.findUnusedPort(DEVTOOLS_PORT_NUMBER);
 
@@ -139,6 +148,11 @@ public class BrowserManager {
       }
 
       adbManager.removeAllForwards();
+    } else {
+      throw new DebugException(new Status(
+          IStatus.INFO,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "No Android device was chosen. Connection cancelled."));
     }
 
     return null;
@@ -337,7 +351,14 @@ public class BrowserManager {
       // avg: 46ms
       timer.startTask("open WIP connection");
 
-      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
+      if (tab == null) {
+        throw new DebugException(new Status(
+            IStatus.INFO,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "No Chrome tab was chosen. Connection cancelled."));
+      }
+
+      if (tab.getWebSocketDebuggerUrl() == null) {
         throw new DebugException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
@@ -557,7 +578,7 @@ public class BrowserManager {
   }
 
   private IBrowserTabInfo findTargetTab(IBrowserTabChooser browserTabChooser,
-      List<? extends IBrowserTabInfo> tabs) {
+      List<? extends IBrowserTabInfo> tabs) throws CoreException {
     IBrowserTabInfo chosenTab = browserTabChooser.chooseTab(tabs);
 
     if (chosenTab != null) {

@@ -41,7 +41,6 @@ import org.eclipse.swt.widgets.Text;
  * The main launch configuration UI for running applications in Chrome.
  */
 public class ChromeMainTab extends AbstractLaunchConfigurationTab {
-
   protected ModifyListener textModifyListener = new ModifyListener() {
     @Override
     public void modifyText(ModifyEvent e) {
@@ -111,6 +110,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     argsLabel.setText("Browser arguments:");
 
     argumentText = new Text(group, SWT.BORDER | SWT.SINGLE);
+    argumentText.addModifyListener(textModifyListener);
     GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).span(2, 1).applyTo(
         argumentText);
 

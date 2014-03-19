@@ -16,6 +16,8 @@ package com.github.sdbg.debug.core.util;
 
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
+
 /**
  * An interface to choose a tab to debug from a list of tabs.
  */
@@ -27,6 +29,6 @@ public interface IBrowserTabChooser {
    * @param tabs
    * @return
    */
-  public IBrowserTabInfo chooseTab(List<? extends IBrowserTabInfo> tabs);
+  public IBrowserTabInfo chooseTab(List<? extends IBrowserTabInfo> tabs) throws CoreException;
 
 }

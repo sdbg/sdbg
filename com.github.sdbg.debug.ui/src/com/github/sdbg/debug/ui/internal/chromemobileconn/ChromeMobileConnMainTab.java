@@ -66,6 +66,7 @@ public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
     label.setText("Device:");
 
     deviceText = new Text(group, SWT.SINGLE | SWT.BORDER);
+    deviceText.addModifyListener(textModifyListener);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(deviceText);
 
     launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, false/*allowHtmlFile*/);

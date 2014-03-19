@@ -67,12 +67,14 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     label.setText("Host:");
 
     hostText = new Text(group, SWT.SINGLE | SWT.BORDER);
+    hostText.addModifyListener(textModifyListener);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(hostText);
 
     label = new Label(group, SWT.NONE);
     label.setText("Port:");
 
     portText = new Text(group, SWT.SINGLE | SWT.BORDER);
+    portText.addModifyListener(textModifyListener);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(portText);
 
     launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, false/*allowHtmlFile*/);

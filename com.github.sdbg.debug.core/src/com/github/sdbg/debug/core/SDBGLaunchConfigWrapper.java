@@ -46,6 +46,8 @@ public class SDBGLaunchConfigWrapper {
 
   private static final String IS_FILE = "launchFile";
 
+  private static final String DEVICE = "device";
+
   private static final String URL = "url";
 
   private static final String CONNECTION_HOST = "connectionHost";
@@ -151,6 +153,16 @@ public class SDBGLaunchConfigWrapper {
     } catch (CoreException e) {
       SDBGDebugCorePlugin.logError(e);
       return 9222;
+    }
+  }
+
+  public String getDevice() {
+    try {
+      return launchConfig.getAttribute(DEVICE, "");
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+
+      return "";
     }
   }
 
@@ -363,6 +375,13 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setConnectionPort(int value) {
     getWorkingCopy().setAttribute(CONNECTION_PORT, value);
+  }
+
+  /**
+   * @see #getDevice()
+   */
+  public void setDevice(String value) {
+    getWorkingCopy().setAttribute(DEVICE, value);
   }
 
   /**

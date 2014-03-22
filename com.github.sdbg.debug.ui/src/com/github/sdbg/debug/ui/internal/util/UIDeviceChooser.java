@@ -1,7 +1,7 @@
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.debug.core.util.IBrowserTabChooser;
-import com.github.sdbg.debug.core.util.IBrowserTabInfo;
+import com.github.sdbg.debug.core.util.IDeviceChooser;
+import com.github.sdbg.debug.core.util.IDeviceInfo;
 
 import java.util.List;
 
@@ -13,8 +13,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ListDialog;
 
-public class UIBrowserTabChooser implements IBrowserTabChooser {
-  private static class TabLabelProvider extends LabelProvider {
+public class UIDeviceChooser implements IDeviceChooser {
+  private static class DeviceLabelProvider extends LabelProvider {
     @Override
     public Image getImage(Object element) {
       return null;
@@ -22,41 +22,33 @@ public class UIBrowserTabChooser implements IBrowserTabChooser {
 
     @Override
     public String getText(Object element) {
-      if (element instanceof IBrowserTabInfo) {
-        IBrowserTabInfo tab = (IBrowserTabInfo) element;
-
-        String text = tab.getTitle();
-        String url = tab.getUrl();
-
-        if (tab.getUrl() != null && tab.getUrl().length() > 0 && !text.equalsIgnoreCase(url)) {
-          text += " (" + url + ")";
-        }
-
-        return text;
+      if (element instanceof IDeviceInfo) {
+        IDeviceInfo device = (IDeviceInfo) element;
+        return device.getName() + " (" + device.getId().toUpperCase() + ")";
       } else {
         return null;
       }
     }
   }
 
-  public UIBrowserTabChooser() {
+  public UIDeviceChooser() {
   }
 
   @Override
-  public IBrowserTabInfo chooseTab(final List<? extends IBrowserTabInfo> tabs) {
-    final IBrowserTabInfo[] result = new IBrowserTabInfo[1];
+  public IDeviceInfo chooseDevice(final List<? extends IDeviceInfo> devices) {
+    final IDeviceInfo[] result = new IDeviceInfo[1];
     Display.getDefault().syncExec(new Runnable() {
       @Override
       public void run() {
         ListDialog dlg = new ListDialog(
             PlatformUI.getWorkbench().getWorkbenchWindows()[0].getShell());
-        dlg.setInput(tabs);
-        dlg.setTitle("Connect to a running Chrome");
-        dlg.setMessage("Select a tab for remote connection");
+        dlg.setInput(devices);
+        dlg.setTitle("Connect to a device");
+        dlg.setMessage("Select a device for remote connection");
         dlg.setContentProvider(new ArrayContentProvider());
-        dlg.setLabelProvider(new TabLabelProvider());
+        dlg.setLabelProvider(new DeviceLabelProvider());
         if (dlg.open() == Window.OK) {
-          result[0] = (IBrowserTabInfo) dlg.getResult()[0];
+          result[0] = (IDeviceInfo) dlg.getResult()[0];
         }
       }
     });

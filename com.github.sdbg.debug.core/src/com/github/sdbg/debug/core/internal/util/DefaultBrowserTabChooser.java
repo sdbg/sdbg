@@ -12,9 +12,11 @@
  * the License.
  */
 
-package com.github.sdbg.debug.core.util;
+package com.github.sdbg.debug.core.internal.util;
 
 import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
+import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 
 import java.util.List;
 

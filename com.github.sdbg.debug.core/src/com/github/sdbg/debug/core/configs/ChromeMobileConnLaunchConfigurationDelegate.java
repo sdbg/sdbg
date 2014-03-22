@@ -18,24 +18,49 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.util.IDFilterDeviceChooser;
 import com.github.sdbg.debug.core.internal.util.LaunchConfigResourceResolver;
 import com.github.sdbg.debug.core.internal.util.URLFilterTabChooser;
+import com.github.sdbg.debug.core.util.IDeviceChooser;
 import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 
 /**
- * A ILaunchConfigurationDelegate implementation that can connect to a running Chrome instance.
+ * A ILaunchConfigurationDelegate implementation that can connect to a running Chrome for Mobile
+ * instance.
  */
-public class ChromeConnLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
+public class ChromeMobileConnLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
+  private static IDeviceChooser uiDeviceChooser;
+
+  private static synchronized IDeviceChooser getUIDeviceChooser() {
+    if (uiDeviceChooser == null) {
+      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
+          "com.github.sdbg.debug.core.uiDeviceChooser");
+      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
+        try {
+          uiDeviceChooser = (IDeviceChooser) element.createExecutableExtension("class");
+          break;
+        } catch (CoreException e) {
+          SDBGDebugCorePlugin.logError(e);
+        }
+      }
+    }
+
+    return uiDeviceChooser;
+  }
+
   /**
    * Create a new ChromeConnLaunchConfigurationDelegate.
    */
-  public ChromeConnLaunchConfigurationDelegate() {
+  public ChromeMobileConnLaunchConfigurationDelegate() {
   }
 
   @Override
@@ -53,9 +78,8 @@ public class ChromeConnLaunchConfigurationDelegate extends SDBGLaunchConfigurati
         launch,
         configuration,
         new LaunchConfigResourceResolver(launchConfig),
+        new IDFilterDeviceChooser(launchConfig.getDevice(), getUIDeviceChooser()),
         new URLFilterTabChooser(launchConfig.getUrl(), getUIBrowserTabChooser()),
-        launchConfig.getConnectionHost(),
-        launchConfig.getConnectionPort(),
         monitor);
   }
 }

@@ -22,6 +22,9 @@ import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
 import com.github.sdbg.ui.actions.InstrumentedAction;
 import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
@@ -38,9 +41,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowPulldownDelegate2;
-
-import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * The abstract superclass of the run and debug actions.
@@ -200,9 +200,6 @@ public abstract class RunAbstractAction extends InstrumentedAction implements
     if (menu.getItemCount() > 0) {
       new Separator().fill(menu, -1);
     }
-
-    new ActionContributionItem(new ManageLaunchesAction(window)).fill(menu, -1);
-
   }
 
   private void initMenu() {

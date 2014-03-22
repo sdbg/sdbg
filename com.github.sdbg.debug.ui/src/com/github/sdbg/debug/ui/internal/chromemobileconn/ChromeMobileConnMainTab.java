@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.github.sdbg.debug.ui.internal.chromeconn;
+package com.github.sdbg.debug.ui.internal.chromemobileconn;
 
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
@@ -37,9 +37,8 @@ import org.eclipse.swt.widgets.Text;
 /**
  * The main UI tab for connections to running Chrome instances.
  */
-public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
-  private Text hostText;
-  private Text portText;
+public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
+  private Text deviceText;
   private LaunchTargetComposite launchTargetGroup;
 
   protected ModifyListener textModifyListener = new ModifyListener() {
@@ -49,8 +48,8 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     }
   };
 
-  public ChromeConnMainTab() {
-    setMessage("Create a configuration to connect to a running Chrome");
+  public ChromeMobileConnMainTab() {
+    setMessage("Create a configuration to connect to a running Chrome for Mobile");
   }
 
   @Override
@@ -64,18 +63,11 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     GridLayoutFactory.fillDefaults().numColumns(2).margins(12, 6).applyTo(group);
 
     Label label = new Label(group, SWT.NONE);
-    label.setText("Host:");
+    label.setText("Device:");
 
-    hostText = new Text(group, SWT.SINGLE | SWT.BORDER);
-    hostText.addModifyListener(textModifyListener);
-    GridDataFactory.fillDefaults().grab(true, false).applyTo(hostText);
-
-    label = new Label(group, SWT.NONE);
-    label.setText("Port:");
-
-    portText = new Text(group, SWT.SINGLE | SWT.BORDER);
-    portText.addModifyListener(textModifyListener);
-    GridDataFactory.fillDefaults().grab(true, false).applyTo(portText);
+    deviceText = new Text(group, SWT.SINGLE | SWT.BORDER);
+    deviceText.addModifyListener(textModifyListener);
+    GridDataFactory.fillDefaults().grab(true, false).applyTo(deviceText);
 
     launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, false/*allowHtmlFile*/);
     launchTargetGroup.addListener(SWT.Modify, new Listener() {
@@ -89,7 +81,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     label = new Label(composite, SWT.NONE);
 
     final Label instructionsLabel = new Label(composite, SWT.WRAP);
-    instructionsLabel.setText("To start Chrome with remote connections enabled, use the following flag(s):\n--remote-debugging-port=<port> [--user-data-dir=<remote-profile>]");
+    instructionsLabel.setText("Make sure that \"USB debugging\" is enabled on your Android device. Then connect it to your PC via USB.");
     GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(
         instructionsLabel);
 
@@ -98,20 +90,6 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public String getErrorMessage() {
-    if (hostText.getText().length() == 0) {
-      return "Host is not specified";
-    }
-
-    if (portText.getText().length() == 0) {
-      return "Port is not specified";
-    }
-
-    try {
-      Integer.parseInt(portText.getText());
-    } catch (Exception e) {
-      return e.getMessage();
-    }
-
     return launchTargetGroup.getErrorMessage();
   }
 
@@ -129,8 +107,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
   public void initializeFrom(ILaunchConfiguration configuration) {
     SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
 
-    hostText.setText(chromeLauncher.getConnectionHost());
-    portText.setText(Integer.toString(chromeLauncher.getConnectionPort()));
+    deviceText.setText(chromeLauncher.getDevice());
     launchTargetGroup.setUrlTextValue(chromeLauncher.getUrl());
     launchTargetGroup.setProjectTextValue(chromeLauncher.getProjectName());
     launchTargetGroup.setHtmlButtonSelection(false);
@@ -145,8 +122,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
   public void performApply(ILaunchConfigurationWorkingCopy configuration) {
     SDBGLaunchConfigWrapper chromeLauncher = new SDBGLaunchConfigWrapper(configuration);
 
-    chromeLauncher.setConnectionHost(hostText.getText());
-    chromeLauncher.setConnectionPort(Integer.parseInt(portText.getText()));
+    chromeLauncher.setDevice(deviceText.getText());
     chromeLauncher.setShouldLaunchFile(false);
     chromeLauncher.setUrl(launchTargetGroup.getUrlString());
     chromeLauncher.setProjectName(launchTargetGroup.getProject());

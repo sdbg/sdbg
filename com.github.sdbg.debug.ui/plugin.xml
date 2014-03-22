@@ -232,6 +232,60 @@
       </shortcut>
    </extension>
    
+   <!-- Chrome for Mobile connection launch configuration -->
+   
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.chromeMobileConnLaunchConfig"
+            icon="icons/chrome_conn.png"
+            id="com.github.sdbg.debug.core.chromeMobileConnLaunchConfigImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.chromemobileconn.ChromeMobileConnTabGroup"
+            id="com.github.sdbg.debug.core.chromeMobileConnLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.chromeMobileConnLaunchConfig"
+            description="Connect to a running Chrome for Mobile">
+      </launchConfigurationTabGroup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.chromemobileconn.ChromeMobileConnLaunchShortcut"
+            id="com.github.sdbg.debug.ui.chromeMobileConnLaunchShortcut"
+            label="%chrome.chromeMobileConnlaunch.shortcut.label"
+            icon="icons/chrome_conn.png"
+            modes="run,debug">
+         <configurationType
+               id="com.github.sdbg.debug.core.chromeMobileConnLaunchConfig">
+         </configurationType>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <test property="org.eclipse.core.resources.name" value="manifest.json"/>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   
    <!-- Browser launch configuration -->
    <extension
          point="org.eclipse.debug.core.launchConfigurationTypes">
@@ -440,13 +494,6 @@
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.internal.launch.ManageLaunchesHandler"
-            description="%launchDialogCommandName"
-            id="com.github.sdbg.debug.ui.launchDialog"
-            name="%launchDialogCommandName">
-      </command>
-      <command
-            categoryId="org.eclipse.ui.category.window"
             defaultHandler="com.github.sdbg.debug.ui.internal.util.ShowWebConsoleHandler"
             description="Show Web Server Address"
             id="com.github.sdbg.debug.ui.showWebConsole"
@@ -458,13 +505,6 @@
             description="%removeBreakpointsCommandName"
             id="com.github.sdbg.debug.ui.removeBreakpoints"
             name="%removeBreakpointsCommandName">
-      </command>
-      <command
-            categoryId="org.eclipse.ui.category.window"
-            defaultHandler="com.github.sdbg.debug.ui.internal.util.RemoteConnectionHandler"
-            description="Connect to remote host"
-            id="com.github.sdbg.debug.ui.remoteConnection"
-            name="Remote Connection...">
       </command>
       <command
             categoryId="org.eclipse.ui.category.window"
@@ -873,6 +913,12 @@
             class="com.github.sdbg.debug.ui.internal.util.UIBrowserTabChooser">
       </chooser>
    </extension>
+   <extension
+         point="com.github.sdbg.debug.core.uiDeviceChooser">
+      <chooser
+            class="com.github.sdbg.debug.ui.internal.util.UIDeviceChooser">
+      </chooser>
+   </extension>
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"
@@ -898,5 +944,4 @@
          </action>
       </objectContribution>
    </extension -->
-      
 </plugin>

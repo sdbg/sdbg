@@ -27,7 +27,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 /**
- * A resource resolver for use with url based Dartium launches.
+ * A resource resolver for use with url based Chrome launches.
  */
 public class LaunchConfigResourceResolver implements IResourceResolver {
   private SDBGLaunchConfigWrapper wrapper;
@@ -141,8 +141,6 @@ public class LaunchConfigResourceResolver implements IResourceResolver {
   }
 
   private IContainer getSourceContainer() {
-    // TODO(devoncarew): remove this if/else logic once most launch configurations have moved over
-    // to using source directories.
     return wrapper.getProject();
   }
 

@@ -5,6 +5,7 @@
    <extension-point id="breakpointPathResolver" name="Breakpoint Path Resolver" schema="schema/breakpointPathResolver.exsd"/>
    <extension-point id="sourceLookupExtensions" name="Source Lookup Extensions" schema="schema/sourceLookupExtensions.exsd"/>
    <extension-point id="uiBrowserTabChooser" name="Browser Tab Chooser UI" schema="schema/uiBrowserTabChooser.exsd"/>
+   <extension-point id="uiDeviceChooser" name="Device Chooser UI" schema="schema/uiDeviceChooser.exsd"/>
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
@@ -30,6 +31,15 @@
             id="com.github.sdbg.debug.core.chromeConnLaunchConfig"
             modes="debug"
             name="%launchconfig.chromeConn.name"
+            sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
+            sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
+      </launchConfigurationType>
+      
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.ChromeMobileConnLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.chromeMobileConnLaunchConfig"
+            modes="debug"
+            name="%launchconfig.chromeMobileConn.name"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>

@@ -15,25 +15,18 @@
 package com.github.sdbg.debug.core.configs;
 
 import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.internal.util.BrowserManager;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
 import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.utilities.NetUtils;
+import com.github.sdbg.debug.core.util.IBrowserTabChooser;
+import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -41,14 +34,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
-import org.eclipse.debug.core.model.IProcess;
 
 //[ {
 //  "title": "New Tab",
@@ -69,14 +57,42 @@ import org.eclipse.debug.core.model.IProcess;
  * conceptually launch the manifest.json file which specifies a Chrome app. We currently send Chrome
  * the path to the manifest file's parent directory via the --load-extension flag.
  */
+// TODO: This will not work out of the box for GWT SuperDevMode, because GWT SDM is done using a web server and the generated JS file and sourcemaps 
+// do not have a fixed location on the disk - a new directory with these is created on each new SDM recompilation
 public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
+  private static class ChromeAppBrowserTabChooser implements IBrowserTabChooser {
+    @Override
+    public IBrowserTabInfo chooseTab(List<? extends IBrowserTabInfo> tabs) {
+      for (IBrowserTabInfo tab : tabs) {
+        if (tab.getTitle().startsWith("chrome-extension://")) {
+          continue;
+        }
+
+        // chrome-extension://kohcodfehgoaolndkcophkcmhjenpfmc/_generated_background_page.html
+        if (tab.getTitle().endsWith("_generated_background_page.html")) {
+          continue;
+        }
+
+        // chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/background.html
+        if (tab.getUrl().endsWith("_generated_background_page.html")
+            || tab.getUrl().endsWith("/background.html")) {
+          continue;
+        }
+
+        if (tab.getUrl().startsWith("chrome-extension://") && tab.getTitle().length() > 0) {
+          return tab;
+        }
+      }
+
+      return null;
+    }
+  }
 
   private static class ChromeAppResourceResolver implements IResourceResolver {
     private IContainer container;
+    private String prefix;
 
-    String prefix;
-
-    public ChromeAppResourceResolver(IContainer container, ChromiumTabInfo tab) {
+    public ChromeAppResourceResolver(IContainer container, IBrowserTabInfo tab) {
       this.container = container;
 
       prefix = tab.getUrl();
@@ -115,23 +131,12 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
 
     @Override
     public String getUrlRegexForResource(IResource resource) {
-      //final String PACKAGES = "/packages/";
-
       String relPath = calcRelPath(container, resource);
-
       if (relPath != null) {
         return relPath;
       }
 
       return resource.getFullPath().toString();
-
-//      if (resourcePath.contains(PACKAGES)) {
-//        int index = resourcePath.indexOf(PACKAGES);
-//
-//        return resourcePath.substring(index + PACKAGES.length());
-//      }
-//
-//      return null;
     }
 
     @Override
@@ -165,18 +170,25 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     }
   }
 
-  private static final int DEFAULT_DEBUGGER_PORT = 9422;
+  private static BrowserManager browserManager = new BrowserManager("chrome-app") {
+    @Override
+    protected IResourceResolver createResourceResolver(ILaunch launch,
+        ILaunchConfiguration configuration, IBrowserTabInfo tab) {
+      SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
+      return new ChromeAppResourceResolver(wrapper.getApplicationResource().getParent(), tab);
+    }
+  };
 
-  private static Process chromeAppBrowserProcess;
+  public static void dispose() {
+    browserManager.dispose();
+  }
 
   /**
    * Create a new ChromeAppLaunchConfigurationDelegate.
    */
   public ChromeAppLaunchConfigurationDelegate() {
-
   }
 
-  // TODO XXX FIXME: 90%+ of the code below is duplicate with code in BrowserManager. Move it over to BrowserManager
   @Override
   public void doLaunch(ILaunchConfiguration configuration, String mode, ILaunch launch,
       IProgressMonitor monitor, InstrumentationBuilder instrumentation) throws CoreException {
@@ -185,294 +197,32 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
           + "' is not supported."));
     }
 
-    boolean enableDebugging = ILaunchManager.DEBUG_MODE.equals(mode);
-
-    File chromeExe = BrowserManager.getManager().findChrome();
-
-    if (chromeExe == null) {
-      throw new CoreException(new Status(
-          IStatus.ERROR,
-          SDBGDebugCorePlugin.PLUGIN_ID,
-          "Could not find Chrome"));
-    }
-
     SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
 
-    wrapper.markAsLaunched();
-
     IResource jsonResource = wrapper.getApplicationResource();
-
     if (jsonResource == null) {
-      throw newDebugException("No file specified to launch");
+      throw new CoreException(
+          SDBGDebugCorePlugin.createErrorStatus("No manifest.json file specified to launch."));
     }
 
-    File cwd = getWorkingDirectory(jsonResource);
-    String extensionPath = jsonResource.getParent().getLocation().toFile().getAbsolutePath();
-
-    List<String> commandsList = new ArrayList<String>();
-
-    commandsList.add(chromeExe.getAbsolutePath());
-    commandsList.add("--user-data-dir="
-        + BrowserManager.getCreateUserDataDirectoryPath("chrome-apps"));
-    commandsList.add("--no-first-run");
-    commandsList.add("--no-default-browser-check");
+    List<String> extraCommandLineArgs = new ArrayList<String>();
 
     // This is currently only supported on the mac.
     if (DartCore.isMac()) {
-      commandsList.add("--no-startup-window");
+      extraCommandLineArgs.add("--no-startup-window");
     }
 
-    commandsList.add("--load-and-launch-app=" + extensionPath);
+    extraCommandLineArgs.add("--load-and-launch-app="
+        + jsonResource.getParent().getLocation().toFile().getAbsolutePath());
 
-    for (String arg : wrapper.getArgumentsAsArray()) {
-      commandsList.add(arg);
-    }
-
-    int devToolsPortNumber = DEFAULT_DEBUGGER_PORT;
-
-    if (enableDebugging) {
-      devToolsPortNumber = NetUtils.findUnusedPort(DEFAULT_DEBUGGER_PORT);
-
-      commandsList.add("--remote-debugging-port=" + devToolsPortNumber);
-    }
-
-    monitor.beginTask("Chrome", IProgressMonitor.UNKNOWN);
-
-    terminatePreviousLaunch();
-
-    String[] commands = commandsList.toArray(new String[commandsList.size()]);
-    ProcessBuilder processBuilder = new ProcessBuilder(commands);
-    processBuilder.directory(cwd);
-
-    Map<String, String> wrapperEnv = wrapper.getEnvironment();
-
-    if (!wrapperEnv.isEmpty()) {
-      Map<String, String> env = processBuilder.environment();
-
-      for (String key : wrapperEnv.keySet()) {
-        env.put(key, wrapperEnv.get(key));
-      }
-    }
-
-    Process runtimeProcess = null;
-
-    try {
-      runtimeProcess = processBuilder.start();
-    } catch (IOException ioe) {
-      throw newDebugException(ioe);
-    }
-
-    saveLaunchedProcess(runtimeProcess);
-
-    if (enableDebugging) {
-      try {
-        // Poll until we find a good tab to connect to.
-        ChromiumTabInfo tab = getChromiumTab(runtimeProcess, devToolsPortNumber);
-
-        if (tab != null && tab.getWebSocketDebuggerUrl() != null) {
-          WebkitConnection connection = new WebkitConnection(
-              tab.getHost(),
-              tab.getPort(),
-              tab.getWebSocketDebuggerFile());
-
-          final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
-              chromeExe.getName(),
-              connection,
-              launch,
-              runtimeProcess,
-              new ChromeAppResourceResolver(jsonResource.getParent(), tab),
-              true,
-              false);
-
-          monitor.worked(1);
-
-          launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
-          launch.addDebugTarget(debugTarget);
-          launch.addProcess(debugTarget.getProcess());
-
-          try {
-            debugTarget.openConnection();
-          } catch (IOException ioe) {
-            SDBGDebugCorePlugin.logError(ioe);
-          }
-        }
-
-        // Give the app a little time to open the main window.
-        sleep(500);
-
-        DebugUIHelper.getHelper().activateApplication(chromeExe, "Chrome");
-      } catch (CoreException ce) {
-        SDBGDebugCorePlugin.logError(ce);
-      }
-    } else {
-      Map<String, String> processAttributes = new HashMap<String, String>();
-
-      processAttributes.put(IProcess.ATTR_PROCESS_TYPE, "Chrome");
-
-      IProcess eclipseProcess = DebugPlugin.newProcess(
-          launch,
-          runtimeProcess,
-          configuration.getName(),
-          processAttributes);
-
-      if (eclipseProcess == null) {
-        throw newDebugException("Error starting Chrome");
-      }
-
-      // We need to wait until the process is started before we can try and activate the window.
-      sleep(1000);
-
-      DebugUIHelper.getHelper().activateApplication(chromeExe, "Chrome");
-    }
-
-    monitor.done();
+    browserManager.launchBrowser(
+        launch,
+        configuration,
+        null/*resolver*/,
+        new ChromeAppBrowserTabChooser(),
+        null/*url*/,
+        monitor,
+        ILaunchManager.DEBUG_MODE.equals(mode),
+        extraCommandLineArgs);
   }
-
-  private ChromiumTabInfo findTargetTab(List<ChromiumTabInfo> tabs) {
-    for (ChromiumTabInfo tab : tabs) {
-      if (tab.getTitle().startsWith("chrome-extension://")) {
-        continue;
-      }
-
-      // chrome-extension://kohcodfehgoaolndkcophkcmhjenpfmc/_generated_background_page.html
-      if (tab.getTitle().endsWith("_generated_background_page.html")) {
-        continue;
-      }
-
-      // chrome-extension://nkeimhogjdpnpccoofpliimaahmaaome/background.html
-      if (tab.getUrl().endsWith("_generated_background_page.html")
-          || tab.getUrl().endsWith("/background.html")) {
-        continue;
-      }
-
-      if (tab.getUrl().startsWith("chrome-extension://") && tab.getTitle().length() > 0) {
-        return tab;
-      }
-    }
-
-    return null;
-  }
-
-  private ChromiumTabInfo getChromiumTab(Process process, int port) throws CoreException {
-    // Give Chromium 10 seconds to start up.
-    final int maxStartupDelay = 10 * 1000;
-
-    long endTime = System.currentTimeMillis() + maxStartupDelay;
-
-    while (true) {
-      if (isProcessTerminated(process)) {
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Could not launch browser - process terminated while trying to connect. "
-                + "Try closing any running Chrome instances."));
-      }
-
-      try {
-        List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(port);
-
-        ChromiumTabInfo targetTab = findTargetTab(tabs);
-
-        if (targetTab != null) {
-          for (ChromiumTabInfo tab : tabs) {
-            SDBGDebugCorePlugin.log("Found: " + tab.toString());
-          }
-
-          SDBGDebugCorePlugin.log("Choosing: " + targetTab);
-
-          return targetTab;
-        }
-      } catch (IOException exception) {
-        if (System.currentTimeMillis() > endTime) {
-          throw new CoreException(new Status(
-              IStatus.ERROR,
-              SDBGDebugCorePlugin.PLUGIN_ID,
-              "Could not connect to Chrome",
-              exception));
-        }
-      }
-
-      if (System.currentTimeMillis() > endTime) {
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Timed out trying to connect to Chrome"));
-      }
-
-      sleep(250);
-    }
-  }
-
-  /**
-   * Return the parent of the Chrome app directory. The Chrome app directory contains the given
-   * manifest.json file.
-   * 
-   * @param jsonResource
-   * @return
-   */
-  private File getWorkingDirectory(IResource jsonResource) {
-    IContainer containingDir = jsonResource.getParent();
-    File containingFile = containingDir.getLocation().toFile();
-
-    // Return the parent of this directory.
-    return containingFile.getParentFile();
-  }
-
-  private boolean isProcessTerminated(Process process) {
-    try {
-      if (process != null) {
-        process.exitValue();
-      }
-
-      return true;
-    } catch (IllegalThreadStateException ex) {
-      return false;
-    }
-  }
-
-  private DebugException newDebugException(String message) {
-    return new DebugException(new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID, message));
-  }
-
-  private DebugException newDebugException(Throwable t) {
-    return new DebugException(new Status(
-        IStatus.ERROR,
-        SDBGDebugCorePlugin.PLUGIN_ID,
-        t.toString(),
-        t));
-  }
-
-  /**
-   * Store the successfully launched process into a static variable;
-   * 
-   * @param process
-   */
-  private void saveLaunchedProcess(Process process) {
-    chromeAppBrowserProcess = process;
-  }
-
-  private void sleep(int millis) {
-    try {
-      Thread.sleep(millis);
-    } catch (Exception exception) {
-
-    }
-  }
-
-  private void terminatePreviousLaunch() {
-    if (chromeAppBrowserProcess != null) {
-      try {
-        chromeAppBrowserProcess.exitValue();
-        chromeAppBrowserProcess = null;
-      } catch (IllegalThreadStateException ex) {
-        // exitValue() will throw if the process has not yet stopped. In that case, we ask it to.
-        chromeAppBrowserProcess.destroy();
-        chromeAppBrowserProcess = null;
-
-        // Delay a bit.
-        sleep(100);
-      }
-    }
-  }
-
 }

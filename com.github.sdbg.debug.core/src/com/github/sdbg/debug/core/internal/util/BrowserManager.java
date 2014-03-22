@@ -17,16 +17,17 @@ import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.android.ADBManager;
 import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
 import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
 import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
 import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.debug.core.util.DefaultBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
-import com.github.sdbg.debug.core.util.ResourceServerManager;
+import com.github.sdbg.debug.core.util.IDeviceChooser;
+import com.github.sdbg.debug.core.util.IDeviceInfo;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.NetUtils;
 
@@ -36,19 +37,16 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
-import org.eclipse.debug.core.model.IDebugTarget;
 import org.eclipse.debug.core.model.IProcess;
 
 /**
@@ -62,111 +60,102 @@ public class BrowserManager {
 
   private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location";
 
-  private static BrowserManager manager = new BrowserManager();
+  private String browserDataDirName;
 
-  /**
-   * Create a Chrome user data directory, and return the path to that directory.
-   * 
-   * @return the user data directory path
-   */
-  public static String getCreateUserDataDirectoryPath(String baseName) {
-    String dataDirPath = System.getProperty("user.home") + File.separator + "." + baseName;
+  private Semaphore launchSemaphore;
 
-    File dataDir = new File(dataDirPath);
+  private ADBManager adbManager;
 
-    if (!dataDir.exists()) {
-      dataDir.mkdir();
-    } else {
-      // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can cause old tabs to
-      // restore themselves when we launch the browser.
-      File defaultDir = new File(dataDir, "Default");
+  private Process browserProcess;
 
-      if (defaultDir.exists()) {
-        File tabInfoFile = new File(defaultDir, "Current Tabs");
+  private File browserExecutable;
 
-        if (tabInfoFile.exists()) {
-          tabInfoFile.delete();
-        }
-
-        File sessionInfoFile = new File(defaultDir, "Current Session");
-
-        if (sessionInfoFile.exists()) {
-          sessionInfoFile.delete();
-        }
-      }
-    }
-
-    return dataDirPath;
+  public BrowserManager(String browserDataDirName) {
+    this.browserDataDirName = browserDataDirName;
+    this.launchSemaphore = new Semaphore(1);
+    this.adbManager = new ADBManager();
   }
 
-  public static BrowserManager getManager() {
-    return manager;
-  }
+  public WebkitDebugTarget connect(ILaunch launch, ILaunchConfiguration configuration,
+      IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, String host,
+      int port, IProgressMonitor monitor) throws CoreException {
+    SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
 
-  private Process browserProcess = null;
-
-  private IResourceResolver resourceResolver;
-
-  private File chromeExecutable;
-
-  private int devToolsPortNumber;
-
-  private IBrowserTabChooser tabChooser;
-
-  public BrowserManager() {
-    this.tabChooser = new DefaultBrowserTabChooser();
-  }
-
-// TODO: Unfinished
-  public void connect(ILaunch launch, ILaunchConfiguration configuration,
-      IBrowserTabChooser tabChooser, String host, int port, IProgressMonitor monitor)
-      throws CoreException {
-    monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
+    LogTimer timer = new LogTimer("Chrome debug connect");
 
     try {
-      List<? extends IBrowserTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
+      timer.startTask("connect");
 
-      ChromiumTabInfo tab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
+      try {
+        launchConfig.markAsLaunched();
 
-      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
-        throw new DebugException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chrome"));
+        return connectToChromiumDebug(
+            "Remote",
+            launch,
+            launchConfig,
+            null/*url*/,
+            monitor,
+            null/*runtimeProcess*/,
+            timer,
+            true/*enableBreakpoints*/,
+            host,
+            port,
+            null/*browserOutput*/,
+            null/*processDescription*/,
+            resourceResolver,
+            browserTabChooser,
+            true/*remote*/);
+      } finally {
+        timer.stopTask();
+      }
+    } finally {
+      timer.stopTimer();
+    }
+  }
+
+  public WebkitDebugTarget connect(ILaunch launch, ILaunchConfiguration configuration,
+      IResourceResolver resourceResolver, IDeviceChooser deviceChooser,
+      IBrowserTabChooser browserTabChooser, IProgressMonitor monitor) throws CoreException {
+    List<? extends IDeviceInfo> devices = adbManager.getDevices();
+    if (devices.isEmpty()) {
+      throw new DebugException(
+          new Status(
+              IStatus.ERROR,
+              SDBGDebugCorePlugin.PLUGIN_ID,
+              "No USB-attached Android devices found.\n\nPlease make sure you have enabled USB debugging on your device and you have attached it to the PC via USB."));
+    }
+
+    IDeviceInfo device = deviceChooser.chooseDevice(devices);
+    if (device != null) {
+      int port = NetUtils.findUnusedPort(DEVTOOLS_PORT_NUMBER);
+
+      adbManager.addChromiumForward(device.getId(), port);
+      try {
+        WebkitDebugTarget target = connect(
+            launch,
+            configuration,
+            resourceResolver,
+            browserTabChooser,
+            "127.0.0.1",
+            port,
+            monitor);
+        if (target != null) {
+          return target;
+        }
+      } catch (CoreException e) {
+        adbManager.removeAllForwards();
+        throw e;
       }
 
-      monitor.worked(1);
-
-      WebkitConnection connection = new WebkitConnection(
-          tab.getHost(),
-          tab.getPort(),
-          tab.getWebSocketDebuggerFile());
-
-      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
-          "Remote",
-          connection,
-          launch,
-          null,
-          getResourceServer(),
-          true,
-          true);
-
-      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
-      launch.addDebugTarget(debugTarget);
-      launch.addProcess(debugTarget.getProcess());
-
-      debugTarget.openConnection();
-
-      monitor.worked(1);
-    } catch (IOException e) {
-      throw new CoreException(new Status(
-          IStatus.ERROR,
+      adbManager.removeAllForwards();
+    } else {
+      throw new DebugException(new Status(
+          IStatus.INFO,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          e.toString(),
-          e));
-    } finally {
-      monitor.done();
+          "No Android device was chosen. Connection cancelled."));
     }
+
+    return null;
   }
 
   public void dispose() {
@@ -175,307 +164,140 @@ public class BrowserManager {
     }
   }
 
-  public File findChrome() {
-    if (chromeExecutable == null) {
-      chromeExecutable = manager.findChromeExecutable();
-    }
-    return chromeExecutable;
-  }
-
-  /**
-   * Launch the browser and open the given file. If debug mode also connect to browser.
-   */
-  public void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, IFile file,
-      IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
-    launchBrowser(launch, launchConfig, file, null, monitor, enableDebugging);
-  }
-
-  /**
-   * Launch the browser and open the given url. If debug mode also connect to browser.
-   */
-  public void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, String url,
-      IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
-    launchBrowser(launch, launchConfig, null, url, monitor, enableDebugging);
-  }
-
-  public IDebugTarget performRemoteConnection(IBrowserTabChooser tabChooser, String host, int port,
-      IProgressMonitor monitor) throws CoreException {
-
-    ILaunch launch = null;
-
-    monitor.beginTask("Opening Connection...", IProgressMonitor.UNKNOWN);
-
-    try {
-      List<? extends IBrowserTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
-
-      ChromiumTabInfo tab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
-
-      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
-        throw new DebugException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chrome"));
-      }
-
-      monitor.worked(1);
-
-      launch = CoreLaunchUtils.createTemporaryLaunch(
-          SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID,
-          host + "[" + port + "]");
-
-      CoreLaunchUtils.addLaunch(launch);
-
-      WebkitConnection connection = new WebkitConnection(
-          tab.getHost(),
-          tab.getPort(),
-          tab.getWebSocketDebuggerFile());
-
-      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
-          "Remote",
-          connection,
-          launch,
-          null,
-          getResourceServer(),
-          true,
-          true);
-
-      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
-      launch.addDebugTarget(debugTarget);
-      launch.addProcess(debugTarget.getProcess());
-
-      debugTarget.openConnection();
-
-      monitor.worked(1);
-
-      return debugTarget;
-    } catch (IOException e) {
-      if (launch != null) {
-        CoreLaunchUtils.removeLaunch(launch);
-      }
-
-      throw new CoreException(new Status(
-          IStatus.ERROR,
-          SDBGDebugCorePlugin.PLUGIN_ID,
-          e.toString(),
-          e));
-    } finally {
-      monitor.done();
-    }
-  }
-
-  protected void launchBrowser(ILaunch launch, SDBGLaunchConfigWrapper launchConfig, IFile file,
-      String url, IProgressMonitor monitor, boolean enableDebugging) throws CoreException {
-
-    // For now, we always start a debugging connection, even when we're not really debugging.
-    boolean enableBreakpoints = enableDebugging;
-
-    monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
-
-    File chromeExe = findChrome();
-
-    IPath browserLocation = new Path(chromeExe.getAbsolutePath());
-
-    String browserName = chromeExe.getName();
-
-    // avg: 0.434 sec (old: 0.597)
-    LogTimer timer = new LogTimer("Chrome debug startup");
-
-    // avg: 55ms
-    timer.startTask(browserName + " startup");
-
-    url = resolveLaunchUrl(file, url);
-
-    url = launchConfig.appendQueryParams(url);
-
-    IResourceResolver resolver = launchConfig.getShouldLaunchFile() ? getResourceServer()
-        : new LaunchConfigResourceResolver(launchConfig);
-
-    // for now, check if browser is open, and connection is alive
-    boolean restart = browserProcess == null || isProcessTerminated(browserProcess)
-        || WebkitDebugTarget.getActiveTarget() == null
-        || !WebkitDebugTarget.getActiveTarget().canTerminate();
-
-    // we only re-cycle the debug connection if we're launching the same launch configuration
-    if (!restart) {
-      if (!WebkitDebugTarget.getActiveTarget().getLaunch().getLaunchConfiguration().equals(
-          launch.getLaunchConfiguration())) {
-        restart = true;
-      }
-    }
-
-    if (!restart) {
-      if (enableDebugging != WebkitDebugTarget.getActiveTarget().getEnableBreakpoints()) {
-        restart = true;
-      }
-    }
-
-    CoreLaunchUtils.removeTerminatedLaunches();
-
-    if (!restart) {
-      DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
-
-      try {
-        WebkitDebugTarget.getActiveTarget().navigateToUrl(
-            launch.getLaunchConfiguration(),
-            url,
-            enableBreakpoints,
-            resolver);
-      } catch (IOException e) {
-        SDBGDebugCorePlugin.logError(e);
-      }
-    } else {
-      terminateExistingBrowserProcess();
-
-      StringBuilder processDescription = new StringBuilder();
-
-      ListeningStream dartiumOutput = startNewBrowserProcess(
-          launchConfig,
-          url,
-          monitor,
-          enableDebugging,
-          browserLocation,
-          browserName,
-          processDescription);
-
-      sleep(100);
-
-      monitor.worked(1);
-
-      if (isProcessTerminated(browserProcess)) {
-        SDBGDebugCorePlugin.logError("Chrome output: " + dartiumOutput.toString());
-
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Could not launch browser - process terminated on startup"
-                + getProcessStreamMessage(dartiumOutput.toString())));
-      }
-
-      connectToChromiumDebug(
-          browserName,
-          launch,
-          launchConfig,
-          url,
-          monitor,
-          browserProcess,
-          timer,
-          enableBreakpoints,
-          devToolsPortNumber,
-          dartiumOutput,
-          processDescription.toString(),
-          resolver);
-    }
-
-    DebugUIHelper.getHelper().activateApplication(chromeExe, "Chrome");
-
-    timer.stopTask();
-    timer.stopTimer();
-    monitor.done();
-  }
-
-  /**
-   * Launch browser and open file url. If debug mode also connect to browser.
-   */
-  void connectToChromiumDebug(String browserName, ILaunch launch,
-      SDBGLaunchConfigWrapper launchConfig, String url, IProgressMonitor monitor,
-      Process runtimeProcess, LogTimer timer, boolean enableBreakpoints, int devToolsPortNumber,
-      ListeningStream dartiumOutput, String processDescription, IResourceResolver resolver)
+  public void launchBrowser(ILaunch launch, ILaunchConfiguration configuration,
+      IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, String url,
+      IProgressMonitor monitor, boolean enableDebugging, List<String> extraCommandLineArgs)
       throws CoreException {
-    monitor.worked(1);
 
-    try {
-      // avg: 383ms
-      timer.startTask("get chromium tabs");
+    if (launchSemaphore.tryAcquire()) {
+      try {
+        SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
+        launchConfig.markAsLaunched();
 
-      ChromiumTabInfo tab = getChromiumTab(runtimeProcess, devToolsPortNumber, dartiumOutput);
+        // For now, we always start a debugging connection, even when we're not really debugging.
+        boolean enableBreakpoints = enableDebugging;
 
-      monitor.worked(2);
+        monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
 
-      timer.stopTask();
+        // avg: 0.434 sec (old: 0.597)
+        LogTimer timer = new LogTimer("Chrome debug startup");
 
-      // avg: 46ms
-      timer.startTask("open WIP connection");
+        // avg: 55ms
+        timer.startTask("Chrome startup");
 
-      if (tab == null || tab.getWebSocketDebuggerUrl() == null) {
-        throw new DebugException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chrome"));
-      }
+        // for now, check if browser is open, and connection is alive
+        boolean restart = browserProcess == null || isProcessTerminated(browserProcess)
+            || WebkitDebugTarget.getActiveTarget() == null
+            || !WebkitDebugTarget.getActiveTarget().canTerminate();
 
-      // Even when Chrome has reported all the debuggable tabs to us, the debug server
-      // may not yet have started up. Delay a small fixed amount of time.
-      sleep(100);
-
-      WebkitConnection connection = new WebkitConnection(
-          tab.getHost(),
-          tab.getPort(),
-          tab.getWebSocketDebuggerFile());
-
-      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
-          browserName,
-          connection,
-          launch,
-          runtimeProcess,
-          resolver,
-          enableBreakpoints,
-          false);
-
-      monitor.worked(1);
-
-      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
-      launch.addDebugTarget(debugTarget);
-      launch.addProcess(debugTarget.getProcess());
-      debugTarget.getProcess().setAttribute(IProcess.ATTR_CMDLINE, processDescription);
-
-      if (launchConfig.getShowLaunchOutput()) {
-        dartiumOutput.setListener(new StreamListener() {
-          @Override
-          public void handleStreamData(String data) {
-            debugTarget.writeToStdout(data);
+        // we only re-cycle the debug connection if we're launching the same launch configuration
+        if (!restart) {
+          if (!WebkitDebugTarget.getActiveTarget().getLaunch().getLaunchConfiguration().equals(
+              launch.getLaunchConfiguration())) {
+            restart = true;
           }
-        });
+        }
+
+        if (!restart) {
+          if (enableDebugging != WebkitDebugTarget.getActiveTarget().getEnableBreakpoints()) {
+            restart = true;
+          }
+        }
+
+        CoreLaunchUtils.removeTerminatedLaunches();
+
+        File browserExecutable = getBrowserExecutable();
+
+        if (!restart && url != null && resourceResolver != null) {
+          DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
+
+          try {
+            WebkitDebugTarget.getActiveTarget().navigateToUrl(
+                launch.getLaunchConfiguration(),
+                url,
+                enableBreakpoints,
+                resourceResolver);
+          } catch (IOException e) {
+            SDBGDebugCorePlugin.logError(e);
+          }
+        } else {
+          terminateExistingBrowserProcess();
+
+          StringBuilder processDescription = new StringBuilder();
+
+          int[] devToolsPortNumberHolder = new int[1];
+          ListeningStream browserOutput = startNewBrowserProcess(
+              launchConfig,
+              url,
+              monitor,
+              enableDebugging,
+              processDescription,
+              extraCommandLineArgs,
+              devToolsPortNumberHolder);
+
+          sleep(100);
+
+          monitor.worked(1);
+
+          if (isProcessTerminated(browserProcess)) {
+            SDBGDebugCorePlugin.logError("Browser output: " + browserOutput.toString());
+
+            throw new CoreException(new Status(
+                IStatus.ERROR,
+                SDBGDebugCorePlugin.PLUGIN_ID,
+                "Could not launch browser - process terminated on startup"
+                    + getProcessStreamMessage(browserOutput.toString())));
+          }
+
+          connectToChromiumDebug(
+              browserExecutable.getName(),
+              launch,
+              launchConfig,
+              url,
+              monitor,
+              browserProcess,
+              timer,
+              enableBreakpoints,
+              null,
+              devToolsPortNumberHolder[0],
+              browserOutput,
+              processDescription.toString(),
+              resourceResolver,
+              browserTabChooser,
+              false/*remote*/);
+        }
+
+        DebugUIHelper.getHelper().activateApplication(browserExecutable, "Chrome");
+
+        timer.stopTask();
+        timer.stopTimer();
+        monitor.done();
+      } finally {
+        launchSemaphore.release();
       }
-
-      debugTarget.openConnection(url, true);
-      Trace.trace("Connected to WIP debug agent on port " + devToolsPortNumber);
-
-      timer.stopTask();
-    } catch (IOException e) {
-      DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
-
-      IStatus status;
-
-      // Clean up the error message on certain connection failures to Chrome.
-      // http://code.google.com/p/dart/issues/detail?id=4435
-      if (e.toString().indexOf("connection failed: unknown status code 500") != -1) {
-        SDBGDebugCorePlugin.logError(e);
-
-        status = new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "Unable to connect to Chrome");
-      } else {
-        status = new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID, e.toString(), e);
-      }
-
-      throw new CoreException(status);
     }
-
-    monitor.worked(1);
   }
 
-  private List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig,
-      IPath browserLocation, String url, boolean enableDebugging, int devToolsPortNumber) {
+  // Only exists to support the funky Chrome Application launch
+  protected IResourceResolver createResourceResolver(ILaunch launch,
+      ILaunchConfiguration configuration, IBrowserTabInfo tab) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  private List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig, String url,
+      int devToolsPortNumber, List<String> extraArguments) {
     List<String> arguments = new ArrayList<String>();
 
-    arguments.add(browserLocation.toOSString());
+    arguments.add(getBrowserExecutable().getAbsolutePath());
 
-    // Enable remote debug over HTTP on the specified port.
-    arguments.add("--remote-debugging-port=" + devToolsPortNumber);
+    if (devToolsPortNumber > -1) {
+      // Enable remote debug over HTTP on the specified port.
+      arguments.add("--remote-debugging-port=" + devToolsPortNumber);
+    }
 
     // In order to start up multiple Chrome processes, we need to specify a different user dir.
-    arguments.add("--user-data-dir=" + getCreateUserDataDirectoryPath("chrome"));
+    arguments.add("--user-data-dir="
+        + getCreateUserDataDirectory(browserDataDirName).getAbsolutePath());
 
     if (launchConfig.isEnableExperimentalWebkitFeatures()) {
       arguments.add("--enable-experimental-web-platform-features");
@@ -491,18 +313,132 @@ public class BrowserManager {
     // Bypass the error dialog when the profile lock couldn't be attained.
     arguments.add("--no-process-singleton-dialog");
 
+    arguments.addAll(extraArguments);
+
     for (String arg : launchConfig.getArgumentsAsArray()) {
       arguments.add(arg);
     }
 
-    if (enableDebugging) {
-      // Start up with a blank page.
-      arguments.add(INITIAL_PAGE);
-    } else {
+    if (url != null) {
       arguments.add(url);
     }
 
     return arguments;
+  }
+
+  private WebkitDebugTarget connectToChromiumDebug(String browserName, ILaunch launch,
+      SDBGLaunchConfigWrapper launchConfig, String url, IProgressMonitor monitor,
+      Process runtimeProcess, LogTimer timer, boolean enableBreakpoints, String host, int port,
+      ListeningStream browserOutput, String processDescription, IResourceResolver resolver,
+      IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException {
+    monitor.worked(1);
+
+    try {
+      // avg: 383ms
+      timer.startTask("get chromium tabs");
+
+      ChromiumTabInfo tab = getChromiumTab(
+          runtimeProcess,
+          browserTabChooser,
+          host,
+          port,
+          browserOutput);
+
+      monitor.worked(2);
+
+      timer.stopTask();
+
+      // avg: 46ms
+      timer.startTask("open WIP connection");
+
+      if (tab == null) {
+        throw new DebugException(new Status(
+            IStatus.INFO,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "No Chrome tab was chosen. Connection cancelled."));
+      }
+
+      if (tab.getWebSocketDebuggerUrl() == null) {
+        throw new DebugException(
+            new Status(
+                IStatus.ERROR,
+                SDBGDebugCorePlugin.PLUGIN_ID,
+                "Unable to connect to Chrome"
+                    + (remote
+                        ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is alresady attached to that particular Chrome tab."
+                        : "")));
+      }
+
+      // Even when Chrome has reported all the debuggable tabs to us, the debug server
+      // may not yet have started up. Delay a small fixed amount of time.
+      sleep(100);
+
+      if (resolver == null) {
+        resolver = createResourceResolver(launch, launchConfig.getConfig(), tab);
+      }
+
+      WebkitConnection connection = new WebkitConnection(
+          tab.getHost(),
+          tab.getPort(),
+          tab.getWebSocketDebuggerFile());
+
+      final WebkitDebugTarget debugTarget = new WebkitDebugTarget(
+          browserName,
+          connection,
+          launch,
+          runtimeProcess,
+          resolver,
+          adbManager,
+          enableBreakpoints,
+          remote);
+
+      monitor.worked(1);
+
+      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+      launch.addDebugTarget(debugTarget);
+      launch.addProcess(debugTarget.getProcess());
+
+      if (processDescription != null) {
+        debugTarget.getProcess().setAttribute(IProcess.ATTR_CMDLINE, processDescription);
+      }
+
+      if (browserOutput != null && launchConfig.getShowLaunchOutput()) {
+        browserOutput.setListener(new StreamListener() {
+          @Override
+          public void handleStreamData(String data) {
+            debugTarget.writeToStdout(data);
+          }
+        });
+      }
+
+      if (browserOutput != null) {
+        debugTarget.openConnection(url, true);
+      } else {
+        debugTarget.openConnection();
+      }
+
+      Trace.trace("Connected to WIP debug agent on host " + host + " and port " + port);
+
+      timer.stopTask();
+
+      monitor.worked(1);
+
+      return debugTarget;
+    } catch (IOException e) {
+      DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
+
+      // Clean up the error message on certain connection failures to Chrome.
+      // http://code.google.com/p/dart/issues/detail?id=4435
+      if (e.toString().indexOf("connection failed: unknown status code 500") != -1) {
+        SDBGDebugCorePlugin.logError(e);
+      }
+
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "Unable to connect to Chrome: " + e.getMessage(),
+          e));
+    }
   }
 
   private void describe(List<String> arguments, StringBuilder builder) {
@@ -640,9 +576,9 @@ public class BrowserManager {
     return null;
   }
 
-  private IBrowserTabInfo findTargetTab(IBrowserTabChooser tabChooser,
-      List<? extends IBrowserTabInfo> tabs) {
-    IBrowserTabInfo chosenTab = tabChooser.chooseTab(tabs);
+  private IBrowserTabInfo findTargetTab(IBrowserTabChooser browserTabChooser,
+      List<? extends IBrowserTabInfo> tabs) throws CoreException {
+    IBrowserTabInfo chosenTab = browserTabChooser.chooseTab(tabs);
 
     if (chosenTab != null) {
       for (IBrowserTabInfo tab : tabs) {
@@ -666,15 +602,22 @@ public class BrowserManager {
     return null;
   }
 
-  private ChromiumTabInfo getChromiumTab(Process runtimeProcess, int port,
-      ListeningStream dartiumOutput) throws IOException, CoreException {
-    // Give Chromium 20 seconds to start up.
-    final int maxStartupDelay = 20 * 1000;
+  private File getBrowserExecutable() {
+    if (browserExecutable == null) {
+      browserExecutable = findChromeExecutable();
+    }
+    return browserExecutable;
+  }
 
+  private ChromiumTabInfo getChromiumTab(Process runtimeProcess,
+      IBrowserTabChooser browserTabChooser, String host, int port, ListeningStream dartiumOutput)
+      throws IOException, CoreException {
+    // Give Chromium 20 seconds to start up.
+    int maxStartupDelay = 20 * 1000;
     long endTime = System.currentTimeMillis() + maxStartupDelay;
 
     while (true) {
-      if (isProcessTerminated(runtimeProcess)) {
+      if (runtimeProcess != null && isProcessTerminated(runtimeProcess)) {
         throw new CoreException(new Status(
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
@@ -684,15 +627,14 @@ public class BrowserManager {
       }
 
       try {
-        List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(port);
-
-        ChromiumTabInfo targetTab = (ChromiumTabInfo) findTargetTab(tabChooser, tabs);
-
-        if (targetTab != null) {
+        ChromiumTabInfo targetTab = (ChromiumTabInfo) findTargetTab(
+            browserTabChooser,
+            ChromiumConnector.getAvailableTabs(host, port));
+        if (targetTab != null || runtimeProcess == null) {
           return targetTab;
         }
       } catch (IOException exception) {
-        if (System.currentTimeMillis() > endTime) {
+        if (runtimeProcess == null || System.currentTimeMillis() > endTime) {
           throw exception;
         }
       }
@@ -705,24 +647,44 @@ public class BrowserManager {
     }
   }
 
+  /**
+   * Create a Chrome user data directory, and return the path to that directory.
+   * 
+   * @return the user data directory path
+   */
+  private File getCreateUserDataDirectory(String baseName) {
+    File dataDir = new File(new File(new File(System.getProperty("user.home")), ".sdbg"), baseName);
+
+    if (!dataDir.exists()) {
+      dataDir.mkdirs();
+    } else {
+      // Remove the "<dataDir>/Default/Current Tabs" file if it exists - it can cause old tabs to
+      // restore themselves when we launch the browser.
+      File defaultDir = new File(dataDir, "Default");
+
+      if (defaultDir.exists()) {
+        File tabInfoFile = new File(defaultDir, "Current Tabs");
+
+        if (tabInfoFile.exists()) {
+          tabInfoFile.delete();
+        }
+
+        File sessionInfoFile = new File(defaultDir, "Current Session");
+
+        if (sessionInfoFile.exists()) {
+          sessionInfoFile.delete();
+        }
+      }
+    }
+
+    return dataDir;
+  }
+
   private String getProcessStreamMessage(String output) {
     StringBuilder msg = new StringBuilder();
 
     if (output.length() != 0) {
       msg.append("Chrome stdout: ").append(output).append("\n");
-    }
-
-    boolean expired = false;
-
-    if (output.length() != 0) {
-      if (output.indexOf("Chrome build has expired") != -1) {
-        expired = true;
-      }
-
-      if (expired) {
-        msg.append("\nThis build of Chrome has expired.\n\n");
-        msg.append("Please download a new Chrome build");
-      }
     }
 
     if (msg.length() != 0) {
@@ -732,22 +694,6 @@ public class BrowserManager {
     }
 
     return msg.toString();
-  }
-
-  private IResourceResolver getResourceServer() throws CoreException {
-    if (resourceResolver == null) {
-      try {
-        resourceResolver = ResourceServerManager.getServer();
-      } catch (IOException ioe) {
-        throw new CoreException(new Status(
-            IStatus.ERROR,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            ioe.getMessage(),
-            ioe));
-      }
-    }
-
-    return resourceResolver;
   }
 
   private boolean isExistingDirectory(File dir) {
@@ -766,7 +712,7 @@ public class BrowserManager {
     }
   }
 
-  private ListeningStream readFromProcessPipes(final String processName, final InputStream in) {
+  private ListeningStream readFromProcessPipes(final InputStream in) {
     final ListeningStream output = new ListeningStream();
 
     Thread thread = new Thread(new Runnable() {
@@ -797,23 +743,11 @@ public class BrowserManager {
           // When the process closes, we do not want to print any errors.
         }
       }
-    }, "Read from " + processName);
+    }, "Read from browser");
 
     thread.start();
 
     return output;
-  }
-
-  /**
-   * @param file
-   * @throws CoreException
-   */
-  private String resolveLaunchUrl(IFile file, String url) throws CoreException {
-    if (file != null) {
-      return getResourceServer().getUrlForResource(file);
-    }
-
-    return url;
   }
 
   private void sleep(int millis) {
@@ -834,8 +768,8 @@ public class BrowserManager {
    * @throws CoreException
    */
   private ListeningStream startNewBrowserProcess(SDBGLaunchConfigWrapper launchConfig, String url,
-      IProgressMonitor monitor, boolean enableDebugging, IPath browserLocation, String browserName,
-      StringBuilder argDescription) throws CoreException {
+      IProgressMonitor monitor, boolean enableDebugging, StringBuilder argDescription,
+      List<String> extraArguments, int[] devToolsPortNumberHolder) throws CoreException {
 
     Process process = null;
     monitor.worked(1);
@@ -854,7 +788,7 @@ public class BrowserManager {
       }
     }
 
-    devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
+    int devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
 
     if (enableDebugging) {
       devToolsPortNumber = NetUtils.findUnusedPort(DEVTOOLS_PORT_NUMBER);
@@ -865,14 +799,12 @@ public class BrowserManager {
             SDBGDebugCorePlugin.PLUGIN_ID,
             "Unable to locate an available port for the browser debugger"));
       }
+
+      devToolsPortNumberHolder[0] = devToolsPortNumber;
     }
 
-    List<String> arguments = buildArgumentsList(
-        launchConfig,
-        browserLocation,
-        url,
-        enableDebugging,
-        devToolsPortNumber);
+    List<String> arguments = buildArgumentsList(launchConfig, enableDebugging && url != null
+        ? INITIAL_PAGE : url, devToolsPortNumber, extraArguments);
     builder.command(arguments);
     builder.redirectErrorStream(true);
 
@@ -891,7 +823,7 @@ public class BrowserManager {
 
     browserProcess = process;
 
-    return readFromProcessPipes(browserName, browserProcess.getInputStream());
+    return readFromProcessPipes(browserProcess.getInputStream());
   }
 
   private void terminateExistingBrowserProcess() {

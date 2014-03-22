@@ -18,6 +18,7 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
+import com.github.sdbg.debug.core.internal.android.ADBManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
@@ -82,13 +83,14 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
   private DartCodeManager dartCodeManager;
   private boolean canSetScriptSource;
   private SourceMapManager sourceMapManager;
+  private ADBManager adbManager;
 
   /**
    * @param target
    */
   public WebkitDebugTarget(String debugTargetName, WebkitConnection connection, ILaunch launch,
-      Process javaProcess, IResourceResolver resourceResolver, boolean enableBreakpoints,
-      boolean isRemote) {
+      Process javaProcess, IResourceResolver resourceResolver, ADBManager adbManager,
+      boolean enableBreakpoints, boolean isRemote) {
     super(null);
 
     setActiveTarget(this);
@@ -97,6 +99,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     this.connection = connection;
     this.launch = launch;
     this.resourceResolver = resourceResolver;
+    this.adbManager = adbManager;
     this.enableBreakpoints = enableBreakpoints;
 
     debugThread = new WebkitDebugThread(this);
@@ -147,6 +150,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
         target.launch,
         null,
         target.resourceResolver,
+        target.adbManager,
         target.enableBreakpoints,
         false);
 
@@ -220,6 +224,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     }
 
     sourceMapManager.dispose();
+
+    if (adbManager != null) {
+      adbManager.removeAllForwards();
+    }
 
     debugThread = null;
 

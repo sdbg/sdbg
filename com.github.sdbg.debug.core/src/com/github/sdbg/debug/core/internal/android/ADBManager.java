@@ -127,6 +127,14 @@ public class ADBManager {
     }, "devices");
   }
 
+  public void pull(String deviceId, String remote, File fileOrDir) throws CoreException {
+    executeADB("-s", deviceId, "pull", remote, fileOrDir.getAbsolutePath());
+  }
+
+  public void push(String deviceId, File fileOrDir, String remote) throws CoreException {
+    executeADB("-s", deviceId, "push", fileOrDir.getAbsolutePath(), remote);
+  }
+
   public void removeAllForwards() {
     while (!forwards.isEmpty()) {
       String forward = forwards.iterator().next();
@@ -154,6 +162,10 @@ public class ADBManager {
 
   public void removeTCPForward(String deviceId, int localTCPPort) throws CoreException {
     removeForward(deviceId, "tcp:" + Integer.toString(localTCPPort));
+  }
+
+  public void shell(String deviceId, String command) throws CoreException {
+    executeADB("-s", deviceId, "shell", command);
   }
 
   private String executeADB(String... arguments) throws CoreException {

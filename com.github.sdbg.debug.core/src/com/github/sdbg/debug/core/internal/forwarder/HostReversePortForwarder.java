@@ -40,7 +40,7 @@ public class HostReversePortForwarder extends ReversePortForwarder {
 
   private Object mainMonitor = new Object();
 
-  private Runnable command;
+  private boolean stopRequest;
   private Thread thread;
 
   public HostReversePortForwarder(int commandPort, Forward... forwards) {
@@ -50,21 +50,11 @@ public class HostReversePortForwarder extends ReversePortForwarder {
     }
   }
 
-  public void dispose() {
-    execute(new Runnable() {
-      @Override
-      public void run() {
-        throw new RuntimeException("Dispose");
-      }
-    });
-
-    try {
-      thread.join();
-    } catch (InterruptedException e) {
+  public void start() throws IOException {
+    if (thread != null) {
+      throw new IOException("Already started");
     }
-  }
 
-  public void start() {
     thread = new Thread(new Runnable() {
       @Override
       public void run() {
@@ -74,6 +64,27 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         }
       }
     }, "Host Reverse Forwarder Thread");
+  }
+
+  public void stop() {
+    if (thread != null) {
+      synchronized (mainMonitor) {
+        stopRequest = true;
+        selector.wakeup();
+
+        try {
+          mainMonitor.wait();
+        } catch (InterruptedException e) {
+        }
+      }
+
+      try {
+        thread.join();
+      } catch (InterruptedException e) {
+      }
+
+      thread = null;
+    }
   }
 
   @Override
@@ -130,30 +141,6 @@ public class HostReversePortForwarder extends ReversePortForwarder {
     }
   }
 
-  private void execute(final Runnable command) {
-    synchronized (mainMonitor) {
-      this.command = new Runnable() {
-        @Override
-        public void run() {
-          synchronized (mainMonitor) {
-            try {
-              command.run();
-            } finally {
-              mainMonitor.notify();
-            }
-          }
-        }
-      };
-
-      selector.wakeup();
-
-      try {
-        mainMonitor.wait();
-      } catch (InterruptedException e) {
-      }
-    }
-  }
-
   private ByteChannel openChannel(String host, int port) throws IOException {
     return SocketChannel.open(new InetSocketAddress(host, port));
   }
@@ -167,12 +154,10 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         selector.select();
 
         synchronized (mainMonitor) {
-          if (command != null) {
-            try {
-              command.run();
-            } finally {
-              command = null;
-            }
+          if (stopRequest) {
+            stopRequest = false;
+            mainMonitor.notify();
+            break;
           }
         }
 

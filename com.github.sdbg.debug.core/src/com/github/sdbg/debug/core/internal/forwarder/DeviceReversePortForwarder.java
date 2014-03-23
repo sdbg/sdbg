@@ -122,7 +122,8 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
       createServerSocketChannel(port);
     }
 
-    System.out.println(serverCommandChannel.socket().getLocalPort());
+    System.out.println("* PORT: " + serverCommandChannel.socket().getLocalPort());
+    System.out.flush();
   }
 
   @Override

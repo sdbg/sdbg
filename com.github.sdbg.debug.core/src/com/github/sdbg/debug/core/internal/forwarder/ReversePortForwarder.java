@@ -11,10 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class ReversePortForwarder {
-  protected static final byte CMD_UNKNOWN_COMMAND = (byte) 1, CMD_OPEN_PORT = (byte) 2,
-      CMD_OPEN_PORT_ACK = (byte) 3, CMD_OPEN_PORT_FAIL = (byte) 4, CMD_CLOSE_PORT = (byte) 5,
-      CMD_CLOSE_PORT_ACK = (byte) 6, CMD_CLOSE_PORT_FAIL = (byte) 7, CMD_OPEN_CHANNEL = (byte) 8,
-      CMD_OPEN_CHANNEL_ACK = (byte) 9, CMD_OPEN_CHANNEL_FAIL = (byte) 10;
+  protected static final byte CMD_UNKNOWN_COMMAND = (byte) 1, CMD_OPEN_CHANNEL = (byte) 2,
+      CMD_OPEN_CHANNEL_ACK = (byte) 3, CMD_OPEN_CHANNEL_FAIL = (byte) 4;
 
   private static final int CMD_MAX_LENGTH = 10;
 
@@ -34,6 +32,14 @@ public abstract class ReversePortForwarder {
   protected void closeTunnel(int tunnelId) {
     Tunnel tunnel = tunnels.remove(tunnelId);
     if (tunnel != null) {
+      if (tunnel.getLeftChannel() != null) {
+        ((SelectableChannel) tunnel.getLeftChannel()).keyFor(selector).cancel();
+      }
+
+      if (tunnel.getRightChannel() != null) {
+        ((SelectableChannel) tunnel.getRightChannel()).keyFor(selector).cancel();
+      }
+
       channels.remove(tunnel.getLeftChannel());
       channels.remove(tunnel.getRightChannel());
     }
@@ -76,6 +82,9 @@ public abstract class ReversePortForwarder {
     } catch (IOException e) {
       // Best effort
     }
+    selector = null;
+
+    commandReadBuffer = commandWriteBuffer = null;
   }
 
   protected Tunnel getTunnel(int tunnelId) throws IOException {
@@ -99,6 +108,9 @@ public abstract class ReversePortForwarder {
   protected void init() throws IOException {
     // Create a new selector
     selector = SelectorProvider.provider().openSelector();
+
+    commandReadBuffer = ByteBuffer.allocate(8192);
+    commandWriteBuffer = ByteBuffer.allocate(8192);
   }
 
   protected boolean processCommand(byte cmd, ByteBuffer commandBuffer) throws IOException {
@@ -165,6 +177,8 @@ public abstract class ReversePortForwarder {
       throw new IOException("Left channel of the tunnel is already registered");
     } else {
       tunnel.setLeftChannel(leftChannel);
+      ((SelectableChannel) leftChannel).keyFor(selector).interestOps(
+          SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       channels.put(leftChannel, tunnelId);
     }
   }
@@ -175,6 +189,8 @@ public abstract class ReversePortForwarder {
       throw new IOException("Right channel of the tunnel is already registered");
     } else {
       tunnel.setRightChannel(rightChannel);
+      ((SelectableChannel) rightChannel).keyFor(selector).interestOps(
+          SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       channels.put(rightChannel, tunnelId);
     }
   }

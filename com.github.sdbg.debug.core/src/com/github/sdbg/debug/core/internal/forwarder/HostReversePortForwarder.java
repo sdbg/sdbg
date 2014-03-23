@@ -6,35 +6,48 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
 public class HostReversePortForwarder extends ReversePortForwarder {
-  private Object mainMonitor = new Object();
+  public static class Forward {
+    private String host;
+    private int port;
+    private int devicePort;
+
+    public Forward(String host, int port, int devicePort) {
+      this.host = host;
+      this.port = port;
+      this.devicePort = devicePort;
+    }
+
+    public int getDevicePort() {
+      return devicePort;
+    }
+
+    public String getHost() {
+      return host;
+    }
+
+    public int getPort() {
+      return port;
+    }
+  }
 
   private int commandPort;
+  private Map<Integer, Forward> forwards = new HashMap<Integer, Forward>();
 
-  private Map<Integer, Object[]> forwardInfos = new HashMap<Integer, Object[]>();
-  private Map<Integer, Collection<Integer>> forwards = new HashMap<Integer, Collection<Integer>>();
+  private Object mainMonitor = new Object();
 
   private Runnable command;
   private Thread thread;
 
-  public HostReversePortForwarder(int commandPort) {
+  public HostReversePortForwarder(int commandPort, Forward... forwards) {
     this.commandPort = commandPort;
-  }
-
-  public void addForward(final String host, final int port, final int devicePort) {
-    execute(new Runnable() {
-      @Override
-      public void run() {
-        forwardInfos.put(devicePort, new Object[] {host, port});
-        forwards.put(devicePort, new HashSet<Integer>());
-      }
-    });
+    for (Forward forward : forwards) {
+      this.forwards.put(forward.getDevicePort(), forward);
+    }
   }
 
   public void dispose() {
@@ -49,22 +62,6 @@ public class HostReversePortForwarder extends ReversePortForwarder {
       thread.join();
     } catch (InterruptedException e) {
     }
-  }
-
-  public void removeForward(final int devicePort) {
-    execute(new Runnable() {
-      @Override
-      public void run() {
-        forwardInfos.remove(devicePort);
-        for (Integer tunnelId : forwards.remove(devicePort)) {
-          try {
-            getTunnel(tunnelId).close();
-          } catch (IOException e) {
-            // Best effort
-          }
-        }
-      }
-    });
   }
 
   public void start() {
@@ -82,12 +79,6 @@ public class HostReversePortForwarder extends ReversePortForwarder {
   @Override
   protected void done() {
     super.done();
-
-    for (int devicePort : forwards.keySet()) {
-      removeForward(devicePort);
-    }
-
-    forwardInfos.clear();
     forwards.clear();
   }
 
@@ -104,23 +95,31 @@ public class HostReversePortForwarder extends ReversePortForwarder {
     if (cmd == CMD_OPEN_CHANNEL) {
       if (commandBuffer.limit() >= 4) {
         int devicePort = commandBuffer.getInt();
-        Object[] hostAndPort = forwardInfos.get(devicePort);
+        Forward forward = forwards.get(devicePort);
         int tunnelId = commandBuffer.getInt();
 
-        ByteChannel channel = openChannel((String) hostAndPort[0], (Integer) hostAndPort[1]);
         Tunnel tunnel = createTunnel(tunnelId);
-        tunnel.setLeftChannel(channel);
 
-        ByteChannel rightChannel = openChannel("localhost", devicePort);
-        tunnel.setRightChannel(rightChannel);
+        try {
+          ByteChannel channel = openChannel(forward.getHost(), forward.getPort());
+          tunnel.setLeftChannel(channel);
 
-        tunnel.getLeftToRight().put(CMD_OPEN_CHANNEL_ACK);
-        tunnel.getLeftToRight().putInt(devicePort);
-        Tunnel.spool(
-            selector,
-            tunnel.getLeftChannel(),
-            tunnel.getRightChannel(),
-            tunnel.getLeftToRight());
+          ByteChannel rightChannel = openChannel("localhost", devicePort);
+          tunnel.setRightChannel(rightChannel);
+
+          tunnel.getLeftToRight().put(CMD_OPEN_CHANNEL_ACK);
+          tunnel.getLeftToRight().putInt(devicePort);
+          Tunnel.spool(
+              selector,
+              tunnel.getLeftChannel(),
+              tunnel.getRightChannel(),
+              tunnel.getLeftToRight());
+        } catch (IOException e) {
+          closeTunnel(tunnelId);
+          commandWriteBuffer.put(CMD_OPEN_CHANNEL_FAIL);
+          commandWriteBuffer.putInt(tunnelId);
+          writeCommand();
+        }
 
         return true;
       } else {
@@ -163,7 +162,7 @@ public class HostReversePortForwarder extends ReversePortForwarder {
     init();
 
     try {
-      while (true) { // TODO: Option to stop
+      while (true) {
         // Wait for an event one of the registered channels
         selector.select();
 

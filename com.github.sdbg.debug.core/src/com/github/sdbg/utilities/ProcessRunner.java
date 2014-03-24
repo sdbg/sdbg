@@ -14,6 +14,8 @@
 
 package com.github.sdbg.utilities;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -22,8 +24,6 @@ import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 /**
  * Execute the process created by the given process builder; collect the results and the exit code.
@@ -35,8 +35,8 @@ public class ProcessRunner {
   private ProcessBuilder processBuilder;
 
   private int exitCode;
-  private StringBuilder stdout = new StringBuilder();
-  private StringBuilder stderr = new StringBuilder();
+  private StringBuffer stdout = new StringBuffer();
+  private StringBuffer stderr = new StringBuffer();
 
   private Thread processThread;
   private Process process;
@@ -89,6 +89,10 @@ public class ProcessRunner {
 
   public String getStdOut() {
     return stdout.toString();
+  }
+
+  public boolean isRunning() {
+    return process != null && processThread != null && processThread.isAlive();
   }
 
   /**
@@ -213,7 +217,7 @@ public class ProcessRunner {
     }
   }
 
-  protected void pipeOutput(InputStream in, StringBuilder builder) {
+  protected void pipeOutput(InputStream in, StringBuffer builder) {
     try {
       Reader reader = new InputStreamReader(in, "UTF-8");
       char[] buffer = new char[512];

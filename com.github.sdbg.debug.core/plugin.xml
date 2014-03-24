@@ -43,6 +43,13 @@
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
+
+      <launchConfigurationType
+            delegate="com.github.sdbg.debug.core.configs.AndroidReverseForwardsLaunchConfigurationDelegate"
+            id="com.github.sdbg.debug.core.androidReverseForwardsConnLaunchConfig"
+            modes="run"
+            name="%launchconfig.chromeMobileReverseForwardsConn.name">
+      </launchConfigurationType>
    </extension>
 
    <!-- breakpoints -->

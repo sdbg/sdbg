@@ -16,7 +16,6 @@ package com.github.sdbg.debug.core;
 import com.github.sdbg.debug.core.internal.util.CoreLaunchUtils;
 import com.github.sdbg.debug.core.internal.util.LaunchConfigResourceResolver;
 import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.utilities.instrumentation.Instrumentation;
 import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
@@ -27,11 +26,8 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IConfigurationElement;
-import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
@@ -41,31 +37,6 @@ import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
  * Super class for all launch configuration delegates
  */
 public abstract class SDBGLaunchConfigurationDelegate extends LaunchConfigurationDelegate {
-  private static IBrowserTabChooser uiBrowserTabChooser;
-
-  protected static synchronized IBrowserTabChooser getUIBrowserTabChooser() {
-    if (uiBrowserTabChooser == null) {
-      IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
-          "com.github.sdbg.debug.core.uiBrowserTabChooser");
-      for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
-        try {
-          uiBrowserTabChooser = (IBrowserTabChooser) element.createExecutableExtension("class");
-          break;
-        } catch (CoreException e) {
-          SDBGDebugCorePlugin.logError(e);
-        }
-      }
-    }
-
-    return uiBrowserTabChooser;
-  }
-
-  @Override
-  public final boolean buildForLaunch(ILaunchConfiguration configuration, String mode,
-      IProgressMonitor monitor) throws CoreException {
-    return false;
-  }
-
   public abstract void doLaunch(ILaunchConfiguration configuration, String mode, ILaunch launch,
       IProgressMonitor monitor, InstrumentationBuilder instrumentation) throws CoreException;
 

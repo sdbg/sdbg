@@ -195,6 +195,12 @@ public abstract class ReversePortForwarder {
     }
   }
 
+  protected void trace(String str) {
+  }
+
+  protected void trace(Throwable t) {
+  }
+
   protected void writeCommand() throws IOException {
     commandWriteBuffer.flip();
     commandChannel.write(commandWriteBuffer);

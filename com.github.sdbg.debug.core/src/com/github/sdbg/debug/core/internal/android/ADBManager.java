@@ -105,6 +105,18 @@ public class ADBManager {
     }
   }
 
+  public Process asyncShell(String deviceId, String command) throws CoreException {
+    try {
+      return prepareADB("-s", deviceId, "shell", command).start();
+    } catch (IOException e) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          e.toString(),
+          e));
+    }
+  }
+
   public void dispose() {
     removeAllForwards();
   }
@@ -170,11 +182,7 @@ public class ADBManager {
 
   private String executeADB(String... arguments) throws CoreException {
     try {
-      List<String> cmdLine = new ArrayList<String>();
-      cmdLine.add(getAdbExecutable().getAbsolutePath());
-      cmdLine.addAll(Arrays.asList(arguments));
-
-      ProcessRunner runner = new ProcessRunner(new ProcessBuilder(cmdLine));
+      ProcessRunner runner = new ProcessRunner(prepareADB(arguments));
       runner.runSync(null);
 
       if (runner.getExitCode() != 0) {
@@ -205,6 +213,22 @@ public class ADBManager {
       }
 
       return data;
+    } catch (IOException e) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          e.toString(),
+          e));
+    }
+  }
+
+  private ProcessBuilder prepareADB(String... arguments) throws CoreException {
+    try {
+      List<String> cmdLine = new ArrayList<String>();
+      cmdLine.add(getAdbExecutable().getAbsolutePath());
+      cmdLine.addAll(Arrays.asList(arguments));
+
+      return new ProcessBuilder(cmdLine);
     } catch (IOException e) {
       throw new CoreException(new Status(
           IStatus.ERROR,

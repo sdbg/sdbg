@@ -19,6 +19,7 @@ import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.internal.util.BrowserManager;
 import com.github.sdbg.debug.core.internal.util.LaunchConfigResourceResolver;
+import com.github.sdbg.debug.core.internal.util.UIBrowserTabChooser;
 import com.github.sdbg.debug.core.internal.util.URLFilterTabChooser;
 import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
@@ -53,7 +54,7 @@ public class ChromeConnLaunchConfigurationDelegate extends SDBGLaunchConfigurati
         launch,
         configuration,
         new LaunchConfigResourceResolver(launchConfig),
-        new URLFilterTabChooser(launchConfig.getUrl(), getUIBrowserTabChooser()),
+        new URLFilterTabChooser(launchConfig.getUrl(), UIBrowserTabChooser.get()),
         launchConfig.getConnectionHost(),
         launchConfig.getConnectionPort(),
         monitor);

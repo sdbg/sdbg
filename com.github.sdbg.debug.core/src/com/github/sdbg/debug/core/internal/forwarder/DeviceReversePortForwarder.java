@@ -1,7 +1,6 @@
 package com.github.sdbg.debug.core.internal.forwarder;
 
 import java.io.IOException;
-import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -18,21 +17,24 @@ import java.util.Map;
 
 public class DeviceReversePortForwarder extends ReversePortForwarder {
   public static void main(String[] args) throws IOException {
-    int[] ports = new int[args.length];
-    for (int i = 0; i < args.length; i++) {
+    int commandPort = Integer.parseInt(args[0]);
+    int[] ports = new int[args.length - 1];
+    for (int i = 1; i < args.length; i++) {
       ports[i] = Integer.parseInt(args[i]);
     }
 
-    new DeviceReversePortForwarder(ports).run();
+    new DeviceReversePortForwarder(commandPort, ports).run();
   }
 
+  private int commandPort;
   private int[] ports;
 
-  private ServerSocketChannel serverCommandChannel;
+  private ServerSocketChannel commandServerChannel;
   private Map<ServerSocketChannel, Collection<Integer>> serverChannels = new HashMap<ServerSocketChannel, Collection<Integer>>();
   private Map<ByteChannel, ByteBuffer> pendingChannels = new HashMap<ByteChannel, ByteBuffer>();
 
-  public DeviceReversePortForwarder(int[] ports) {
+  public DeviceReversePortForwarder(int commandPort, int[] ports) {
+    this.commandPort = commandPort;
     this.ports = ports;
   }
 
@@ -41,7 +43,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
 
     try {
       do {
-        // Wait for an event one of the registered channels
+        // Wait for an event on one of the registered channels
         if (commandChannel != null) {
           selector.select();
         } else {
@@ -82,12 +84,12 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     }
     commandChannel = null;
 
-    serverCommandChannel.keyFor(selector).cancel();
+    commandServerChannel.keyFor(selector).cancel();
     try {
-      serverCommandChannel.close();
+      commandServerChannel.close();
     } catch (IOException e) {
     }
-    serverCommandChannel = null;
+    commandServerChannel = null;
 
     super.done();
   }
@@ -97,33 +99,11 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     super.init();
 
     // Create a new non-blocking server socket channel
-    serverCommandChannel = ServerSocketChannel.open();
-    serverCommandChannel.configureBlocking(false);
-
-    // Bind the server socket to the specified address and port
-    for (int i = 4000; i <= 32767; i++) {
-      try {
-        serverCommandChannel.socket().bind(new InetSocketAddress(i));
-        break;
-      } catch (BindException e) {
-        // Stay silent
-      }
-    }
-
-    if (!serverCommandChannel.socket().isBound()) {
-      throw new IOException("No available port in the interval 4000 - 32767");
-    }
-
-    // Register the server socket channel, indicating an interest in 
-    // accepting new connections
-    serverCommandChannel.register(selector, SelectionKey.OP_ACCEPT);
+    createCommandServerSocketChannel();
 
     for (int port : ports) {
       createServerSocketChannel(port);
     }
-
-    System.out.println("* PORT: " + serverCommandChannel.socket().getLocalPort());
-    System.out.flush();
   }
 
   @Override
@@ -140,7 +120,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
   @Override
   protected void processKey(SelectionKey key) throws IOException {
     if (key.isAcceptable()) {
-      if (key.channel() == serverCommandChannel) {
+      if (key.channel() == commandServerChannel) {
         acceptCommand(key);
       } else {
         if (commandChannel == null) {
@@ -186,6 +166,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
   private void accept(SelectionKey key) throws IOException {
     // For an accept to be pending the channel must be a server socket channel.
     ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
+    trace("New incoming connection to device port " + serverSocketChannel.socket().getLocalPort());
 
     int tunnelId = createTunnel();
 
@@ -213,12 +194,17 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
 
   private void acceptCommand(SelectionKey key) throws IOException {
     // Accept the connection and make it non-blocking
-    SocketChannel socketChannel = serverCommandChannel.accept();
+    SocketChannel socketChannel = commandServerChannel.accept();
     socketChannel.configureBlocking(false);
 
     if (commandChannel == null) {
       socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       commandChannel = socketChannel;
+
+      // Now that the command channel is opened we can start accepting connections from the other channels 
+      for (ServerSocketChannel channel : serverChannels.keySet()) {
+        channel.keyFor(selector).interestOps(SelectionKey.OP_ACCEPT);
+      }
     } else {
       socketChannel.register(selector, SelectionKey.OP_READ);
       pendingChannels.put(socketChannel, ByteBuffer.allocate(5));
@@ -253,6 +239,18 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     }
   }
 
+  private void createCommandServerSocketChannel() throws IOException {
+    ServerSocketChannel channel = ServerSocketChannel.open();
+
+    channel.configureBlocking(false);
+
+    channel.socket().bind(new InetSocketAddress(commandPort));
+    channel.register(selector, SelectionKey.OP_ACCEPT);
+
+    commandServerChannel = channel;
+    trace("Listening for commands on device port " + commandPort);
+  }
+
   private void createServerSocketChannel(int port) throws IOException {
     ServerSocketChannel channel = ServerSocketChannel.open();
     serverChannels.put(channel, new HashSet<Integer>());
@@ -260,6 +258,6 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     channel.configureBlocking(false);
 
     channel.socket().bind(new InetSocketAddress(port));
-    channel.register(selector, SelectionKey.OP_ACCEPT);
+    trace("Reverse proxy port " + port + " opened on the device");
   }
 }

@@ -6,8 +6,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 public class HostReversePortForwarder extends ReversePortForwarder {
@@ -35,7 +37,6 @@ public class HostReversePortForwarder extends ReversePortForwarder {
     }
   }
 
-  private int commandPort;
   private Map<Integer, Forward> forwards = new HashMap<Integer, Forward>();
 
   private Object mainMonitor = new Object();
@@ -43,16 +44,35 @@ public class HostReversePortForwarder extends ReversePortForwarder {
   private boolean stopRequest;
   private Thread thread;
 
-  public HostReversePortForwarder(int commandPort, Forward... forwards) {
-    this.commandPort = commandPort;
+  public HostReversePortForwarder(Forward... forwards) {
+    this(Arrays.asList(forwards));
+  }
+
+  public HostReversePortForwarder(List<Forward> forwards) {
     for (Forward forward : forwards) {
       this.forwards.put(forward.getDevicePort(), forward);
     }
   }
 
+  public void connect(int commandPort) throws IOException {
+    // Create a new non-blocking socket channel
+    commandChannel = SocketChannel.open(new InetSocketAddress(commandPort));
+  }
+
+  public boolean isConnected() {
+    return commandChannel != null;
+  }
+
   public void start() throws IOException {
     if (thread != null) {
       throw new IOException("Already started");
+    }
+
+    try {
+      init();
+    } catch (IOException e) {
+      done();
+      throw e;
     }
 
     thread = new Thread(new Runnable() {
@@ -68,37 +88,53 @@ public class HostReversePortForwarder extends ReversePortForwarder {
 
   public void stop() {
     if (thread != null) {
-      synchronized (mainMonitor) {
-        stopRequest = true;
-        selector.wakeup();
+      try {
+        synchronized (mainMonitor) {
+          stopRequest = true;
+          selector.wakeup();
+
+          try {
+            mainMonitor.wait();
+          } catch (InterruptedException e) {
+          }
+        }
 
         try {
-          mainMonitor.wait();
+          thread.join();
         } catch (InterruptedException e) {
         }
-      }
 
+        thread = null;
+      } finally {
+        done();
+      }
+    } else if (commandChannel != null) {
       try {
-        thread.join();
-      } catch (InterruptedException e) {
+        commandChannel.close();
+      } catch (IOException e) {
       }
 
-      thread = null;
+      commandChannel = null;
     }
+
   }
 
   @Override
   protected void done() {
     super.done();
     forwards.clear();
+
+    if (commandChannel != null) {
+      try {
+        commandChannel.close();
+      } catch (IOException e) {
+      }
+    }
   }
 
   @Override
   protected void init() throws IOException {
     super.init();
-
-    // Create a new non-blocking socket channel
-    commandChannel = SocketChannel.open(new InetSocketAddress(commandPort));
   }
 
   @Override
@@ -146,32 +182,26 @@ public class HostReversePortForwarder extends ReversePortForwarder {
   }
 
   private void run() throws IOException {
-    init();
+    while (true) {
+      // Wait for an event one of the registered channels
+      selector.select();
 
-    try {
-      while (true) {
-        // Wait for an event one of the registered channels
-        selector.select();
-
-        synchronized (mainMonitor) {
-          if (stopRequest) {
-            stopRequest = false;
-            mainMonitor.notify();
-            break;
-          }
-        }
-
-        for (Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator(); selectedKeys.hasNext();) {
-          SelectionKey key = selectedKeys.next();
-          selectedKeys.remove();
-
-          if (key.isValid()) {
-            processKey(key);
-          }
+      synchronized (mainMonitor) {
+        if (stopRequest) {
+          stopRequest = false;
+          mainMonitor.notify();
+          break;
         }
       }
-    } finally {
-      done();
+
+      for (Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator(); selectedKeys.hasNext();) {
+        SelectionKey key = selectedKeys.next();
+        selectedKeys.remove();
+
+        if (key.isValid()) {
+          processKey(key);
+        }
+      }
     }
   }
 }

@@ -91,10 +91,10 @@ public abstract class ReversePortForwarder {
     }
   }
 
-  protected Tunnel getTunnel(SelectionKey key) throws IOException {
+  protected int getTunnelId(SelectionKey key) throws IOException {
     Integer tunnelId = channels.get(key.channel());
     if (tunnelId != null) {
-      return getTunnel(tunnelId);
+      return tunnelId;
     } else {
       throw new IOException("Unknown channel");
     }
@@ -125,7 +125,17 @@ public abstract class ReversePortForwarder {
         writeCommand();
       }
     } else if (key.isReadable() || key.isWritable()) {
-      getTunnel(key).spool(key);
+      try {
+        int tunnelId = getTunnelId(key);
+        try {
+          getTunnel(tunnelId).spool(key);
+        } catch (IOException e) {
+          trace("IO spooling error: " + e.getMessage());
+          closeTunnel(tunnelId);
+        }
+      } catch (IOException e) {
+        trace("IO spooling error: " + e.getMessage());
+      }
     }
   }
 

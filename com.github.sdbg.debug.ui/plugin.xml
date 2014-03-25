@@ -150,7 +150,7 @@
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chromeapp.ChromeAppLaunchShortcut"
             id="com.github.sdbg.debug.ui.chromeAppLaunchShortcut"
-            label="%chrome.chromeApplaunch.shortcut.label"
+            label="%sdbg.chromeApplaunch.shortcut.label"
             icon="icons/chrome_app.png"
             modes="run,debug">
          <configurationType
@@ -204,7 +204,7 @@
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chromeconn.ChromeConnLaunchShortcut"
             id="com.github.sdbg.debug.ui.chromeConnLaunchShortcut"
-            label="%chrome.chromeConnlaunch.shortcut.label"
+            label="%sdbg.chromeConnlaunch.shortcut.label"
             icon="icons/chrome_conn.png"
             modes="run,debug">
          <configurationType
@@ -258,7 +258,7 @@
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chromemobileconn.ChromeMobileConnLaunchShortcut"
             id="com.github.sdbg.debug.ui.chromeMobileConnLaunchShortcut"
-            label="%chrome.chromeMobileConnlaunch.shortcut.label"
+            label="%sdbg.chromeMobileConnlaunch.shortcut.label"
             icon="icons/chrome_conn.png"
             modes="run,debug">
          <configurationType
@@ -293,7 +293,7 @@
             delegate="com.github.sdbg.debug.ui.internal.browser.BrowserLaunchConfigurationDelegate"
             id="com.github.sdbg.debug.core.browserLaunchConfig"
             modes="run"
-            name="%chrome.launch.config.client.name">
+            name="%sdbg.launch.config.client.name">
       </launchConfigurationType>
    </extension>
 
@@ -352,6 +352,60 @@
       </shortcut>
    </extension>
        
+   <!-- Android reverse port forwarding launch configuration -->
+   
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTypeImages">
+      <launchConfigurationTypeImage
+            configTypeID="com.github.sdbg.debug.core.androidReverseForwardsLaunchConfig"
+            icon="icons/android.png"
+            id="com.github.sdbg.debug.core.androidReverseForwardsLaunchConfigImage">
+      </launchConfigurationTypeImage>
+   </extension>
+
+   <extension
+         point="org.eclipse.debug.ui.launchConfigurationTabGroups">
+      <launchConfigurationTabGroup
+            class="com.github.sdbg.debug.ui.internal.androidreverseforwards.AndroidReverseForwardsTabGroup"
+            id="com.github.sdbg.debug.core.androidReverseForwardsLaunchConfigTabGroup"
+            type="com.github.sdbg.debug.core.androidReverseForwardsLaunchConfig"
+            description="Connect to a running Chrome for Mobile">
+      </launchConfigurationTabGroup>
+   </extension>
+   
+   <extension
+         point="org.eclipse.debug.ui.launchShortcuts">
+      <shortcut
+            class="com.github.sdbg.debug.ui.internal.androidreverseforwards.AndroidReverseForwardsLaunchShortcut"
+            id="com.github.sdbg.debug.ui.androidReverseForwardsLaunchShortcut"
+            label="%sdbg.androidReverseForwardsLaunch.shortcut.label"
+            icon="icons/android.png"
+            modes="run">
+         <configurationType
+               id="com.github.sdbg.debug.core.androidReverseForwardsLaunchConfig">
+         </configurationType>
+         <contextualLaunch>
+            <enablement>
+               <with variable="selection">
+                  <count value="1">
+                  </count>
+                  <iterate>
+                     <adapt type="org.eclipse.core.resources.IResource">
+                        <or>
+                           <and>
+                              <test property="com.github.sdbg.debug.isInDartProject"/>
+                              <test property="org.eclipse.core.resources.name" value="manifest.json"/>
+                           </and>
+                           <test property="com.github.sdbg.debug.isDartProject"/>
+                        </or>
+                     </adapt>
+                  </iterate>
+               </with>
+            </enablement>
+         </contextualLaunch>
+      </shortcut>
+   </extension>
+   
    <!-- breakpoints -->
 
    <extension

@@ -29,31 +29,30 @@ public class SDBGReverseForwardsLaunchConfigWrapper {
   private static final String REVERSE_FORWARDS = "reverseForwards", DEVICE = "device",
       DEVICE_COMMAND_PORT = "deviceCommandPort";
 
-  public static String getReverseForward(String host, Integer port, Integer devicePort) {
-    return (host != null ? host.trim() : "") + ":" + (port != null ? port.toString() : "") + ":"
-        + (devicePort != null ? devicePort.toString() : "");
+  public static String getReverseForward(String host, int port, int devicePort) {
+    return host + ":" + port + ":" + devicePort;
   }
 
-  public static Integer getReverseForwardDevicePort(String forward) {
+  public static int getReverseForwardDevicePort(String forward) {
     String[] str = forward.split("\\:");
     if (str[2].length() > 0) {
       return Integer.parseInt(str[2]);
     } else {
-      return null;
+      return -1;
     }
   }
 
   public static String getReverseForwardHost(String forward) {
     String[] str = forward.split("\\:");
-    return str[0].length() > 0 ? str[0] : null;
+    return str[0];
   }
 
-  public static Integer getReverseForwardPort(String forward) {
+  public static int getReverseForwardPort(String forward) {
     String[] str = forward.split("\\:");
     if (str[1].length() > 0) {
       return Integer.parseInt(str[1]);
     } else {
-      return null;
+      return -1;
     }
   }
 
@@ -86,7 +85,7 @@ public class SDBGReverseForwardsLaunchConfigWrapper {
 
   public int getDeviceCommandPort() {
     try {
-      return launchConfig.getAttribute(REVERSE_FORWARDS, 6565);
+      return launchConfig.getAttribute(DEVICE_COMMAND_PORT, 6565);
     } catch (CoreException e) {
       SDBGDebugCorePlugin.logError(e);
       return 6565;
@@ -114,7 +113,12 @@ public class SDBGReverseForwardsLaunchConfigWrapper {
   }
 
   public List<String> getReverseForwards() {
-    return new ArrayList<String>(Arrays.asList(getReverseForwardsStr().split("\\,")));
+    String forwardsStr = getReverseForwardsStr().trim();
+    if (forwardsStr.length() > 0) {
+      return new ArrayList<String>(Arrays.asList(getReverseForwardsStr().split("\\,")));
+    } else {
+      return new ArrayList<String>();
+    }
   }
 
   public String getReverseForwardsStr() {

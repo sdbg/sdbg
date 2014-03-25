@@ -79,6 +79,8 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   public static final String CHROMEAPP_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeAppLaunchConfig";
 
+  public static final String ANDROIDREVERSEFORWARDS_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.androidReverseForwardsLaunchConfig";
+
   private static IDebugEventSetListener debugEventListener;
 
   private static SDBGDebugCorePlugin plugin;

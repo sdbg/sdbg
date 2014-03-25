@@ -12,10 +12,10 @@
  * the License.
  */
 
-package com.github.sdbg.debug.ui.internal.chromemobileconn;
+package com.github.sdbg.debug.ui.internal.androidreverseforwards;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.SDBGReverseForwardsLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
 import com.github.sdbg.debug.ui.internal.util.AbstractLaunchShortcut;
 import com.github.sdbg.debug.ui.internal.util.ILaunchShortcutExt;
@@ -38,12 +38,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A launch shortcut to connect to a running Chrome for Mobile.
+ * A launch shortcut to reverse forward ports to Android device.
  */
-public class ChromeMobileConnLaunchShortcut extends AbstractLaunchShortcut implements
+public class AndroidReverseForwardsLaunchShortcut extends AbstractLaunchShortcut implements
     ILaunchShortcutExt {
-  public ChromeMobileConnLaunchShortcut() {
-    super("Connect to a running Chrome for Mobile");
+  public AndroidReverseForwardsLaunchShortcut() {
+    super("Forward Ports to Android Device");
   }
 
   @Override
@@ -66,7 +66,7 @@ public class ChromeMobileConnLaunchShortcut extends AbstractLaunchShortcut imple
   @Override
   protected ILaunchConfigurationType getConfigurationType() {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROMEMOBILECONN_LAUNCH_CONFIG_ID);
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.ANDROIDREVERSEFORWARDS_LAUNCH_CONFIG_ID);
 
     return type;
   }
@@ -106,18 +106,18 @@ public class ChromeMobileConnLaunchShortcut extends AbstractLaunchShortcut imple
     if (config == null) {
       // Create and launch a new configuration
       ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-      ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROMEMOBILECONN_LAUNCH_CONFIG_ID);
+      ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.ANDROIDREVERSEFORWARDS_LAUNCH_CONFIG_ID);
 
       try {
         ILaunchConfigurationWorkingCopy launchConfig = type.newInstance(
             null,
             manager.generateLaunchConfigurationName(getLaunchName(resource)));
 
-        SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(launchConfig);
-
-        launchWrapper.setApplicationName(resource.getFullPath().toString());
-        launchWrapper.setProjectName(resource.getProject().getName());
-        launchConfig.setMappedResources(new IResource[] {resource});
+//        SDBGReverseForwardsLaunchConfigWrapper launchWrapper = new SDBGReverseForwardsLaunchConfigWrapper(launchConfig);
+//
+//        launchWrapper.setApplicationName(resource.getFullPath().toString());
+//        launchWrapper.setProjectName(resource.getProject().getName());
+//        launchConfig.setMappedResources(new IResource[] {resource});
 
         config = launchConfig.doSave();
       } catch (CoreException e) {
@@ -128,7 +128,8 @@ public class ChromeMobileConnLaunchShortcut extends AbstractLaunchShortcut imple
 
     LaunchUtils.clearConsoles();
 
-    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
+    SDBGReverseForwardsLaunchConfigWrapper launchWrapper = new SDBGReverseForwardsLaunchConfigWrapper(
+        config);
     launchWrapper.markAsLaunched();
     LaunchUtils.launch(config, mode);
   }

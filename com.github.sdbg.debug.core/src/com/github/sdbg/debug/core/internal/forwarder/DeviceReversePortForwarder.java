@@ -20,7 +20,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     int commandPort = Integer.parseInt(args[0]);
     int[] ports = new int[args.length - 1];
     for (int i = 1; i < args.length; i++) {
-      ports[i] = Integer.parseInt(args[i]);
+      ports[i] = Integer.parseInt(args[i - 1]);
     }
 
     new DeviceReversePortForwarder(commandPort, ports).run();

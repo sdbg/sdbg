@@ -46,9 +46,9 @@
 
       <launchConfigurationType
             delegate="com.github.sdbg.debug.core.configs.AndroidReverseForwardsLaunchConfigurationDelegate"
-            id="com.github.sdbg.debug.core.androidReverseForwardsConnLaunchConfig"
+            id="com.github.sdbg.debug.core.androidReverseForwardsLaunchConfig"
             modes="run"
-            name="%launchconfig.chromeMobileReverseForwardsConn.name">
+            name="%launchconfig.androidReverseForwards.name">
       </launchConfigurationType>
    </extension>
 

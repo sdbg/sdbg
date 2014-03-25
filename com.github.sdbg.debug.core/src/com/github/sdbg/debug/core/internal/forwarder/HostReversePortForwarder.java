@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
 import java.util.Arrays;
@@ -54,9 +55,13 @@ public class HostReversePortForwarder extends ReversePortForwarder {
     }
   }
 
-  public void connect(int commandPort) throws IOException {
+  public void connect(String commandHost, int commandPort) throws IOException {
     // Create a new non-blocking socket channel
-    commandChannel = SocketChannel.open(new InetSocketAddress(commandPort));
+    commandChannel = SocketChannel.open(commandHost != null ? new InetSocketAddress(
+        commandHost,
+        commandPort) : new InetSocketAddress(commandPort));
+
+    ((SelectableChannel) commandChannel).configureBlocking(false);
   }
 
   public boolean isConnected() {
@@ -81,21 +86,26 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         try {
           HostReversePortForwarder.this.run();
         } catch (IOException e) {
+          //throw new RuntimeException(e);
         }
       }
-    }, "Host Reverse Forwarder Thread");
+    }, "Host Reverse Forwarder");
+
+    thread.start();
   }
 
   public void stop() {
     if (thread != null) {
       try {
         synchronized (mainMonitor) {
-          stopRequest = true;
-          selector.wakeup();
+          if (!stopRequest) {
+            stopRequest = true;
+            selector.wakeup();
 
-          try {
-            mainMonitor.wait();
-          } catch (InterruptedException e) {
+            try {
+              mainMonitor.wait();
+            } catch (InterruptedException e) {
+            }
           }
         }
 
@@ -121,26 +131,35 @@ public class HostReversePortForwarder extends ReversePortForwarder {
 
   @Override
   protected void done() {
-    super.done();
-    forwards.clear();
-
     if (commandChannel != null) {
       try {
         commandChannel.close();
       } catch (IOException e) {
       }
+
+      commandChannel = null;
     }
+
+    super.done();
+    forwards.clear();
   }
 
   @Override
   protected void init() throws IOException {
+    if (commandChannel == null) {
+      throw new IOException("Unexpected");
+    }
+
     super.init();
+
+    ((SelectableChannel) commandChannel).register(selector, SelectionKey.OP_READ
+        | SelectionKey.OP_WRITE);
   }
 
   @Override
   protected boolean processCommand(byte cmd, ByteBuffer commandBuffer) throws IOException {
     if (cmd == CMD_OPEN_CHANNEL) {
-      if (commandBuffer.limit() >= 4) {
+      if (commandBuffer.remaining() >= 8) {
         int devicePort = commandBuffer.getInt();
         Forward forward = forwards.get(devicePort);
         int tunnelId = commandBuffer.getInt();
@@ -148,19 +167,14 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         Tunnel tunnel = createTunnel(tunnelId);
 
         try {
-          ByteChannel channel = openChannel(forward.getHost(), forward.getPort());
-          tunnel.setLeftChannel(channel);
-
-          ByteChannel rightChannel = openChannel("localhost", devicePort);
-          tunnel.setRightChannel(rightChannel);
+          registerLeftChannel(tunnelId, openChannel(forward.getHost(), forward.getPort()));
+          registerRightChannel(
+              tunnelId,
+              openChannel("localhost", ((SocketChannel) commandChannel).socket().getPort())); // TODO XXX FIXME
 
           tunnel.getLeftToRight().put(CMD_OPEN_CHANNEL_ACK);
-          tunnel.getLeftToRight().putInt(devicePort);
-          Tunnel.spool(
-              selector,
-              tunnel.getLeftChannel(),
-              tunnel.getRightChannel(),
-              tunnel.getLeftToRight());
+          tunnel.getLeftToRight().putInt(tunnelId);
+          Tunnel.spool(selector, null, tunnel.getRightChannel(), tunnel.getLeftToRight());
         } catch (IOException e) {
           closeTunnel(tunnelId);
           commandWriteBuffer.put(CMD_OPEN_CHANNEL_FAIL);
@@ -178,29 +192,37 @@ public class HostReversePortForwarder extends ReversePortForwarder {
   }
 
   private ByteChannel openChannel(String host, int port) throws IOException {
-    return SocketChannel.open(new InetSocketAddress(host, port));
+    SocketChannel channel = SocketChannel.open(new InetSocketAddress(host, port));
+    channel.configureBlocking(false);
+
+    return channel;
   }
 
   private void run() throws IOException {
-    while (true) {
-      // Wait for an event one of the registered channels
-      selector.select();
+    try {
+      while (true) {
+        // Wait for an event one of the registered channels
+        selector.select();
 
-      synchronized (mainMonitor) {
-        if (stopRequest) {
-          stopRequest = false;
-          mainMonitor.notify();
-          break;
+        synchronized (mainMonitor) {
+          if (stopRequest) {
+            break;
+          }
+        }
+
+        for (Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator(); selectedKeys.hasNext();) {
+          SelectionKey key = selectedKeys.next();
+          selectedKeys.remove();
+
+          if (key.isValid()) {
+            processKey(key);
+          }
         }
       }
-
-      for (Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator(); selectedKeys.hasNext();) {
-        SelectionKey key = selectedKeys.next();
-        selectedKeys.remove();
-
-        if (key.isValid()) {
-          processKey(key);
-        }
+    } finally {
+      synchronized (mainMonitor) {
+        stopRequest = true;
+        mainMonitor.notify();
       }
     }
   }

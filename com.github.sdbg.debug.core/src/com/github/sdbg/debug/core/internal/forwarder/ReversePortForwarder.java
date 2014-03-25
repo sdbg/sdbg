@@ -3,6 +3,7 @@ package com.github.sdbg.debug.core.internal.forwarder;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.ClosedChannelException;
 import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -32,19 +33,11 @@ public abstract class ReversePortForwarder {
   protected void closeTunnel(int tunnelId) {
     Tunnel tunnel = tunnels.remove(tunnelId);
     if (tunnel != null) {
-      if (tunnel.getLeftChannel() != null) {
-        ((SelectableChannel) tunnel.getLeftChannel()).keyFor(selector).cancel();
-      }
-
-      if (tunnel.getRightChannel() != null) {
-        ((SelectableChannel) tunnel.getRightChannel()).keyFor(selector).cancel();
-      }
-
       channels.remove(tunnel.getLeftChannel());
       channels.remove(tunnel.getRightChannel());
-    }
 
-    tunnel.close();
+      tunnel.close();
+    }
   }
 
   protected int createTunnel() throws IOException {
@@ -77,12 +70,14 @@ public abstract class ReversePortForwarder {
     tunnels.clear();
     channels.clear();
 
-    try {
-      selector.close();
-    } catch (IOException e) {
-      // Best effort
+    if (selector != null) {
+      try {
+        selector.close();
+      } catch (IOException e) {
+        // Best effort
+      }
+      selector = null;
     }
-    selector = null;
 
     commandReadBuffer = commandWriteBuffer = null;
   }
@@ -126,20 +121,8 @@ public abstract class ReversePortForwarder {
     if (key.channel() == commandChannel) {
       if (key.isReadable()) {
         readCommand();
-
-        if (commandReadBuffer.remaining() < CMD_MAX_LENGTH) {
-          key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
-        } else {
-          key.interestOps(key.interestOps() | SelectionKey.OP_READ);
-        }
-      } else {
+      } else if (key.isWritable()) {
         writeCommand();
-
-        if (commandWriteBuffer.limit() == 0) {
-          key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
-        } else {
-          key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
-        }
       }
     } else if (key.isReadable() || key.isWritable()) {
       getTunnel(key).spool(key);
@@ -152,13 +135,10 @@ public abstract class ReversePortForwarder {
     if (numRead == -1) {
       // Remote entity shut the socket down cleanly. Do the
       // same from our end and cancel the channel.
-      throw new IOException();
+      throw new IOException("Command channel closed");
     }
 
-    SelectionKey key = ((SelectableChannel) commandChannel).keyFor(selector);
-    if (commandReadBuffer.limit() > 0) {
-      key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
-
+    if (commandReadBuffer.position() > 0) {
       ByteBuffer readBuffer = (ByteBuffer) commandReadBuffer.duplicate().flip();
 
       byte cmd = readBuffer.get();
@@ -166,8 +146,13 @@ public abstract class ReversePortForwarder {
         readBuffer.compact();
         commandReadBuffer = readBuffer;
       }
+    }
+
+    SelectionKey key = ((SelectableChannel) commandChannel).keyFor(selector);
+    if (commandReadBuffer.remaining() < CMD_MAX_LENGTH) {
+      key.interestOps(key.interestOps() & ~SelectionKey.OP_READ);
     } else {
-      key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+      key.interestOps(key.interestOps() | SelectionKey.OP_READ);
     }
   }
 
@@ -177,9 +162,9 @@ public abstract class ReversePortForwarder {
       throw new IOException("Left channel of the tunnel is already registered");
     } else {
       tunnel.setLeftChannel(leftChannel);
-      ((SelectableChannel) leftChannel).keyFor(selector).interestOps(
-          SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       channels.put(leftChannel, tunnelId);
+
+      register(tunnel.getLeftChannel(), tunnel.getRightChannel());
     }
   }
 
@@ -189,16 +174,22 @@ public abstract class ReversePortForwarder {
       throw new IOException("Right channel of the tunnel is already registered");
     } else {
       tunnel.setRightChannel(rightChannel);
-      ((SelectableChannel) rightChannel).keyFor(selector).interestOps(
-          SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       channels.put(rightChannel, tunnelId);
+
+      register(tunnel.getLeftChannel(), tunnel.getRightChannel());
     }
   }
 
   protected void trace(String str) {
+    System.out.println(str);
   }
 
   protected void trace(Throwable t) {
+    t.printStackTrace();
+  }
+
+  protected void traceChars(String str) {
+    System.out.print(str);
   }
 
   protected void writeCommand() throws IOException {
@@ -206,9 +197,21 @@ public abstract class ReversePortForwarder {
     commandChannel.write(commandWriteBuffer);
     commandWriteBuffer.compact();
 
-    if (!commandWriteBuffer.hasRemaining()) {
-      SelectionKey key = ((SelectableChannel) commandChannel).keyFor(selector);
+    SelectionKey key = ((SelectableChannel) commandChannel).keyFor(selector);
+    if (commandWriteBuffer.position() > 0) {
+      key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+    } else {
       key.interestOps(key.interestOps() & ~SelectionKey.OP_WRITE);
+    }
+  }
+
+  private void register(ByteChannel leftChannel, ByteChannel rightChannel)
+      throws ClosedChannelException {
+    if (leftChannel != null && rightChannel != null) {
+      ((SelectableChannel) leftChannel).register(selector, SelectionKey.OP_READ
+          | SelectionKey.OP_WRITE);
+      ((SelectableChannel) rightChannel).register(selector, SelectionKey.OP_READ
+          | SelectionKey.OP_WRITE);
     }
   }
 }

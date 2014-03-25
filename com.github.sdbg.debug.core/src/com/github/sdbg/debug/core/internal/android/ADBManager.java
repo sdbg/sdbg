@@ -97,11 +97,16 @@ public class ADBManager {
   public void addForward(String deviceId, String local, String remote) throws CoreException {
     String forward = deviceId + "=" + local;
     if (!forwards.contains(forward)) {
-      try {
-        executeADB("-s", deviceId, "forward", local, remote);
-      } finally {
-        forwards.add(forward);
-      }
+      executeADB("-s", deviceId, "forward", local, remote);
+      forwards.add(forward);
+    }
+  }
+
+  public void addForwardNoRebind(String deviceId, String local, String remote) throws CoreException {
+    String forward = deviceId + "=" + local;
+    if (!forwards.contains(forward)) {
+      executeADB("-s", deviceId, "forward", "--no-rebind", local, remote);
+      forwards.add(forward);
     }
   }
 

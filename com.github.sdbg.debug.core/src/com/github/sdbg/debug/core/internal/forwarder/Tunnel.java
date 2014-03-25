@@ -15,10 +15,10 @@ public class Tunnel {
       ByteBuffer buff) throws IOException {
     int read = from != null ? from.read(buff) : 0;
     if (read == -1) {
-      throw new IOException("Reached EOF");
+      throw new IOException("Channel closed");
     }
 
-    if (read > 0) {
+    if (from == null || read > 0) {
       buff.flip();
       to.write(buff);
       buff.compact();
@@ -41,7 +41,7 @@ public class Tunnel {
       toKey = ((SelectableChannel) to).keyFor(selector);
     }
     if (toKey != null) {
-      if (buff.remaining() == buff.limit()) {
+      if (buff.position() == 0) {
         toKey.interestOps(toKey.interestOps() & ~SelectionKey.OP_WRITE);
       } else {
         toKey.interestOps(toKey.interestOps() | SelectionKey.OP_WRITE);
@@ -50,10 +50,12 @@ public class Tunnel {
   }
 
   private static void close(Channel channel) {
-    try {
-      channel.close();
-    } catch (IOException e) {
-      // Best effort
+    if (channel != null) {
+      try {
+        channel.close();
+      } catch (IOException e) {
+        // Best effort
+      }
     }
   }
 

@@ -67,7 +67,7 @@ public class ReversePortForwarderManager {
         manager,
         deviceInfo.getId(),
         deviceCommandPort,
-        forwards), "XXX", Collections.emptyMap()) {
+        forwards), "Device Reverse Port Forwarder", Collections.emptyMap()) {
       @Override
       protected void terminated() {
         forwarder.stop();
@@ -76,16 +76,22 @@ public class ReversePortForwarderManager {
       }
     };
 
-    while (!process.isTerminated()) {
-      int hostCommandPort = NetUtils.findUnusedPort(6565);
-      manager.addForward(deviceInfo.getId(), "tcp:" + hostCommandPort, "tcp:" + deviceCommandPort);
+    int hostCommandPort = NetUtils.findUnusedPort(6565);
+    manager.addForward(deviceInfo.getId(), "tcp:" + hostCommandPort, "tcp:" + deviceCommandPort);
 
+    try {
+      Thread.sleep(2000); // TODO XXX FIXME: Get rid of that
+    } catch (InterruptedException e2) {
+    }
+
+    while (!process.isTerminated()) {
       try {
-        forwarder.connect(hostCommandPort);
+        forwarder.connect("localhost", hostCommandPort);
+        forwarder.start();
         return process;
       } catch (IOException e) {
         try {
-          Thread.sleep(1000);
+          Thread.sleep(100);
         } catch (InterruptedException e1) {
         }
       }

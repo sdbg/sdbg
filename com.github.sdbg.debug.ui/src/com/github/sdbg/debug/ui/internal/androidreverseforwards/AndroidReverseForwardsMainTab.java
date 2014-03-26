@@ -41,6 +41,7 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
   private static final int MAX_FORWARDS = 5; // for now; results in a simpler user interface (no list views, add/remove etc.
 
   private Text deviceText;
+  private Text deviceCommandPortText;
   private Text[] hostTexts = new Text[MAX_FORWARDS], portTexts = new Text[MAX_FORWARDS],
       devicePortTexts = new Text[MAX_FORWARDS];
 
@@ -63,7 +64,7 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
     Group group = new Group(composite, SWT.NONE);
     group.setText("Connection parameters");
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
-    GridLayoutFactory.fillDefaults().numColumns(2).margins(12, 6).applyTo(group);
+    GridLayoutFactory.fillDefaults().numColumns(5).margins(12, 6).applyTo(group);
 
     Label label = new Label(group, SWT.NONE);
     label.setText("Device:");
@@ -71,6 +72,15 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
     deviceText = new Text(group, SWT.SINGLE | SWT.BORDER);
     deviceText.addModifyListener(textModifyListener);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(deviceText);
+
+    label = new Label(group, SWT.NONE);
+
+    label = new Label(group, SWT.NONE);
+    label.setText("Command port:");
+
+    deviceCommandPortText = new Text(group, SWT.SINGLE | SWT.BORDER);
+    deviceCommandPortText.addModifyListener(textModifyListener);
+    GridDataFactory.swtDefaults().hint(40, -1).applyTo(deviceCommandPortText);
 
     Group pfGroup = new Group(composite, SWT.NONE);
     pfGroup.setText("Forwarding rules");
@@ -134,8 +144,10 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
     }
 
     final Label instructionsLabel = new Label(composite, SWT.WRAP);
-    instructionsLabel.setText("Make sure that \"USB debugging\" is enabled on your Android device. Then connect it to your PC via USB.");
-    GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(
+    instructionsLabel.setText("Make sure that \"USB debugging\" is enabled on your Android device. Then connect it to your PC via USB.\n\n"
+        + "Use this feature to expose to the mobile browser development websites running on your PC or LAN (e.g. http://localhost:8080/<my-j2ee-app>).\n\n"
+        + "This method may not work for public websites that inspect the HTTP Host header (e.g. http://gwtproject.org).");
+    GridDataFactory.fillDefaults().grab(true, false).hint(400, SWT.DEFAULT).applyTo(
         instructionsLabel);
 
     setControl(composite);
@@ -143,6 +155,19 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
 
   @Override
   public String getErrorMessage() {
+    if (deviceCommandPortText.getText().trim().length() == 0) {
+      return "Enter device command port";
+    } else {
+      try {
+        int commandPort = Integer.parseInt(deviceCommandPortText.getText().trim());
+        if (commandPort < 0 || commandPort > 65535) {
+          return "Command port out of range (0 - 65536)";
+        }
+      } catch (Exception e) {
+        return "Invalid command port: " + e.getMessage();
+      }
+    }
+
     String message = null;
 
     for (int i = 0; i < MAX_FORWARDS; i++) {
@@ -158,14 +183,20 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
           message = "Enter device port";
         } else {
           try {
-            Integer.parseInt(portStr);
+            int port = Integer.parseInt(portStr);
+            if (port < 0 || port > 65535) {
+              message = "Port out of range (0 - 65536)";
+            }
           } catch (Exception e) {
             message = "Invalid port: " + e.getMessage();
           }
 
           if (message == null) {
             try {
-              Integer.parseInt(devicePortStr);
+              int devicePort = Integer.parseInt(devicePortStr);
+              if (devicePort < 0 || devicePort > 65535) {
+                message = "Device port out of range (0 - 65536)";
+              }
             } catch (Exception e) {
               message = "Invalid device port: " + e.getMessage();
             }
@@ -198,6 +229,7 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
         configuration);
 
     deviceText.setText(launchConfig.getDevice());
+    deviceCommandPortText.setText(Integer.toString(launchConfig.getDeviceCommandPort()));
     List<String> rules = launchConfig.getReverseForwards();
     for (int i = 0; i < MAX_FORWARDS; i++) {
       if (i < rules.size()) {
@@ -223,7 +255,16 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
     SDBGReverseForwardsLaunchConfigWrapper launchConfig = new SDBGReverseForwardsLaunchConfigWrapper(
         configuration);
 
-    launchConfig.setDevice(deviceText.getText());
+    launchConfig.setDevice(deviceText.getText().trim());
+
+    int commandPort;
+    try {
+      commandPort = Integer.parseInt(deviceCommandPortText.getText().trim());
+    } catch (Exception e) {
+      commandPort = -1;
+    }
+    launchConfig.setDeviceCommandPort(commandPort);
+
     List<String> rules = new ArrayList<String>();
     for (int i = 0; i < MAX_FORWARDS; i++) {
       String host = hostTexts[i].getText().trim();
@@ -256,6 +297,7 @@ public class AndroidReverseForwardsMainTab extends AbstractLaunchConfigurationTa
     SDBGReverseForwardsLaunchConfigWrapper launchConfig = new SDBGReverseForwardsLaunchConfigWrapper(
         configuration);
     launchConfig.setDevice("");
+    launchConfig.setDeviceCommandPort(6565);
     launchConfig.setReverseForwardsStr("");
   }
 

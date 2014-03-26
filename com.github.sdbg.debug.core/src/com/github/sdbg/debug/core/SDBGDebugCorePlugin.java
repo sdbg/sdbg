@@ -15,6 +15,7 @@ package com.github.sdbg.debug.core;
 
 import com.github.sdbg.debug.core.configs.ChromeAppLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.internal.android.ADBManager;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
@@ -364,6 +365,8 @@ public class SDBGDebugCorePlugin extends Plugin {
 
     ChromeLaunchConfigurationDelegate.dispose();
     ChromeAppLaunchConfigurationDelegate.dispose();
+
+    new ADBManager().killServer();
 
     if (debugEventListener != null) {
       DebugPlugin.getDefault().removeDebugEventListener(debugEventListener);

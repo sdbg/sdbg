@@ -1,6 +1,7 @@
 package com.github.sdbg.debug.core.internal.android;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.forwarder.DeviceReversePortForwarder;
 import com.github.sdbg.debug.core.internal.forwarder.HostReversePortForwarder;
 import com.github.sdbg.debug.core.internal.forwarder.HostReversePortForwarder.Forward;
 import com.github.sdbg.debug.core.util.IDeviceChooser;
@@ -55,19 +56,13 @@ public class ReversePortForwarderManager {
 
     pushDeviceExecutable(manager, deviceInfo.getId());
 
-    StringBuilder devicePortsStr = new StringBuilder();
-    for (Forward forward : forwards) {
-      devicePortsStr.append(" ");
-      devicePortsStr.append(forward.getDevicePort());
-    }
-
     final HostReversePortForwarder forwarder = new HostReversePortForwarder(forwards);
 
     IProcess process = new RuntimeProcess(launch, prepareDeviceExecutableProcess(
         manager,
         deviceInfo.getId(),
         deviceCommandPort,
-        forwards), "Device Reverse Port Forwarder", Collections.emptyMap()) {
+        forwards), "Forwarder", Collections.emptyMap()) {
       @Override
       protected void terminated() {
         forwarder.stop();
@@ -98,6 +93,84 @@ public class ReversePortForwarderManager {
     }
 
     manager.dispose();
+    throw new DebugException(new Status(
+        IStatus.ERROR,
+        SDBGDebugCorePlugin.PLUGIN_ID,
+        "Reverse port forwarding launch failed."));
+  }
+
+  public IProcess testStart(ILaunch launch, IDeviceChooser deviceChooser, int deviceCommandPort,
+      List<Forward> forwards) throws CoreException {
+    final HostReversePortForwarder forwarder = new HostReversePortForwarder(forwards);
+
+    int[] ports = new int[forwards.size()];
+    for (int i = 0; i < ports.length; i++) {
+      ports[i] = forwards.get(i).getDevicePort();
+    }
+
+    final DeviceReversePortForwarder drpf = new DeviceReversePortForwarder(deviceCommandPort, ports);
+    final Thread dpfThread = new Thread() {
+      @Override
+      public void run() {
+        try {
+          drpf.run();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+    };
+
+    try {
+      IProcess process = new RuntimeProcess(
+          launch,
+          new ProcessBuilder("notepad").start(),
+          "Forwarder",
+          Collections.emptyMap()) {
+        @Override
+        protected void terminated() {
+          forwarder.stop();
+          try {
+            dpfThread.join();
+          } catch (InterruptedException e) {
+          }
+          super.terminated();
+        }
+      };
+
+      dpfThread.start();
+
+      int hostCommandPort = 6565;
+
+      try {
+        Thread.sleep(2000); // TODO XXX FIXME: Get rid of that
+      } catch (InterruptedException e2) {
+      }
+
+      while (!process.isTerminated()) {
+        try {
+          forwarder.connect("localhost", hostCommandPort);
+          forwarder.start();
+          return process;
+        } catch (IOException e) {
+          try {
+            Thread.sleep(100);
+          } catch (InterruptedException e1) {
+          }
+        }
+      }
+    } catch (IOException e) {
+      try {
+        dpfThread.join();
+      } catch (InterruptedException e1) {
+      }
+
+      throw new DebugException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          e.getMessage(),
+          e));
+    }
+
     throw new DebugException(new Status(
         IStatus.ERROR,
         SDBGDebugCorePlugin.PLUGIN_ID,

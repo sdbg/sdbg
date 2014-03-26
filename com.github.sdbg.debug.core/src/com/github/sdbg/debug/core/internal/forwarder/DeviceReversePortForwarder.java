@@ -13,9 +13,22 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class DeviceReversePortForwarder extends ReversePortForwarder {
   public static void main(String[] args) throws IOException {
+    for (Handler handler : LogManager.getLogManager().getLogger("").getHandlers()) {
+      if (handler instanceof ConsoleHandler) {
+        ConsoleHandler ch = (ConsoleHandler) handler;
+        ch.setFormatter(new ShellFormatter());
+        break;
+      }
+    }
+
     int commandPort = Integer.parseInt(args[0]);
     int[] ports = new int[args.length - 1];
     for (int i = 0; i < ports.length; i++) {
@@ -33,6 +46,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
   private Map<ByteChannel, ByteBuffer> pendingChannels = new HashMap<ByteChannel, ByteBuffer>();
 
   public DeviceReversePortForwarder(int commandPort, int[] ports) {
+    super(Logger.getLogger(DeviceReversePortForwarder.class.getName()));
     this.commandPort = commandPort;
     this.ports = ports;
   }
@@ -46,7 +60,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
         if (commandChannel != null) {
           selector.select();
         } else {
-          traceChars("Waiting for command connection on port "
+          logger.info("Waiting for command connection on port "
               + commandServerChannel.socket().getLocalPort() + "...");
 
           // Command channel not established yet. Wait for 10 seconds and then timeout
@@ -63,7 +77,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
         }
       } while (commandChannel != null);
 
-      trace(" Timed out");
+      logger.info("Command connection timed out");
     } finally {
       done();
     }
@@ -116,6 +130,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     if (cmd == CMD_OPEN_CHANNEL_FAIL) {
       int tunnelId = commandBuffer.getInt();
       closeTunnel(tunnelId);
+      logger.info("Opening tunnel " + tunnelId + " failed");
       return true;
     } else {
       return super.processCommand(cmd, commandBuffer);
@@ -154,8 +169,15 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
             try {
               byte cmd = readBuffer.get();
               if (cmd == CMD_OPEN_CHANNEL_ACK) {
-                registerLeftChannel(readBuffer.getInt(), channel);
-                pendingChannels.remove(channel);
+                int tunnelId = readBuffer.getInt();
+
+                try {
+                  registerLeftChannel(tunnelId, channel);
+                  pendingChannels.remove(channel);
+                } catch (IOException e) {
+                  logger.log(Level.INFO, "Spooling error: " + e.getMessage(), e);
+                  closeTunnel(tunnelId);
+                }
               } else {
                 throw new IOException("Unknown command");
               }
@@ -164,8 +186,8 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
             }
           }
         } catch (IOException e) {
+          logger.log(Level.SEVERE, "PROTOCOL ERROR: " + e.getMessage(), e);
           close(channel);
-          trace("IO error when processng pending channel: " + e.getMessage());
         }
       } else {
         super.processKey(key);
@@ -176,9 +198,10 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
   private void accept(SelectionKey key) throws IOException {
     // For an accept to be pending the channel must be a server socket channel.
     ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
-    trace("New incoming connection to device port " + serverSocketChannel.socket().getLocalPort());
 
     int tunnelId = createTunnel();
+    logger.fine("New incoming connection to device port "
+        + serverSocketChannel.socket().getLocalPort() + "; tunnel " + tunnelId);
 
     try {
       // Accept the connection and make it non-blocking
@@ -187,7 +210,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
 
       registerRightChannel(tunnelId, socketChannel);
     } catch (IOException e) {
-      trace("IO error: " + e.getMessage());
+      logger.log(Level.SEVERE, "PROTOCOL ERROR: " + e.getMessage(), e);
       closeTunnel(tunnelId);
     }
 
@@ -211,7 +234,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
         channel.register(selector, SelectionKey.OP_ACCEPT);
       }
 
-      trace(" Connected");
+      logger.info("Command connection established");
     } else {
       socketChannel.register(selector, SelectionKey.OP_READ);
       pendingChannels.put(socketChannel, ByteBuffer.allocate(5));
@@ -255,6 +278,6 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
     channel.configureBlocking(false);
 
     channel.socket().bind(new InetSocketAddress(port));
-    trace("Opened reverse proxy port: " + port);
+    logger.info("Opened reverse proxy port: " + port);
   }
 }

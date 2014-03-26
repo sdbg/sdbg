@@ -144,6 +144,10 @@ public class ADBManager {
     }, "devices");
   }
 
+  public void killServer() throws CoreException {
+    executeADB("kill-server");
+  }
+
   public void pull(String deviceId, String remote, File fileOrDir) throws CoreException {
     executeADB("-s", deviceId, "pull", remote, fileOrDir.getAbsolutePath());
   }

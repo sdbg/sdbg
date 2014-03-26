@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HostReversePortForwarder extends ReversePortForwarder {
   public static class Forward {
@@ -50,6 +52,7 @@ public class HostReversePortForwarder extends ReversePortForwarder {
   }
 
   public HostReversePortForwarder(List<Forward> forwards) {
+    super(Logger.getLogger(HostReversePortForwarder.class.getName()));
     for (Forward forward : forwards) {
       this.forwards.put(forward.getDevicePort(), forward);
     }
@@ -86,10 +89,10 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         try {
           HostReversePortForwarder.this.run();
         } catch (IOException e) {
-          //throw new RuntimeException(e);
+          throw new RuntimeException(e);
         }
       }
-    }, "Host Reverse Forwarder");
+    }, "Host Reverse Port Forwarder");
 
     thread.start();
   }
@@ -147,7 +150,7 @@ public class HostReversePortForwarder extends ReversePortForwarder {
   @Override
   protected void init() throws IOException {
     if (commandChannel == null) {
-      throw new IOException("Unexpected");
+      throw new IOException("Command channel is closed");
     }
 
     super.init();
@@ -175,16 +178,11 @@ public class HostReversePortForwarder extends ReversePortForwarder {
           tunnel.getLeftToRight().put(CMD_OPEN_CHANNEL_ACK);
           tunnel.getLeftToRight().putInt(tunnelId);
 
-          if (!Tunnel.spool(
-              selector,
-              tunnel.getLeftChannel(),
-              tunnel.getRightChannel(),
-              tunnel.getLeftToRight())) {
-            trace("Tunnel " + tunnelId + " closed");
+          if (!tunnel.spoolLeftToRight(selector)) {
             closeTunnel(tunnelId);
           }
         } catch (IOException e) {
-          trace("IO spooling error: " + e.getMessage());
+          logger.log(Level.INFO, "Spooling error: " + e.getMessage());
           closeTunnel(tunnelId);
           commandWriteBuffer.put(CMD_OPEN_CHANNEL_FAIL);
           commandWriteBuffer.putInt(tunnelId);

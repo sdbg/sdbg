@@ -11,25 +11,39 @@ import java.nio.channels.Selector;
 import java.nio.channels.WritableByteChannel;
 
 public class Tunnel {
-  public static void spool(Selector selector, ReadableByteChannel from, WritableByteChannel to,
+  public static boolean spool(Selector selector, ReadableByteChannel from, WritableByteChannel to,
       ByteBuffer buff) throws IOException {
-    int read = from != null ? from.read(buff) : 0;
-    if (read == -1) {
-      throw new IOException("Channel closed");
-    }
+    int read = 0, written = 0;
+    do {
+      if (from != null && read > -1) {
+        if (buff.hasRemaining()) {
+          read = from.read(buff);
+        } else {
+          read = 0;
+        }
+      } else {
+        read = 0;
+      }
 
-    if (from == null || read > 0) {
-      buff.flip();
-      to.write(buff);
-      buff.compact();
-    }
+      if (to != null && written > -1) {
+        if (buff.position() > 0) {
+          buff.flip();
+          written = to.write(buff);
+          buff.compact();
+        } else {
+          written = 0;
+        }
+      } else {
+        written = 0;
+      }
+    } while (read > 0 || written > 0);
 
     SelectionKey fromKey = null;
     if (selector != null && from instanceof SelectableChannel) {
       fromKey = ((SelectableChannel) from).keyFor(selector);
     }
     if (fromKey != null) {
-      if (buff.remaining() == 0) {
+      if (!buff.hasRemaining()) {
         fromKey.interestOps(fromKey.interestOps() & ~SelectionKey.OP_READ);
       } else {
         fromKey.interestOps(fromKey.interestOps() | SelectionKey.OP_READ);
@@ -47,6 +61,8 @@ public class Tunnel {
         toKey.interestOps(toKey.interestOps() | SelectionKey.OP_WRITE);
       }
     }
+
+    return (read > -1 || buff.position() > 0) && written > -1;
   }
 
   private static void close(Channel channel) {
@@ -99,19 +115,21 @@ public class Tunnel {
     this.rightChannel = rightChannel;
   }
 
-  public void spool(SelectionKey key) throws IOException {
+  public boolean spool(SelectionKey key) throws IOException {
     if (key.isReadable()) {
       if (key.channel() == leftChannel) {
-        spool(key.selector(), leftChannel, rightChannel, getLeftToRight());
+        return spool(key.selector(), leftChannel, rightChannel, getLeftToRight());
       } else {
-        spool(key.selector(), rightChannel, leftChannel, getRightToLeft());
+        return spool(key.selector(), rightChannel, leftChannel, getRightToLeft());
       }
     } else if (key.isWritable()) {
       if (key.channel() == rightChannel) {
-        spool(key.selector(), leftChannel, rightChannel, getLeftToRight());
+        return spool(key.selector(), leftChannel, rightChannel, getLeftToRight());
       } else {
-        spool(key.selector(), rightChannel, leftChannel, getRightToLeft());
+        return spool(key.selector(), rightChannel, leftChannel, getRightToLeft());
       }
+    } else {
+      return true;
     }
   }
 }

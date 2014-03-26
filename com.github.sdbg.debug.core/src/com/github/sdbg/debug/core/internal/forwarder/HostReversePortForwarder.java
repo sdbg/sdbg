@@ -174,8 +174,17 @@ public class HostReversePortForwarder extends ReversePortForwarder {
 
           tunnel.getLeftToRight().put(CMD_OPEN_CHANNEL_ACK);
           tunnel.getLeftToRight().putInt(tunnelId);
-          Tunnel.spool(selector, null, tunnel.getRightChannel(), tunnel.getLeftToRight());
+
+          if (!Tunnel.spool(
+              selector,
+              tunnel.getLeftChannel(),
+              tunnel.getRightChannel(),
+              tunnel.getLeftToRight())) {
+            trace("Tunnel " + tunnelId + " closed");
+            closeTunnel(tunnelId);
+          }
         } catch (IOException e) {
+          trace("IO spooling error: " + e.getMessage());
           closeTunnel(tunnelId);
           commandWriteBuffer.put(CMD_OPEN_CHANNEL_FAIL);
           commandWriteBuffer.putInt(tunnelId);

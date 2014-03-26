@@ -165,6 +165,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
           }
         } catch (IOException e) {
           close(channel);
+          trace("IO error when processng pending channel: " + e.getMessage());
         }
       } else {
         super.processKey(key);
@@ -186,6 +187,7 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
 
       registerRightChannel(tunnelId, socketChannel);
     } catch (IOException e) {
+      trace("IO error: " + e.getMessage());
       closeTunnel(tunnelId);
     }
 

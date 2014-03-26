@@ -128,7 +128,10 @@ public abstract class ReversePortForwarder {
       try {
         int tunnelId = getTunnelId(key);
         try {
-          getTunnel(tunnelId).spool(key);
+          if (!getTunnel(tunnelId).spool(key)) {
+            trace("Tunnel " + tunnelId + " closed");
+            closeTunnel(tunnelId);
+          }
         } catch (IOException e) {
           trace("IO spooling error: " + e.getMessage());
           closeTunnel(tunnelId);

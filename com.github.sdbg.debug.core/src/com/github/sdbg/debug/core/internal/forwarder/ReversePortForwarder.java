@@ -230,7 +230,7 @@ public abstract class ReversePortForwarder {
           | SelectionKey.OP_WRITE);
       ((SelectableChannel) tunnel.getRightChannel()).register(selector, SelectionKey.OP_READ
           | SelectionKey.OP_WRITE);
-      logger.fine("Tunnel " + tunnelId + " ready for work");
+      logger.info("Tunnel " + tunnelId + " ready for work");
     }
   }
 }

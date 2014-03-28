@@ -48,8 +48,6 @@ public class SDBGLaunchConfigWrapper {
 
   private static final String DEVICE = "device";
 
-  private static final String DEVICE_REVERSE_FORWARD_PORT = "deviceReverseForwardPort";
-
   private static final String URL = "url";
 
   private static final String CONNECTION_HOST = "connectionHost";
@@ -165,15 +163,6 @@ public class SDBGLaunchConfigWrapper {
       SDBGDebugCorePlugin.logError(e);
 
       return "";
-    }
-  }
-
-  public int getDeviceReverseForwardPort() {
-    try {
-      return launchConfig.getAttribute(CONNECTION_PORT, 8080);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-      return 8080;
     }
   }
 
@@ -393,13 +382,6 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setDevice(String value) {
     getWorkingCopy().setAttribute(DEVICE, value);
-  }
-
-  /**
-   * @see #getDeviceReverseForwardPort()
-   */
-  public void setDeviceReverseForwardPort(int value) {
-    getWorkingCopy().setAttribute(DEVICE_REVERSE_FORWARD_PORT, value);
   }
 
   /**

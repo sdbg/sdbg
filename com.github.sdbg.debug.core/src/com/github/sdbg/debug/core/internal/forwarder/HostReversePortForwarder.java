@@ -64,6 +64,27 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         commandHost,
         commandPort) : new InetSocketAddress(commandPort));
 
+    try {
+      ByteBuffer helloCmdBuff = ByteBuffer.allocate(1);
+      int read = commandChannel.read(helloCmdBuff);
+      if (read == -1 || helloCmdBuff.hasRemaining()) {
+        throw new IOException("Unexpected");
+      } else {
+        helloCmdBuff.flip();
+        if (helloCmdBuff.get() != CMD_HELLO) {
+          throw new IOException("Unexpected");
+        }
+      }
+    } catch (IOException e) {
+      try {
+        commandChannel.close();
+      } catch (IOException e2) {
+      }
+
+      commandChannel = null;
+      throw e;
+    }
+
     ((SelectableChannel) commandChannel).configureBlocking(false);
   }
 
@@ -89,7 +110,7 @@ public class HostReversePortForwarder extends ReversePortForwarder {
         try {
           HostReversePortForwarder.this.run();
         } catch (IOException e) {
-          throw new RuntimeException(e);
+          logger.log(Level.SEVERE, "PROTOCOL ERROR: " + e.getMessage(), e);
         }
       }
     }, "Host Reverse Port Forwarder");

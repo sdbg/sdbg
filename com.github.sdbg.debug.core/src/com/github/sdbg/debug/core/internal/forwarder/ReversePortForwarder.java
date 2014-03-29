@@ -14,8 +14,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class ReversePortForwarder {
-  protected static final byte CMD_UNKNOWN_COMMAND = (byte) 1, CMD_OPEN_CHANNEL = (byte) 2,
-      CMD_OPEN_CHANNEL_ACK = (byte) 3, CMD_OPEN_CHANNEL_FAIL = (byte) 4;
+  protected static final byte CMD_HELLO = (byte) 0, CMD_UNKNOWN_OR_UNEXPECTED_COMMAND = (byte) 1,
+      CMD_OPEN_CHANNEL = (byte) 2, CMD_OPEN_CHANNEL_ACK = (byte) 3,
+      CMD_OPEN_CHANNEL_FAIL = (byte) 4;
 
   private static final int CMD_MAX_LENGTH = 10;
 
@@ -113,7 +114,7 @@ public abstract class ReversePortForwarder {
   }
 
   protected boolean processCommand(byte cmd, ByteBuffer commandBuffer) throws IOException {
-    commandWriteBuffer.put(CMD_UNKNOWN_COMMAND);
+    commandWriteBuffer.put(CMD_UNKNOWN_OR_UNEXPECTED_COMMAND);
     commandWriteBuffer.put(cmd);
     writeCommand();
 

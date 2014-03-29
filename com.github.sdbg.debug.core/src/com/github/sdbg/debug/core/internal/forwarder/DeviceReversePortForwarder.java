@@ -229,6 +229,9 @@ public class DeviceReversePortForwarder extends ReversePortForwarder {
       socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
       commandChannel = socketChannel;
 
+      commandWriteBuffer.put(CMD_HELLO);
+      writeCommand();
+
       // Now that the command channel is opened we can start accepting connections from the other channels 
       for (ServerSocketChannel channel : serverChannels) {
         channel.register(selector, SelectionKey.OP_ACCEPT);

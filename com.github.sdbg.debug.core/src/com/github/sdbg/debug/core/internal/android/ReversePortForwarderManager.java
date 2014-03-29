@@ -74,10 +74,10 @@ public class ReversePortForwarderManager {
     int hostCommandPort = NetUtils.findUnusedPort(6565);
     manager.addForward(deviceInfo.getId(), "tcp:" + hostCommandPort, "tcp:" + deviceCommandPort);
 
-    try {
-      Thread.sleep(2000); // TODO XXX FIXME: Get rid of that
-    } catch (InterruptedException e2) {
-    }
+//    try {
+//      Thread.sleep(2000); // TODO XXX FIXME: Get rid of that
+//    } catch (InterruptedException e2) {
+//    }
 
     while (!process.isTerminated()) {
       try {

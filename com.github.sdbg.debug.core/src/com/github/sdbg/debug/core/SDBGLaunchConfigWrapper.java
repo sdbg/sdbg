@@ -172,13 +172,15 @@ public class SDBGLaunchConfigWrapper {
   public Map<String, String> getEnvironment() throws CoreException {
     Map<String, String> map = new HashMap<String, String>();
 
-    for (String envProperty : DebugPlugin.getDefault().getLaunchManager().getEnvironment(
-        launchConfig)) {
-      int index = envProperty.indexOf('=');
-      if (index > 0) {
-        String key = envProperty.substring(0, index);
-        String value = envProperty.substring(index + 1);
-        map.put(key, value);
+    String[] environment = DebugPlugin.getDefault().getLaunchManager().getEnvironment(launchConfig);
+    if (environment != null) {
+      for (String envProperty : environment) {
+        int index = envProperty.indexOf('=');
+        if (index > 0) {
+          String key = envProperty.substring(0, index);
+          String value = envProperty.substring(index + 1);
+          map.put(key, value);
+        }
       }
     }
 

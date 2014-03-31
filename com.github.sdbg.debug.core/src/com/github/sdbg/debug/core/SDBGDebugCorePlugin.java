@@ -15,6 +15,7 @@ package com.github.sdbg.debug.core;
 
 import com.github.sdbg.debug.core.configs.ChromeAppLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.internal.android.ADBManager;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
@@ -78,6 +79,8 @@ public class SDBGDebugCorePlugin extends Plugin {
   public static final String CHROMEMOBILECONN_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeMobileConnLaunchConfig";
 
   public static final String CHROMEAPP_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeAppLaunchConfig";
+
+  public static final String ANDROIDREVERSEFORWARDS_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.androidReverseForwardsLaunchConfig";
 
   private static IDebugEventSetListener debugEventListener;
 
@@ -362,6 +365,8 @@ public class SDBGDebugCorePlugin extends Plugin {
 
     ChromeLaunchConfigurationDelegate.dispose();
     ChromeAppLaunchConfigurationDelegate.dispose();
+
+    new ADBManager().killServer();
 
     if (debugEventListener != null) {
       DebugPlugin.getDefault().removeDebugEventListener(debugEventListener);

@@ -506,7 +506,12 @@
         	id="com.github.sdbg.debug.ui.internal.editors.JsEditor">
       </editor>
    </extension>
-   
+
+	<extension
+ 		point="org.eclipse.core.filebuffers.documentSetup">
+ 		<participant extensions="js,sdbgjs" class="com.github.sdbg.debug.ui.internal.editors.JsEditorDocumentSetup"/>
+	</extension>
+	   
    <extension point="org.eclipse.ui.contexts">
       <context
         	name="SDBG Debug"

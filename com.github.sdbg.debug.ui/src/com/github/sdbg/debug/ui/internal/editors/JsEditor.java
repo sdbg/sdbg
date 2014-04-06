@@ -6,6 +6,8 @@ package com.github.sdbg.debug.ui.internal.editors;
 
 //&&&package org.chromium.debug.ui.editors;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.editors.text.TextEditor;
 
 /**
@@ -22,10 +24,22 @@ public class JsEditor extends TextEditor {
   /** The ID of the editor ruler context menu */
   public static final String RULER_CONTEXT = EDITOR_ID + ".ruler"; //$NON-NLS-1$
 
+  private boolean scalabilityModeEnabled;
+
   public JsEditor() {
-    setSourceViewerConfiguration(new JsSourceViewerConfiguration());
+    setSourceViewerConfiguration(new JsSourceViewerScalableConfiguration(this));
     setKeyBindingScopes(new String[] {"org.eclipse.ui.textEditorScope", //$NON-NLS-1$
         "com.github.sdbg.debug.ui.internal.editors.JsEditor.context"}); //$NON-NLS-1$
+  }
+
+  public boolean isScalabilityModeEnabled() {
+    return scalabilityModeEnabled;
+  }
+
+  @Override
+  protected void doSetInput(IEditorInput input) throws CoreException {
+    super.doSetInput(input);
+    updateScalabilityMode(input);
   }
 
   @Override
@@ -33,7 +47,11 @@ public class JsEditor extends TextEditor {
     super.initializeEditor();
     setEditorContextMenuId(EDITOR_CONTEXT);
     setRulerContextMenuId(RULER_CONTEXT);
-    setDocumentProvider(new JsDocumentProvider());
+  }
+
+  private void updateScalabilityMode(IEditorInput input) {
+    scalabilityModeEnabled = getDocumentProvider().getDocument(input) != null
+        && getDocumentProvider().getDocument(input).getLength() > 1024 * 1024;
   }
 
 //&&&  

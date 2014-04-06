@@ -145,6 +145,11 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
   }
 
   private String sanitizeFileName(String str) {
-    return str.replace(':', '~').replace('/', '_').replace('\\', '_');
+    String fileName = str.replace(':', '~').replace('/', '_').replace('\\', '_');
+    if (fileName.endsWith(".js")) {
+      fileName = fileName.substring(0, fileName.length() - ".js".length()) + ".sdbgjs";
+    }
+
+    return "-" + fileName;
   }
 }

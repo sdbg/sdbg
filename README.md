@@ -15,7 +15,7 @@ Eclipse 3.7 or later is required.
 To install SDBG, use the following sequence of Eclipse commands: Help menu -> Install New Software... -> Add...
 - (The "Add Repository" dialog will appear)
 - For "Name", enter "SDBG" or something similar
-- For "Location", fill-in the following URL: [https://github.com/sdbg/sdbg/raw/master/p2repo](https://github.com/sdbg/sdbg/raw/master/p2repo)
+- For "Location", fill-in the following URL: [http://sdbg.github.io/p2](http://sdbg.github.io/p2)
 
 Alternatively, you can download the latest [SDBG P2 repository ZIP](https://github.com/sdbg/sdbg/releases) and install it by using the following sequence of Eclipse commands:
 Help menu -> Install New Software... -> Add... -> Archive...

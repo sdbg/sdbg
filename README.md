@@ -1,4 +1,4 @@
-# SDBG: Sourcemap Debugger
+# SDBG: Eclipse JavaScript debugger with Source maps support
 
 This is an Eclipse plugin designed to expose IDE debugging support for compiled JavaScript applications using sourcemaps.
 

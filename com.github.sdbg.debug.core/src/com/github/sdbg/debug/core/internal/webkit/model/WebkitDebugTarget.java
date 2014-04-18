@@ -199,7 +199,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
   @Override
   public boolean canTerminate() {
-    return connection.isConnected();
+    return connection != null && connection.isConnected();
   }
 
   @Override
@@ -211,25 +211,43 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
   public void fireTerminateEvent() {
     setActiveTarget(null);
 
+    // NOTE: We are also setting some class members explicitly to NULL, because
+    // even though our instance is terminated, Eclipse will continue to keep a reference to it 
+    // for visualization purposes in Eclipse Debug view, until we clean it up
+    //
+    // However, the last thing we want is to keep a reference to e.g. sourceMapManager when not needed, 
+    // as it occupies huge amounts of RAM
+
     breakpointManager.dispose(false);
+    breakpointManager = null;
 
     cssScriptManager.dispose();
+    cssScriptManager = null;
 
     if (htmlScriptManager != null) {
       htmlScriptManager.dispose();
+      htmlScriptManager = null;
     }
 
     if (dartCodeManager != null) {
       dartCodeManager.dispose();
+      dartCodeManager = null;
     }
 
     sourceMapManager.dispose();
+    sourceMapManager = null;
 
     if (adbManager != null) {
       adbManager.removeAllForwards();
+      adbManager = null;
     }
 
+    IBreakpointManager eclipseBpManager = DebugPlugin.getDefault().getBreakpointManager();
+    eclipseBpManager.removeBreakpointManagerListener(this);
+
     debugThread = null;
+    connection = null;
+    process = null;
 
     // Check for null on system shutdown.
     if (DebugPlugin.getDefault() != null) {

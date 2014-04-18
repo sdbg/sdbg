@@ -246,8 +246,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     eclipseBpManager.removeBreakpointManagerListener(this);
 
     debugThread = null;
-    connection = null;
-    process = null;
 
     // Check for null on system shutdown.
     if (DebugPlugin.getDefault() != null) {
@@ -542,6 +540,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
     }
     process.terminate();
+    process = null;
   }
 
   public void writeToStdout(String message) {

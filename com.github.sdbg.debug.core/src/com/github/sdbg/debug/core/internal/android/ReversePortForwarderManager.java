@@ -62,7 +62,7 @@ public class ReversePortForwarderManager {
         manager,
         deviceInfo.getId(),
         deviceCommandPort,
-        forwards), "Forwarder", Collections.emptyMap()) {
+        forwards), "Forwarder", Collections.<String, String> emptyMap()) {
       @Override
       protected void terminated() {
         forwarder.stop();
@@ -125,7 +125,7 @@ public class ReversePortForwarderManager {
           launch,
           new ProcessBuilder("notepad").start(),
           "Forwarder",
-          Collections.emptyMap()) {
+          Collections.<String, String> emptyMap()) {
         @Override
         protected void terminated() {
           forwarder.stop();

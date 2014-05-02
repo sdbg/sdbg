@@ -48,17 +48,18 @@ public class RunInChromeAction extends RunAbstractAction {
   @Override
   protected void doLaunch(UIInstrumentationBuilder instrumentation) {
     IResource resource = LaunchUtils.getSelectedResource(window);
+    if (resource == null) {
+      return;
+    }
 
     try {
-      if (resource != null) {
-        instrumentation.metric("Resource-Class", resource.getClass().toString());
-        instrumentation.data("Resource-Name", resource.getName());
+      instrumentation.metric("Resource-Class", resource.getClass().toString());
+      instrumentation.data("Resource-Name", resource.getName());
 
-        // new launch config
-        ILaunchShortcut shortcut = LaunchUtils.getChromeLaunchShortcut();
-        ISelection selection = new StructuredSelection(resource);
-        launch(shortcut, selection, instrumentation);
-      }
+      // new launch config
+      ILaunchShortcut shortcut = LaunchUtils.getChromeLaunchShortcut();
+      ISelection selection = new StructuredSelection(resource);
+      launch(shortcut, selection, instrumentation);
     } catch (Exception exception) {
       instrumentation.metric("Problem", "Exception launching " + exception.getClass().toString());
       instrumentation.data("Problem", "Exception launching " + exception.toString());

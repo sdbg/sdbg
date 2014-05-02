@@ -54,8 +54,8 @@ public class JDTSourcePathProvider extends StandardSourcePathProvider {
     }
 
     IJavaProject javaProject = JavaCore.create(project);
-    if (javaProject != null && javaProject.getProject().exists()
-        && !javaProject.getProject().isOpen()) {
+    assert javaProject != null;
+    if (javaProject.getProject().exists() && !javaProject.getProject().isOpen()) {
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,

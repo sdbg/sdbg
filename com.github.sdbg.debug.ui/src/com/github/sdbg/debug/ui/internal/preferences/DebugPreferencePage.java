@@ -37,7 +37,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 /**
- * The preference page for Dart debugging.
+ * The preference page for SDBG debugging.
  */
 public class DebugPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
   public static final String PAGE_ID = "com.github.sdbg.debug.debugPreferencePage"; //$NON-NLS-1$

@@ -86,8 +86,6 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   private static SDBGDebugCorePlugin plugin;
 
-  public static final String PREFS_DART_VM_PATH = "vmPath";
-
   public static final String PREFS_BROWSER_NAME = "browserName";
 
   public static final String PREFS_USE_SOURCE_MAPS = "useSourceMaps";
@@ -247,16 +245,6 @@ public class SDBGDebugCorePlugin extends Plugin {
     return getPrefs().get(PREFS_BROWSER_NAME, "");
   }
 
-  /**
-   * Returns the path to the Dart VM executable, if it has been set. Otherwise, this method returns
-   * the empty string.
-   * 
-   * @return the path to the Dart VM executable
-   */
-  public String getDartVmExecutablePath() {
-    return getPrefs().get(PREFS_DART_VM_PATH, "");
-  }
-
   public boolean getIsDefaultBrowser() {
     return getPrefs().getBoolean(PREFS_DEFAULT_BROWSER, true);
   }
@@ -297,21 +285,6 @@ public class SDBGDebugCorePlugin extends Plugin {
     prefs.putBoolean(PREFS_DEFAULT_BROWSER, useDefault);
     prefs.put(PREFS_BROWSER_NAME, name);
     prefs.put(PREFS_BROWSER_ARGS, args);
-
-    try {
-      getPrefs().flush();
-    } catch (BackingStoreException exception) {
-      logError(exception);
-    }
-  }
-
-  /**
-   * Set the path to the Dart VM executable.
-   * 
-   * @param value the path to the Dart VM executable.
-   */
-  public void setDartVmExecutablePath(String value) {
-    getPrefs().put(PREFS_DART_VM_PATH, value);
 
     try {
       getPrefs().flush();

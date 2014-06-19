@@ -13,6 +13,16 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
+import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
+import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.model.ISDBGValue;
+
 import java.io.IOException;
 import java.util.Collections;
 
@@ -24,16 +34,6 @@ import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.core.model.IWatchExpressionListener;
 import org.json.JSONObject;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
-import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
-import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
-import com.github.sdbg.debug.core.model.ISDBGValue;
 
 /**
  * The IValue implementation of Webkit Debug element.
@@ -66,7 +66,8 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public void computeDetail(final IValueCallback callback) {
     // If the value is a primitive type, just return the display string.
-    if (value.isPrimitive() || (variable != null && variable.isLibraryObject())) {
+    if (value.isPrimitive() || (variable != null && variable.isLibraryObject())
+        || !SDBGDebugCorePlugin.getPlugin().getInvokeToString()) {
       callback.detailComputed(getDisplayString());
 
       return;
@@ -93,42 +94,6 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       SDBGDebugCorePlugin.logError(e);
 
       callback.detailComputed(null);
-    }
-  }
-
-  private void evalOnGlobalContext(final String expression,
-      final WebkitResult<WebkitRemoteObject> originalResult, final IWatchExpressionListener listener) {
-    try {
-      getConnection().getRuntime().evaluate(
-          expression,
-          null,
-          false,
-          new WebkitCallback<WebkitRemoteObject>() {
-            @Override
-            public void handleResult(WebkitResult<WebkitRemoteObject> result) {
-              if (result.isError()) {
-                listener.watchEvaluationFinished(WatchExpressionResult.error(
-                    expression,
-                    originalResult.getErrorMessage()));
-              } else if (result.getResult().isSyntaxError()) {
-                listener.watchEvaluationFinished(WatchExpressionResult.value(
-                    expression,
-                    new WebkitDebugValue(getTarget(), null, originalResult.getResult())));
-              } else {
-                listener.watchEvaluationFinished(WatchExpressionResult.value(
-                    expression,
-                    new WebkitDebugValue(getTarget(), null, result.getResult())));
-              }
-            }
-          });
-    } catch (IOException e) {
-      listener.watchEvaluationFinished(WatchExpressionResult.exception(
-          expression,
-          new DebugException(new Status(
-              IStatus.ERROR,
-              SDBGDebugCorePlugin.PLUGIN_ID,
-              e.toString(),
-              e))));
     }
   }
 
@@ -330,6 +295,49 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     return value.isPrimitive();
   }
 
+  @Override
+  public void reset() {
+    variableCollector = null;
+
+    fireEvent(new DebugEvent(this, DebugEvent.CHANGE, DebugEvent.CONTENT));
+  }
+
+  private void evalOnGlobalContext(final String expression,
+      final WebkitResult<WebkitRemoteObject> originalResult, final IWatchExpressionListener listener) {
+    try {
+      getConnection().getRuntime().evaluate(
+          expression,
+          null,
+          false,
+          new WebkitCallback<WebkitRemoteObject>() {
+            @Override
+            public void handleResult(WebkitResult<WebkitRemoteObject> result) {
+              if (result.isError()) {
+                listener.watchEvaluationFinished(WatchExpressionResult.error(
+                    expression,
+                    originalResult.getErrorMessage()));
+              } else if (result.getResult().isSyntaxError()) {
+                listener.watchEvaluationFinished(WatchExpressionResult.value(
+                    expression,
+                    new WebkitDebugValue(getTarget(), null, originalResult.getResult())));
+              } else {
+                listener.watchEvaluationFinished(WatchExpressionResult.value(
+                    expression,
+                    new WebkitDebugValue(getTarget(), null, result.getResult())));
+              }
+            }
+          });
+    } catch (IOException e) {
+      listener.watchEvaluationFinished(WatchExpressionResult.exception(
+          expression,
+          new DebugException(new Status(
+              IStatus.ERROR,
+              SDBGDebugCorePlugin.PLUGIN_ID,
+              e.toString(),
+              e))));
+    }
+  }
+
   private String parseObjectId(String objectId) {
     if (objectId == null) {
       return null;
@@ -352,13 +360,6 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     } else {
       variableCollector = VariableCollector.empty();
     }
-  }
-
-  @Override
-  public void reset() {
-    variableCollector = null;
-
-    fireEvent(new DebugEvent(this, DebugEvent.CHANGE, DebugEvent.CONTENT));
   }
 
 }

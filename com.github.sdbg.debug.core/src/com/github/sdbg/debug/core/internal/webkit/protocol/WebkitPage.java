@@ -18,14 +18,14 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.DatatypeConverter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A WIP page domain object.
@@ -42,6 +42,8 @@ public class WebkitPage extends WebkitDomain {
     public void frameDetached(String frameId);
 
     public void frameNavigated(String frameId, String url);
+
+    public void frameResized();
 
     public void frameStartedLoading(String frameId);
 
@@ -67,6 +69,11 @@ public class WebkitPage extends WebkitDomain {
     }
 
     @Override
+    public void frameResized() {
+
+    }
+
+    @Override
     public void frameStartedLoading(String frameId) {
 
     }
@@ -86,6 +93,7 @@ public class WebkitPage extends WebkitDomain {
   private static final String PAGE_DOMCONTENTEVENTFIRED = "Page.domContentEventFired";
   private static final String PAGE_FRAMENAVIGATED = "Page.frameNavigated";
   private static final String PAGE_FRAMEDETACHED = "Page.frameDetached";
+  private static final String PAGE_FRAMERESIZED = "Page.frameResized";
   private static final String PAGE_FRAMESTOPPEDLOADING = "Page.frameStoppedLoading";
   private static final String PAGE_FRAMESTARTEDLOADING = "Page.frameStartedLoading";
 
@@ -261,6 +269,10 @@ public class WebkitPage extends WebkitDomain {
       for (PageListener listener : listeners) {
         listener.frameDetached(frameId);
       }
+    } else if (method.equals(PAGE_FRAMERESIZED)) {
+      for (PageListener listener : listeners) {
+        listener.frameResized();
+      }
     } else if (method.equals(PAGE_FRAMESTOPPEDLOADING)) {
       // {"method":"Page.frameStoppedLoading","params":{"frameId":"4620.1"}}
 
@@ -271,6 +283,8 @@ public class WebkitPage extends WebkitDomain {
       }
     } else if (method.equals(PAGE_FRAMESTARTEDLOADING)) {
       // {"method":"Page.frameStartedLoading","params":{"frameId":"48490.1"}}
+
+      connection.getCSS().frameStartedLoading();
 
       String frameId = params.getString("frameId");
 

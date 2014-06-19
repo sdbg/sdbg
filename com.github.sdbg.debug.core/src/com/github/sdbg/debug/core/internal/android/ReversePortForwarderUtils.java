@@ -24,16 +24,13 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.RuntimeProcess;
 
-public class ReversePortForwarderManager {
+public class ReversePortForwarderUtils {
   private static final String APP_NAME = "com.github.sdbg.android.forwarder",
       APP_FILE_NAME = APP_NAME + ".jar", APP_DEVICE_DIR = "/sdcard/tmp", APP_DIR = APP_DEVICE_DIR
           + "/" + APP_NAME, APP_DALVIK_CACHE_DIR = APP_DIR + "/dalvik-cache",
       MAIN_CLASS_NAME = "com.github.sdbg.debug.core.internal.forwarder.DeviceReversePortForwarder";
 
-  public ReversePortForwarderManager() {
-  }
-
-  public IProcess start(ILaunch launch, IDeviceChooser deviceChooser, int deviceCommandPort,
+  public static IProcess start(ILaunch launch, IDeviceChooser deviceChooser, int deviceCommandPort,
       List<Forward> forwards) throws CoreException {
     final ADBManager manager = new ADBManager();
 
@@ -99,8 +96,8 @@ public class ReversePortForwarderManager {
         "Reverse port forwarding launch failed."));
   }
 
-  public IProcess testStart(ILaunch launch, IDeviceChooser deviceChooser, int deviceCommandPort,
-      List<Forward> forwards) throws CoreException {
+  public static IProcess testStart(ILaunch launch, IDeviceChooser deviceChooser,
+      int deviceCommandPort, List<Forward> forwards) throws CoreException {
     final HostReversePortForwarder forwarder = new HostReversePortForwarder(forwards);
 
     int[] ports = new int[forwards.size()];
@@ -177,7 +174,7 @@ public class ReversePortForwarderManager {
         "Reverse port forwarding launch failed."));
   }
 
-  private Process prepareDeviceExecutableProcess(ADBManager manager, String deviceId,
+  private static Process prepareDeviceExecutableProcess(ADBManager manager, String deviceId,
       int deviceCommandPort, List<Forward> forwards) throws CoreException {
     StringBuilder devicePortsStr = new StringBuilder();
     for (Forward forward : forwards) {
@@ -190,7 +187,8 @@ public class ReversePortForwarderManager {
         + devicePortsStr);
   }
 
-  private void pushDeviceExecutable(ADBManager manager, String deviceId) throws CoreException {
+  private static void pushDeviceExecutable(ADBManager manager, String deviceId)
+      throws CoreException {
     try {
       manager.shell(deviceId, "mkdir " + APP_DIR);
       manager.shell(deviceId, "mkdir " + APP_DALVIK_CACHE_DIR);
@@ -227,5 +225,8 @@ public class ReversePortForwarderManager {
           e.toString(),
           e));
     }
+  }
+
+  private ReversePortForwarderUtils() {
   }
 }

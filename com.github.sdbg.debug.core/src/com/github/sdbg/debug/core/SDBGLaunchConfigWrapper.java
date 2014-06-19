@@ -39,6 +39,9 @@ public class SDBGLaunchConfigWrapper {
   private static final String APPLICATION_NAME = "applicationName";
   private static final String URL_QUERY_PARAMS = "urlQueryParams";
 
+  private static final String INSTALL_CONTENT_SHELL = "installContentShell";
+  private static final String LAUNCH_CONTENT_SHELL = "runContentShell";
+
   private static final String SHOW_LAUNCH_OUTPUT = "showLaunchOutput";
 
   // --enable-experimental-webkit-features and --enable-devtools-experiments
@@ -101,7 +104,7 @@ public class SDBGLaunchConfigWrapper {
     if (path == null || path.length() == 0) {
       return null;
     } else {
-      return ResourcesPlugin.getWorkspace().getRoot().findMember(getApplicationName());
+      return ResourcesPlugin.getWorkspace().getRoot().findMember(path);
     }
   }
 
@@ -187,6 +190,16 @@ public class SDBGLaunchConfigWrapper {
     return map;
   }
 
+  public boolean getInstallContentShell() {
+    try {
+      return launchConfig.getAttribute(INSTALL_CONTENT_SHELL, getLaunchContentShell());
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+
+      return false;
+    }
+  }
+
   /**
    * @return the last time this config was launched, or 0 or no such
    */
@@ -205,6 +218,16 @@ public class SDBGLaunchConfigWrapper {
 //
 //      return 0;
 //    }
+  }
+
+  public boolean getLaunchContentShell() {
+    try {
+      return launchConfig.getAttribute(LAUNCH_CONTENT_SHELL, true);
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+
+      return false;
+    }
   }
 
   /**
@@ -349,6 +372,14 @@ public class SDBGLaunchConfigWrapper {
 //    }
   }
 
+  public void save() {
+    try {
+      getWorkingCopy().doSave();
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+    }
+  }
+
   /**
    * @see #getApplicationName()
    */
@@ -384,6 +415,14 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setDevice(String value) {
     getWorkingCopy().setAttribute(DEVICE, value);
+  }
+
+  public void setInstallContentShell(boolean value) {
+    getWorkingCopy().setAttribute(INSTALL_CONTENT_SHELL, value);
+  }
+
+  public void setLaunchContentShell(boolean value) {
+    getWorkingCopy().setAttribute(LAUNCH_CONTENT_SHELL, value);
   }
 
   /**

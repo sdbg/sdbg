@@ -15,12 +15,18 @@ package com.github.sdbg.debug.core.breakpoints;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.LineBreakpoint;
@@ -33,7 +39,10 @@ import org.eclipse.osgi.util.NLS;
  */
 public class SDBGBreakpoint extends LineBreakpoint {
 
-  public static IMarker createBreakpointMarker(IResource file, int line) throws CoreException {
+  private static final String FILE_PATH = "fileUri";
+
+  public static IMarker createBreakpointMarker(IResource file, int line, String filePath)
+      throws CoreException {
     IMarker marker = file.createMarker(SDBGDebugCorePlugin.DEBUG_MARKER_ID);
 
     marker.setAttribute(IMarker.LINE_NUMBER, line);
@@ -42,6 +51,9 @@ public class SDBGBreakpoint extends LineBreakpoint {
         IMarker.MESSAGE,
         NLS.bind("Line Breakpoint: {0} [line: {1}]", file.getName(), line));
     marker.setAttribute(ENABLED, true);
+    if (filePath != null) {
+      marker.setAttribute(FILE_PATH, filePath);
+    }
 
     return marker;
   }
@@ -63,10 +75,15 @@ public class SDBGBreakpoint extends LineBreakpoint {
    * @throws CoreException
    */
   public SDBGBreakpoint(final IResource resource, final int line) throws CoreException {
+    this(resource, line, null);
+  }
+
+  public SDBGBreakpoint(final IResource resource, final int line, final String fileUri)
+      throws CoreException {
     IWorkspaceRunnable runnable = new IWorkspaceRunnable() {
       @Override
       public void run(IProgressMonitor monitor) throws CoreException {
-        IMarker marker = createBreakpointMarker(resource, line);
+        IMarker marker = createBreakpointMarker(resource, line, fileUri);
 
         setMarker(marker);
       }
@@ -75,8 +92,54 @@ public class SDBGBreakpoint extends LineBreakpoint {
     run(getMarkerRule(resource), runnable);
   }
 
+  public String getCharset() {
+    IResource resource = getFile();
+    if (resource != null && resource instanceof IFile) {
+      try {
+        return ((IFile) resource).getCharset();
+      } catch (CoreException e) {
+
+      }
+    }
+    return "UTF-8";
+  }
+
+  public InputStream getContents() {
+
+    IResource resource = getFile();
+    if (resource != null && resource instanceof IFile) {
+      try {
+        return ((IFile) resource).getContents();
+      } catch (CoreException e) {
+
+      }
+    }
+
+    String fileUri = getMarker().getAttribute(FILE_PATH, "");
+    if (!fileUri.isEmpty()) {
+      try {
+        return new FileInputStream(new File(fileUri));
+      } catch (FileNotFoundException e) {
+        SDBGDebugCorePlugin.logError(e);
+      }
+
+    }
+    return null;
+  }
+
   public IFile getFile() {
-    return (IFile) getMarker().getResource();
+    if (getMarker().getResource() instanceof IFile) {
+      return (IFile) getMarker().getResource();
+    }
+    return null;
+  }
+
+  public String getFilePath() {
+    try {
+      return (String) getMarker().getAttribute(FILE_PATH);
+    } catch (CoreException e) {
+      return null;
+    }
   }
 
   public int getLine() {
@@ -92,6 +155,21 @@ public class SDBGBreakpoint extends LineBreakpoint {
   @Override
   public String getModelIdentifier() {
     return SDBGDebugCorePlugin.DEBUG_MODEL_ID;
+  }
+
+  public String getName() {
+    if (getMarker().getResource() instanceof IFile) {
+      return ((IFile) getMarker().getResource()).getName();
+    }
+
+    try {
+      Path path = new Path((String) getMarker().getAttribute(FILE_PATH));
+      return path.lastSegment();
+
+    } catch (CoreException e) {
+      SDBGDebugCorePlugin.logError(e);
+    }
+    return null;
   }
 
   public boolean isBreakpointEnabled() {

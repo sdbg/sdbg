@@ -6,4 +6,6 @@ import org.eclipse.debug.core.model.IDebugTarget;
 
 public interface ISDBGDebugTarget extends IDebugTarget {
   ISDBGDebugTarget reconnect() throws IOException;
+
+  void writeToStdout(String message);
 }

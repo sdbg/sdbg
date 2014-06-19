@@ -21,8 +21,6 @@ import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.StringUtilities;
 
-import java.io.IOException;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
@@ -95,6 +93,10 @@ public class SDBGDebugCorePlugin extends Plugin {
   public static final String PREFS_BROWSER_ARGS = "browserArgs";
 
   public static final String PREFS_BREAK_ON_EXCEPTIONS = "breakOnExceptions";
+
+  public static final String PREFS_BREAK_ON_JS_EXCEPTIONS = "breakOnJSExceptions";
+
+  public static final String PREFS_INVOKE_TOSTRING = "invokeToString";
 
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
 
@@ -233,6 +235,10 @@ public class SDBGDebugCorePlugin extends Plugin {
     }
   }
 
+  public boolean getBreakOnJSException() {
+    return getPrefs().getBoolean(PREFS_BREAK_ON_JS_EXCEPTIONS, true);
+  }
+
   public String getBrowserArgs() {
     return getPrefs().get(PREFS_BROWSER_ARGS, "");
   }
@@ -243,6 +249,10 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   public String getBrowserName() {
     return getPrefs().get(PREFS_BROWSER_NAME, "");
+  }
+
+  public boolean getInvokeToString() {
+    return getPrefs().getBoolean(PREFS_INVOKE_TOSTRING, true);
   }
 
   public boolean getIsDefaultBrowser() {
@@ -278,6 +288,10 @@ public class SDBGDebugCorePlugin extends Plugin {
     }
   }
 
+  public void setBreakOnJSException(boolean value) {
+    getPrefs().putBoolean(PREFS_BREAK_ON_JS_EXCEPTIONS, value);
+  }
+
   public void setBrowserPreferences(boolean useDefault, String name, String args) {
 
     IEclipsePreferences prefs = getPrefs();
@@ -293,9 +307,12 @@ public class SDBGDebugCorePlugin extends Plugin {
     }
   }
 
+  public void setInvokeToString(boolean value) {
+    getPrefs().putBoolean(PREFS_INVOKE_TOSTRING, value);
+  }
+
   public void setShowRunResumeDialogPref(boolean value) {
     getPrefs().putBoolean(PREFS_SHOW_RUN_RESUME_DIALOG, value);
-
   }
 
   public void setUserAgentManager(IUserAgentManager userAgentManager) {
@@ -317,18 +334,6 @@ public class SDBGDebugCorePlugin extends Plugin {
     plugin = this;
 
     super.start(context);
-
-    // Start the embedded web server up (use a separate thread so we don't delay application startup).
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ResourceServerManager.getServer();
-        } catch (IOException e) {
-          logError(e);
-        }
-      }
-    }).start();
   }
 
   @Override

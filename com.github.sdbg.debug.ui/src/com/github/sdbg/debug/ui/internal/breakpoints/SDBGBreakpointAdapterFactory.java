@@ -18,7 +18,10 @@ import com.github.sdbg.core.DartCore;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdapterFactory;
+import org.eclipse.debug.ui.actions.IRunToLineTarget;
 import org.eclipse.debug.ui.actions.IToggleBreakpointsTarget;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 /**
@@ -48,6 +51,14 @@ public class SDBGBreakpointAdapterFactory implements IAdapterFactory {
         if (DartCore.isHtmlLikeFileName(name) || DartCore.isJSLikeFileName(name)) {
           return new SDBGBreakpointAdapter();
         }
+      } else {
+        IEditorInput input = editorPart.getEditorInput();
+        if (input instanceof FileStoreEditorInput) {
+          String path = ((FileStoreEditorInput) input).getURI().getPath();
+          if (DartCore.isHtmlLikeFileName(path) || DartCore.isJSLikeFileName(path)) {
+            return new SDBGBreakpointAdapter();
+          }
+        }
       }
     }
 
@@ -57,7 +68,7 @@ public class SDBGBreakpointAdapterFactory implements IAdapterFactory {
   @SuppressWarnings("rawtypes")
   @Override
   public Class[] getAdapterList() {
-    return new Class[] {IToggleBreakpointsTarget.class};
+    return new Class[] {IRunToLineTarget.class, IToggleBreakpointsTarget.class};
   }
 
 }

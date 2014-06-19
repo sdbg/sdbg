@@ -43,8 +43,6 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
   private IStackFrame[] suspendedFrames = EMPTY_FRAMES;
   private IBreakpoint[] suspendedBreakpoints = EMPTY_BREAKPOINTS;
 
-  private WebkitDebugIsolateFrame isolateFrame;
-
   /**
    * @param target
    */
@@ -96,11 +94,7 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
    */
   @Override
   public IStackFrame getIsolateVarsPseudoFrame() {
-    if (isolateFrame == null) {
-      isolateFrame = new WebkitDebugIsolateFrame(this);
-    }
-
-    return isolateFrame;
+    return new WebkitDebugIsolateFrame(this);
   }
 
   @Override

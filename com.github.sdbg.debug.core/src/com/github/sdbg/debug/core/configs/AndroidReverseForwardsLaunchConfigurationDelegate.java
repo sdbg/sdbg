@@ -16,7 +16,7 @@ package com.github.sdbg.debug.core.configs;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGReverseForwardsLaunchConfigWrapper;
-import com.github.sdbg.debug.core.internal.android.ReversePortForwarderManager;
+import com.github.sdbg.debug.core.internal.android.ReversePortForwarderUtils;
 import com.github.sdbg.debug.core.internal.forwarder.HostReversePortForwarder;
 import com.github.sdbg.debug.core.internal.util.IDFilterDeviceChooser;
 import com.github.sdbg.debug.core.internal.util.UIDeviceChooser;
@@ -36,8 +36,7 @@ import org.eclipse.debug.core.model.LaunchConfigurationDelegate;
  * A ILaunchConfigurationDelegate implementation that can forwards certain hosts and ports to
  * localhost:<xxx> on the mobile device itself.
  */
-public class AndroidReverseForwardsLaunchConfigurationDelegate extends
-    LaunchConfigurationDelegate {
+public class AndroidReverseForwardsLaunchConfigurationDelegate extends LaunchConfigurationDelegate {
   /**
    * Create a new ChromeConnLaunchConfigurationDelegate.
    */
@@ -77,10 +76,8 @@ public class AndroidReverseForwardsLaunchConfigurationDelegate extends
           SDBGDebugCorePlugin.createErrorStatus("This configuration has no configured forwards."));
     }
 
-    new ReversePortForwarderManager().start(
-        launch,
-        new IDFilterDeviceChooser(launchConfig.getDevice(), UIDeviceChooser.get()),
-        launchConfig.getDeviceCommandPort(),
-        forwards);
+    ReversePortForwarderUtils.start(launch, new IDFilterDeviceChooser(
+        launchConfig.getDevice(),
+        UIDeviceChooser.get()), launchConfig.getDeviceCommandPort(), forwards);
   }
 }

@@ -14,6 +14,13 @@
 
 package com.github.sdbg.debug.ui.internal;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.DebugUIHelper;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
+import com.github.sdbg.debug.ui.internal.chrome.DevToolsDisconnectManager;
+import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -21,6 +28,7 @@ import java.lang.reflect.Method;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
@@ -28,11 +36,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
-
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.DebugUIHelper;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 /**
  * A helper to allow non-UI code to interact with the UI.
@@ -52,36 +55,19 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
   }
 
   @Override
-  public void showDevtoolsDisconnectError(final String _title, final ISDBGDebugTarget target) {
-    final Display display = Display.getDefault();
+  public void handleDevtoolsDisconnect(ISDBGDebugTarget target) {
+    // Create a new manager for this specific disconnect.
+    new DevToolsDisconnectManager(target);
+  }
 
-    Display.getDefault().asyncExec(new Runnable() {
-      @Override
-      public void run() {
-        if (display.isDisposed()) {
-          return;
-        }
+  @Override
+  public void openBrowserTab(String url) {
+    try {
+      LaunchUtils.openBrowser(url);
+    } catch (CoreException e) {
+      showError("Open Browser", e.getMessage());
+    }
 
-        String title = _title;
-        String message = "The debugger connection has been closed by DevTools.\n\n"
-            + "DevTools only supports one connected debugger (e.g. Editor or Chrome DevTools) at a "
-            + "time. Do you want to re-connect? (DevTools must be closed first)";
-
-        Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-
-        while (MessageDialog.openQuestion(shell, title, message)) {
-          try {
-            target.reconnect();
-
-            return;
-          } catch (IOException e) {
-            title = "Error Re-connecting";
-            message = "Unable to reconnect - DevTools must first be closed in the browser."
-                + " Try to reconnect again?\n\n" + "(" + e.toString() + ")";
-          }
-        }
-      }
-    });
   }
 
   @Override

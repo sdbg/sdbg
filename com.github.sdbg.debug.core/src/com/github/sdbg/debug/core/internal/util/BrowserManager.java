@@ -18,6 +18,7 @@ import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.internal.android.ADBManager;
+import com.github.sdbg.debug.core.internal.android.MobileBrowserUtils;
 import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
 import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
@@ -129,7 +130,8 @@ public class BrowserManager {
     if (device != null) {
       int port = NetUtils.findUnusedPort(DEVTOOLS_PORT_NUMBER);
 
-      adbManager.addChromiumForward(device.getId(), port);
+      MobileBrowserUtils.addChromiumForward(adbManager, device.getId(), port);
+
       try {
         WebkitDebugTarget target = connect(
             launch,

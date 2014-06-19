@@ -14,6 +14,10 @@
 
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.CallFrame;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,17 +25,13 @@ import java.util.List;
 import org.eclipse.debug.core.IStreamListener;
 import org.eclipse.debug.core.model.IStreamMonitor;
 
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.CallFrame;
-
 /**
  * This is a Webkit specific implementation of an IStreamMonitor.
  */
 class WebkitStreamMonitor implements IStreamMonitor, WebkitConsole.ConsoleListener {
   private final static String FAILED_TO_LOAD = "Failed to load resource";
   private final static String CHROME_THUMB = "chrome://thumb/";
-  private final static String CHROME_SEARCH_THUMB = "chrome-search://thumb/";
+  private final static String CHROME_SEARCH_PAGE = "chrome-search://";
   private final static String NEWTAB_MESSAGE = "_/chrome/newtab?";
 
   private List<IStreamListener> listeners = new ArrayList<IStreamListener>();
@@ -138,9 +138,13 @@ class WebkitStreamMonitor implements IStreamMonitor, WebkitConsole.ConsoleListen
       return false;
     }
 
-    // Ignore all "failed to load" messages from chrome://thumb/... urls.
-    if (message.startsWith(FAILED_TO_LOAD)
-        && (url.startsWith(CHROME_THUMB) || url.startsWith(CHROME_SEARCH_THUMB))) {
+    // Ignore messages from chrome://thumb/... urls.
+    if (url.startsWith(CHROME_THUMB)) {
+      return true;
+    }
+
+    // Ignore messages from the chrome-search: page.
+    if (url.startsWith(CHROME_SEARCH_PAGE)) {
       return true;
     }
 

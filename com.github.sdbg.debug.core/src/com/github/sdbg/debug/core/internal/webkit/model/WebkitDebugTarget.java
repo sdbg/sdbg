@@ -29,6 +29,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseO
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
@@ -71,6 +72,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
   }
 
   private String debugTargetName;
+  private String disconnectMessage;
   private WebkitConnection connection;
   private ILaunch launch;
   private WebkitDebugProcess process;
@@ -111,7 +113,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     if (enableBreakpoints) {
       breakpointManager = new BreakpointManager(this);
     } else {
-      breakpointManager = new NullBreakpointManager();
+      breakpointManager = new BreakpointManager.NullBreakpointManager();
     }
 
     cssScriptManager = new CssScriptManager(this);
@@ -282,7 +284,11 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
   @Override
   public String getName() {
-    return debugTargetName;
+    if (disconnectMessage != null) {
+      return debugTargetName + " <" + disconnectMessage + ">";
+    } else {
+      return debugTargetName;
+    }
   }
 
   @Override
@@ -356,8 +362,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     connection.getPage().addPageListener(new WebkitPage.PageListenerAdapter() {
       @Override
       public void loadEventFired(int timestamp) {
-        cssScriptManager.handleLoadEventFired();
-
         if (htmlScriptManager != null) {
           htmlScriptManager.handleLoadEventFired();
         }
@@ -387,7 +391,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
         @Override
         public void targetCrashed() {
-
+          handleTargetCrashed();
         }
       });
     }
@@ -407,11 +411,21 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       @Override
       public void debuggerPaused(PausedReasonType reason, List<WebkitCallFrame> frames,
           WebkitRemoteObject exception) {
-        if (exception != null) {
-          printExceptionToStdout(exception);
-        }
+        if (exception != null && !SDBGDebugCorePlugin.getPlugin().getBreakOnJSException()
+            && isJavaScriptException(frames, exception)) {
+          try {
+            // Continue VM execution.
+            getConnection().getDebugger().resume();
+          } catch (IOException e) {
 
-        debugThread.handleDebuggerSuspended(reason, frames, exception);
+          }
+        } else {
+          if (exception != null) {
+            printExceptionToStdout(exception);
+          }
+
+          debugThread.handleDebuggerSuspended(reason, frames, exception);
+        }
       }
 
       @Override
@@ -620,9 +634,38 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       // when the debugger connection is closing.
       if (enableBreakpoints) {
         // Only show this message if the user launched Dartium with debugging enabled.
-        DebugUIHelper.getHelper().showDevtoolsDisconnectError("Debugger Connection Closed", this);
+        disconnectMessage = "devtools disconnect";
+
+        DebugUIHelper.getHelper().handleDevtoolsDisconnect(this);
       }
     }
+  }
+
+  protected void handleTargetCrashed() {
+    process.getStreamMonitor().messageAdded("<debug target crashed>");
+
+    try {
+      terminate();
+    } catch (DebugException e) {
+      SDBGDebugCorePlugin.logInfo(e);
+    }
+  }
+
+  protected boolean isJavaScriptException(List<WebkitCallFrame> frames, WebkitRemoteObject exception) {
+    if (frames.size() == 0) {
+      return false;
+    }
+
+    WebkitLocation location = frames.get(0).getLocation();
+
+    WebkitScript script = getConnection().getDebugger().getScript(location.getScriptId());
+    String url = script.getUrl();
+
+    if (url.endsWith(".dart.js") || url.endsWith(".precompiled.js")) {
+      return false;
+    }
+
+    return url.endsWith(".js");
   }
 
   protected void printExceptionToStdout(final WebkitRemoteObject exception) {

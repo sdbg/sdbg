@@ -16,8 +16,6 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 
 import junit.framework.TestCase;
 
-import com.github.sdbg.debug.core.internal.webkit.model.BreakpointManager;
-
 public class BreakpointManagerTest extends TestCase {
 
   private final class MockBreakpointManager extends BreakpointManager {
@@ -28,7 +26,7 @@ public class BreakpointManagerTest extends TestCase {
 
 //&&&    
 //    @Override
-//    protected String resolvePathToPackage(IFile resource, String filePath) {
+//    protected String resolvePathToPackage(IResource resource, String filePath) {
 //      String packages = "{\"packages\":{\"unittest\": [\"/dart/unittest/lib\"],"
 //          + "\"foo.bar.baz\": [\"/src/foo/bar/baz/lib\", \"/gen/foo/bar/baz\"]}}";
 //      ExplicitPackageUriResolver resolver = new ExplicitPackageUriResolverTest.MockExplicitPackageUriResolver(

@@ -29,7 +29,6 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseO
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
@@ -411,21 +410,11 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       @Override
       public void debuggerPaused(PausedReasonType reason, List<WebkitCallFrame> frames,
           WebkitRemoteObject exception) {
-        if (exception != null && !SDBGDebugCorePlugin.getPlugin().getBreakOnJSException()
-            && isJavaScriptException(frames, exception)) {
-          try {
-            // Continue VM execution.
-            getConnection().getDebugger().resume();
-          } catch (IOException e) {
-
-          }
-        } else {
-          if (exception != null) {
-            printExceptionToStdout(exception);
-          }
-
-          debugThread.handleDebuggerSuspended(reason, frames, exception);
+        if (exception != null) {
+          printExceptionToStdout(exception);
         }
+
+        debugThread.handleDebuggerSuspended(reason, frames, exception);
       }
 
       @Override
@@ -557,6 +546,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     process = null;
   }
 
+  @Override
   public void writeToStdout(String message) {
     process.getStreamMonitor().messageAdded(message);
   }
@@ -649,23 +639,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     } catch (DebugException e) {
       SDBGDebugCorePlugin.logInfo(e);
     }
-  }
-
-  protected boolean isJavaScriptException(List<WebkitCallFrame> frames, WebkitRemoteObject exception) {
-    if (frames.size() == 0) {
-      return false;
-    }
-
-    WebkitLocation location = frames.get(0).getLocation();
-
-    WebkitScript script = getConnection().getDebugger().getScript(location.getScriptId());
-    String url = script.getUrl();
-
-    if (url.endsWith(".dart.js") || url.endsWith(".precompiled.js")) {
-      return false;
-    }
-
-    return url.endsWith(".js");
   }
 
   protected void printExceptionToStdout(final WebkitRemoteObject exception) {

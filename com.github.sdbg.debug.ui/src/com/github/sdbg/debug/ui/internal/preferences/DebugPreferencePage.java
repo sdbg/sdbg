@@ -43,7 +43,6 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
   public static final String PAGE_ID = "com.github.sdbg.debug.debugPreferencePage"; //$NON-NLS-1$
 
   private Combo exceptionsCombo;
-  private Button breakOnJSButton;
   private Button invokeToStringButton;
 
   private Button defaultBrowserButton;
@@ -70,7 +69,6 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
   public boolean performOk() {
     SDBGDebugCorePlugin.getPlugin().setBreakOnExceptions(
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
-    SDBGDebugCorePlugin.getPlugin().setBreakOnJSException(breakOnJSButton.getSelection());
     SDBGDebugCorePlugin.getPlugin().setInvokeToString(invokeToStringButton.getSelection());
 
     SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
@@ -104,10 +102,6 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
         BreakOnExceptions.all.toString()});
 
     exceptionsCombo.select(exceptionsCombo.indexOf(SDBGDebugCorePlugin.getPlugin().getBreakOnExceptions().toString()));
-
-    breakOnJSButton = new Button(group, SWT.CHECK);
-    breakOnJSButton.setText("Break on JavaScript exceptions");
-    GridDataFactory.swtDefaults().span(2, 1).applyTo(breakOnJSButton);
 
     invokeToStringButton = new Button(group, SWT.CHECK);
     invokeToStringButton.setText("Invoke toString() methods when debugging");
@@ -186,7 +180,6 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     browserNameText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserName());
     browserArgumentText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
     setEnablement(!useDefaultBrowser);
-    breakOnJSButton.setSelection(SDBGDebugCorePlugin.getPlugin().getBreakOnJSException());
     invokeToStringButton.setSelection(SDBGDebugCorePlugin.getPlugin().getInvokeToString());
 
   }

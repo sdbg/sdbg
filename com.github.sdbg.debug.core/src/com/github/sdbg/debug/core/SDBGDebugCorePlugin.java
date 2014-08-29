@@ -21,8 +21,6 @@ import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.StringUtilities;
 
-import java.io.IOException;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
@@ -86,8 +84,6 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   private static SDBGDebugCorePlugin plugin;
 
-  public static final String PREFS_DART_VM_PATH = "vmPath";
-
   public static final String PREFS_BROWSER_NAME = "browserName";
 
   public static final String PREFS_USE_SOURCE_MAPS = "useSourceMaps";
@@ -97,6 +93,8 @@ public class SDBGDebugCorePlugin extends Plugin {
   public static final String PREFS_BROWSER_ARGS = "browserArgs";
 
   public static final String PREFS_BREAK_ON_EXCEPTIONS = "breakOnExceptions";
+
+  public static final String PREFS_INVOKE_TOSTRING = "invokeToString";
 
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
 
@@ -247,14 +245,8 @@ public class SDBGDebugCorePlugin extends Plugin {
     return getPrefs().get(PREFS_BROWSER_NAME, "");
   }
 
-  /**
-   * Returns the path to the Dart VM executable, if it has been set. Otherwise, this method returns
-   * the empty string.
-   * 
-   * @return the path to the Dart VM executable
-   */
-  public String getDartVmExecutablePath() {
-    return getPrefs().get(PREFS_DART_VM_PATH, "");
+  public boolean getInvokeToString() {
+    return getPrefs().getBoolean(PREFS_INVOKE_TOSTRING, true);
   }
 
   public boolean getIsDefaultBrowser() {
@@ -305,24 +297,12 @@ public class SDBGDebugCorePlugin extends Plugin {
     }
   }
 
-  /**
-   * Set the path to the Dart VM executable.
-   * 
-   * @param value the path to the Dart VM executable.
-   */
-  public void setDartVmExecutablePath(String value) {
-    getPrefs().put(PREFS_DART_VM_PATH, value);
-
-    try {
-      getPrefs().flush();
-    } catch (BackingStoreException exception) {
-      logError(exception);
-    }
+  public void setInvokeToString(boolean value) {
+    getPrefs().putBoolean(PREFS_INVOKE_TOSTRING, value);
   }
 
   public void setShowRunResumeDialogPref(boolean value) {
     getPrefs().putBoolean(PREFS_SHOW_RUN_RESUME_DIALOG, value);
-
   }
 
   public void setUserAgentManager(IUserAgentManager userAgentManager) {
@@ -344,18 +324,6 @@ public class SDBGDebugCorePlugin extends Plugin {
     plugin = this;
 
     super.start(context);
-
-    // Start the embedded web server up (use a separate thread so we don't delay application startup).
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          ResourceServerManager.getServer();
-        } catch (IOException e) {
-          logError(e);
-        }
-      }
-    }).start();
   }
 
   @Override

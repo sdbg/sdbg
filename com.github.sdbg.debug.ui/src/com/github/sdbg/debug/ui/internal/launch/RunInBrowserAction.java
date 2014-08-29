@@ -13,16 +13,16 @@
  */
 package com.github.sdbg.debug.ui.internal.launch;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.util.ResourceServer;
+import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.ui.internal.DebugErrorHandler;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
 import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.debug.ui.ILaunchShortcut;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 
 /**
@@ -48,18 +48,21 @@ public class RunInBrowserAction extends RunAbstractAction {
   @Override
   protected void doLaunch(UIInstrumentationBuilder instrumentation) {
     IResource resource = LaunchUtils.getSelectedResource(window);
-    if (resource == null) {
-      return;
-    }
 
     try {
-      instrumentation.metric("Resource-Class", resource.getClass().toString());
-      instrumentation.data("Resource-Name", resource.getName());
+      if (resource != null) {
+        instrumentation.metric("Resource-Class", resource.getClass().toString());
+        instrumentation.data("Resource-Name", resource.getName());
 
-      // new launch config
-      ILaunchShortcut shortcut = LaunchUtils.getBrowserLaunchShortcut();
-      ISelection selection = new StructuredSelection(resource);
-      launch(shortcut, selection, instrumentation);
+        ResourceServer server = ResourceServerManager.getServer();
+        String url = server.getUrlForResource(resource);
+
+        if (SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser()) {
+          LaunchUtils.openBrowser(url);
+        } else {
+          LaunchUtils.launchInExternalBrowser(url);
+        }
+      }
     } catch (Exception exception) {
       instrumentation.metric("Problem", "Exception launching " + exception.getClass().toString());
       instrumentation.data("Problem", "Exception launching " + exception.toString());

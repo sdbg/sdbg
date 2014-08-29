@@ -71,6 +71,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
   }
 
   private String debugTargetName;
+  private String disconnectMessage;
   private WebkitConnection connection;
   private ILaunch launch;
   private WebkitDebugProcess process;
@@ -111,7 +112,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     if (enableBreakpoints) {
       breakpointManager = new BreakpointManager(this);
     } else {
-      breakpointManager = new NullBreakpointManager();
+      breakpointManager = new BreakpointManager.NullBreakpointManager();
     }
 
     cssScriptManager = new CssScriptManager(this);
@@ -282,7 +283,11 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
   @Override
   public String getName() {
-    return debugTargetName;
+    if (disconnectMessage != null) {
+      return debugTargetName + " <" + disconnectMessage + ">";
+    } else {
+      return debugTargetName;
+    }
   }
 
   @Override
@@ -356,8 +361,6 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     connection.getPage().addPageListener(new WebkitPage.PageListenerAdapter() {
       @Override
       public void loadEventFired(int timestamp) {
-        cssScriptManager.handleLoadEventFired();
-
         if (htmlScriptManager != null) {
           htmlScriptManager.handleLoadEventFired();
         }
@@ -387,7 +390,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
         @Override
         public void targetCrashed() {
-
+          handleTargetCrashed();
         }
       });
     }
@@ -543,6 +546,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     process = null;
   }
 
+  @Override
   public void writeToStdout(String message) {
     process.getStreamMonitor().messageAdded(message);
   }
@@ -620,8 +624,20 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       // when the debugger connection is closing.
       if (enableBreakpoints) {
         // Only show this message if the user launched Dartium with debugging enabled.
-        DebugUIHelper.getHelper().showDevtoolsDisconnectError("Debugger Connection Closed", this);
+        disconnectMessage = "devtools disconnect";
+
+        DebugUIHelper.getHelper().handleDevtoolsDisconnect(this);
       }
+    }
+  }
+
+  protected void handleTargetCrashed() {
+    process.getStreamMonitor().messageAdded("<debug target crashed>");
+
+    try {
+      terminate();
+    } catch (DebugException e) {
+      SDBGDebugCorePlugin.logInfo(e);
     }
   }
 

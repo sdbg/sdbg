@@ -37,12 +37,13 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 /**
- * The preference page for Dart debugging.
+ * The preference page for SDBG debugging.
  */
 public class DebugPreferencePage extends PreferencePage implements IWorkbenchPreferencePage {
   public static final String PAGE_ID = "com.github.sdbg.debug.debugPreferencePage"; //$NON-NLS-1$
 
   private Combo exceptionsCombo;
+  private Button invokeToStringButton;
 
   private Button defaultBrowserButton;
 
@@ -68,6 +69,7 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
   public boolean performOk() {
     SDBGDebugCorePlugin.getPlugin().setBreakOnExceptions(
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
+    SDBGDebugCorePlugin.getPlugin().setInvokeToString(invokeToStringButton.getSelection());
 
     SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
         defaultBrowserButton.getSelection(),
@@ -101,13 +103,16 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
 
     exceptionsCombo.select(exceptionsCombo.indexOf(SDBGDebugCorePlugin.getPlugin().getBreakOnExceptions().toString()));
 
+    invokeToStringButton = new Button(group, SWT.CHECK);
+    invokeToStringButton.setText("Invoke toString() methods when debugging");
+    GridDataFactory.swtDefaults().span(2, 1).applyTo(invokeToStringButton);
+
     createBrowserConfig(composite, labelWidth);
 
     return composite;
   }
 
   private void createBrowserConfig(Composite composite, int labelWidth) {
-
     Group browserGroup = new Group(composite, SWT.NONE);
     browserGroup.setText("Launching");
     GridDataFactory.fillDefaults().grab(true, false).applyTo(browserGroup);
@@ -157,7 +162,6 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
         browserArgumentText);
 
     initFromPrefs();
-
   }
 
   private void handleBrowserConfigBrowseButton() {
@@ -176,6 +180,8 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     browserNameText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserName());
     browserArgumentText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
     setEnablement(!useDefaultBrowser);
+    invokeToStringButton.setSelection(SDBGDebugCorePlugin.getPlugin().getInvokeToString());
+
   }
 
   private void setEnablement(boolean value) {
@@ -183,5 +189,4 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     browserNameText.setEnabled(value);
     browserArgumentText.setEnabled(value);
   }
-
 }

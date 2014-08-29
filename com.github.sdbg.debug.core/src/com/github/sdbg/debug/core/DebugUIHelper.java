@@ -35,9 +35,14 @@ public abstract class DebugUIHelper {
     }
 
     @Override
-    public void showDevtoolsDisconnectError(String title, ISDBGDebugTarget target) {
+    public void handleDevtoolsDisconnect(ISDBGDebugTarget target) {
       // no-op
 
+    }
+
+    @Override
+    public void openBrowserTab(String url) {
+      // no-op
     }
 
     @Override
@@ -104,7 +109,9 @@ public abstract class DebugUIHelper {
 
   public abstract void activateApplication(File application, String name);
 
-  public abstract void showDevtoolsDisconnectError(String title, ISDBGDebugTarget target);
+  public abstract void handleDevtoolsDisconnect(ISDBGDebugTarget target);
+
+  public abstract void openBrowserTab(String url);
 
   public abstract void showError(String title, String message);
 

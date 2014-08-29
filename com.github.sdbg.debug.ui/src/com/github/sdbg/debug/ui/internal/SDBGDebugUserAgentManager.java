@@ -14,13 +14,8 @@
 
 package com.github.sdbg.debug.ui.internal;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.IUserAgentManager;
-
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,6 +26,12 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * A class to let the user to choose which user agents are allowed to connect to the embedded
@@ -43,6 +44,8 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
     String agentName;
     boolean allowed;
   }
+
+  private static boolean dialogOpen = false;
 
   static void install() {
     SDBGDebugCorePlugin.getPlugin().setUserAgentManager(new SDBGDebugUserAgentManager());
@@ -62,26 +65,29 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
     }
 
     // check if it's an existing agent
-    if (agentAllowed(remoteAddress, agentName)) {
-      return true;
+    if (isKnownAgent(remoteAddress.getHostAddress(), agentName)) {
+      return agentAllowed(remoteAddress, agentName);
     }
 
     // ask the user
-    if (askUserAllows(remoteAddress, agentName)) {
-      AgentData data = new AgentData();
-
-      data.address = remoteAddress.getHostAddress();
-      data.agentName = agentName;
-      data.allowed = true;
-
-      agents.add(data);
-
-      saveSettings();
-
-      return true;
+    if (dialogOpen) {
+      return false;
     }
 
-    return false;
+    dialogOpen = true;
+    boolean allowConnection = askUserAllows(remoteAddress, agentName);
+
+    AgentData data = new AgentData();
+
+    data.address = remoteAddress.getHostAddress();
+    data.agentName = agentName;
+    data.allowed = allowConnection;
+    agents.add(data);
+    saveSettings();
+
+    dialogOpen = false;
+    return allowConnection;
+
   }
 
   private boolean agentAllowed(InetAddress remoteAddress, String agent) {
@@ -110,12 +116,18 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
 
         // Move the app to the foreground. Otherwise the dialog can be missed.
         shell.forceActive();
-
-        result[0] = MessageDialog.openConfirm(
+        // set Cancel as the default choice
+        MessageDialog dialog = new MessageDialog(
             shell,
             "Allow Remote Device Connection",
+            null,
             "Allow a remote device from " + remoteAddress.getHostAddress()
-                + " to connect to and run your Dart applications?\n\n" + agent);
+                + " to connect to and run your Dart applications?\n\n" + agent,
+            MessageDialog.CONFIRM,
+            new String[] {IDialogConstants.OK_LABEL, IDialogConstants.CANCEL_LABEL},
+            1);
+
+        result[0] = dialog.open() == 0;
       }
     });
 
@@ -124,6 +136,15 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
 
   private File getDataFile() {
     return SDBGDebugUIPlugin.getDefault().getStateLocation().append("agentdata.txt").toFile();
+  }
+
+  private boolean isKnownAgent(String address, String agent) {
+    for (AgentData data : agents) {
+      if (address.equals(data.address) && agent.equals(data.agentName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void loadSettings() {
@@ -146,6 +167,8 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
 
           line = reader.readLine();
         }
+
+        reader.close();
       } catch (IOException ioe) {
         DartUtil.logError(ioe);
       }

@@ -13,6 +13,19 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut;
+import com.github.sdbg.debug.ui.internal.browser.Messages;
+import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut;
+import com.github.sdbg.utilities.ProcessRunner;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,8 +41,11 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
@@ -43,22 +59,20 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.browser.IWebBrowser;
+import org.eclipse.ui.browser.IWorkbenchBrowserSupport;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.ide.IDE;
-
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.ui.internal.DartUtil;
-import com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut;
-import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut;
 
 /**
  * A utility class for launching and launch configurations.
@@ -436,6 +450,119 @@ public class LaunchUtils {
     }
 
     DebugUITools.launch(config, mode);
+  }
+
+  /**
+   * Launch the given url using the browser specified in the preferences
+   * 
+   * @param url
+   * @throws CoreException
+   */
+  public static void launchInExternalBrowser(final String url) throws CoreException {
+
+    String browserName = SDBGDebugCorePlugin.getPlugin().getBrowserName();
+    if (browserName.length() == 0) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugUIPlugin.PLUGIN_ID,
+          "Specify browser to launch in Preferences > Run and Debug"));
+    }
+
+    List<String> cmd = new ArrayList<String>();
+
+    if (DartCore.isMac()) {
+      // use open command on mac
+      cmd.add("/usr/bin/open");
+      cmd.add("-a");
+    }
+    cmd.add(browserName);
+    cmd.add(url);
+
+    if (SDBGDebugCorePlugin.getPlugin().getBrowserArgs().length() != 0) {
+      if (DartCore.isMac()) {
+        cmd.add("--args");
+        cmd.add(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
+      } else {
+        cmd.addAll(Arrays.asList(SDBGDebugCorePlugin.getPlugin().getBrowserArgsAsArray()));
+      }
+    }
+
+    try {
+      ProcessBuilder builder = new ProcessBuilder(cmd);
+      ProcessRunner runner = new ProcessRunner(builder);
+
+      runner.runAsync();
+      runner.await(new NullProgressMonitor(), 500);
+
+      if (runner.getExitCode() != 0) {
+        if (DartCore.isWindows()) {
+          if (browserName.toLowerCase().indexOf("firefox") != -1) {
+            if (runner.getExitCode() == 1) {
+              // In this case, the application was opened in a new tab successfully.
+              // Don't throw an exception.
+
+              return;
+            }
+          }
+        }
+
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            SDBGDebugUIPlugin.PLUGIN_ID,
+            "Could not launch browser \"" + browserName + "\" : \n\n" + runner.getStdErr()));
+      }
+    } catch (IOException e) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          Messages.BrowserLaunchConfigurationDelegate_BrowserNotFound,
+          e));
+    }
+  }
+
+  /**
+   * Open the default browser with the given url
+   * 
+   * @param url
+   * @throws CoreException
+   */
+  public static void openBrowser(String url) throws CoreException {
+    IWebBrowser browser = null;
+    try {
+      browser = PlatformUI.getWorkbench().getBrowserSupport().createBrowser(
+          IWorkbenchBrowserSupport.AS_EXTERNAL,
+          "defaultBrowser",
+          "Default Browser",
+          "Browser");
+      if (browser != null) {
+        final IWebBrowser defaultBrowser = browser;
+        final URL urlToOpen = new URL(url);
+
+        Display.getDefault().asyncExec(new Runnable() {
+
+          @Override
+          public void run() {
+            try {
+              defaultBrowser.openURL(urlToOpen);
+            } catch (PartInitException e) {
+              SDBGDebugCorePlugin.logError(
+                  Messages.BrowserLaunchConfigurationDelegate_DefaultBrowserNotFound,
+                  e);
+            }
+          }
+        });
+      } else {
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            Messages.BrowserLaunchConfigurationDelegate_DefaultBrowserNotFound));
+      }
+    } catch (MalformedURLException e) {
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          Messages.BrowserLaunchConfigurationDelegate_UrlError));
+    }
   }
 
   private LaunchUtils() {

@@ -416,6 +416,9 @@
          <adapter
                type="org.eclipse.debug.ui.actions.IToggleBreakpointsTarget">
          </adapter>
+         <adapter
+               type="org.eclipse.debug.ui.actions.IRunToLineTarget">
+         </adapter>
       </factory>
    </extension>
    
@@ -977,6 +980,14 @@
       <chooser
             class="com.github.sdbg.debug.ui.internal.util.UIDeviceChooser">
       </chooser>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="com.github.sdbg.debug.ui.internal.preferences.DebugPreferencePage"
+            id="com.github.sdbg.debug.debugPreferencePage"
+            name="SDBG">
+      </page>
    </extension>
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution

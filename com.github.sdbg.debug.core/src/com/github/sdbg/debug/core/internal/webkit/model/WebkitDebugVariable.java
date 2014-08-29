@@ -19,6 +19,9 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescrip
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 import com.github.sdbg.debug.core.util.Trace;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
 
@@ -75,6 +78,10 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   public String getDisplayName() throws DebugException {
     if (isListMember()) {
       return "[" + getName() + "]";
+    }
+
+    if (isLibraryRef()) {
+      return convertLibraryRefName(descriptor.getName());
     }
 
     // The names of private fields are mangled by the VM.
@@ -215,6 +222,30 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   protected void setParent(WebkitDebugVariable parent) {
     this.parent = parent;
+  }
+
+  private String convertLibraryRefName(String name) {
+    if (name.startsWith("file:") && name.indexOf('/') != -1) {
+      return "file:" + name.substring(name.lastIndexOf('/') + 1);
+    }
+
+    if (name.startsWith("http:")) {
+      try {
+        URL url = new URL(name);
+        return url.getFile();
+      } catch (MalformedURLException e) {
+      }
+    }
+
+    return name;
+  }
+
+  private boolean isLibraryRef() {
+    if (descriptor.getValue() == null) {
+      return false;
+    }
+
+    return descriptor.getValue().isLibraryRef();
   }
 
   private boolean isListMember() {

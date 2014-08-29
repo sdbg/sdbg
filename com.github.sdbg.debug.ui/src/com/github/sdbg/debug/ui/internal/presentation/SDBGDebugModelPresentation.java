@@ -14,6 +14,7 @@
 package com.github.sdbg.debug.ui.internal.presentation;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 import com.github.sdbg.debug.core.model.IExceptionStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue;
@@ -43,6 +44,7 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
@@ -65,6 +67,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
 
@@ -154,6 +157,16 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
     if (element instanceof IMarker) {
       element = DebugPlugin.getDefault().getBreakpointManager().getBreakpoint((IMarker) element);
+    }
+
+    if (element instanceof SDBGBreakpoint) {
+      IFile file = ((SDBGBreakpoint) element).getFile();
+      if (file != null) {
+        return new FileEditorInput(file);
+      }
+
+      return new FileStoreEditorInput(EFS.getLocalFileSystem().getStore(
+          new Path(((SDBGBreakpoint) element).getFilePath())));
     }
 
     if (element instanceof ILineBreakpoint) {
@@ -379,16 +392,30 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
    */
   protected String getBreakpointText(IBreakpoint bp) {
     try {
-      String text = bp.getMarker().getResource().getProject().getName() + ", "
-          + bp.getMarker().getResource().getProjectRelativePath().toPortableString();
+      String text;
+      if (bp instanceof SDBGBreakpoint) {
+        SDBGBreakpoint sdbgBreakpoint = (SDBGBreakpoint) bp;
+        IFile file = sdbgBreakpoint.getFile();
+        if (file != null) {
+          text = file.getProject().getName() + ", "
+              + file.getProjectRelativePath().toPortableString() + ", line "
+              + NumberFormat.getNumberInstance().format(sdbgBreakpoint.getLine());
+        } else {
+          text = sdbgBreakpoint.getName() + ", line "
+              + NumberFormat.getNumberInstance().format(sdbgBreakpoint.getLine());
+        }
+      } else {
+        text = bp.getMarker().getResource().getProject().getName() + ", "
+            + bp.getMarker().getResource().getProjectRelativePath().toPortableString();
 
-      if (bp instanceof ILineBreakpoint) {
-        text += ", line "
-            + NumberFormat.getNumberInstance().format(((ILineBreakpoint) bp).getLineNumber());
+        if (bp instanceof ILineBreakpoint) {
+          text += ", line "
+              + NumberFormat.getNumberInstance().format(((ILineBreakpoint) bp).getLineNumber());
 
-        String lineInfo = getLineExtract((ILineBreakpoint) bp);
-        if (lineInfo != null) {
-          text = text + ", '" + lineInfo + "'";
+          String lineInfo = getLineExtract((ILineBreakpoint) bp);
+          if (lineInfo != null) {
+            text = text + ", '" + lineInfo + "'";
+          }
         }
       }
 
@@ -437,9 +464,16 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
   private String getLineExtract(ILineBreakpoint bp) {
     try {
-      Reader r = new InputStreamReader(
-          ((IFile) bp.getMarker().getResource()).getContents(),
-          ((IFile) bp.getMarker().getResource()).getCharset());
+      Reader r;
+      if (bp instanceof SDBGBreakpoint) {
+        r = new InputStreamReader(
+            ((SDBGBreakpoint) bp).getContents(),
+            ((SDBGBreakpoint) bp).getCharset());
+      } else {
+        r = new InputStreamReader(
+            ((IFile) bp.getMarker().getResource()).getContents(),
+            ((IFile) bp.getMarker().getResource()).getCharset());
+      }
 
       List<String> lines = Streams.loadLinesAndClose(r);
 

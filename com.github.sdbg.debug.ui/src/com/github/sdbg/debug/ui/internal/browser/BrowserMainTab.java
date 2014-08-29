@@ -141,7 +141,6 @@ public class BrowserMainTab extends AbstractLaunchConfigurationTab {
     SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
     wrapper.setShouldLaunchFile(true);
     wrapper.setApplicationName(""); //$NON-NLS-1$
-    //&&&wrapper.setRunDart2js(true);
   }
 
   private void notifyPanelChanged() {

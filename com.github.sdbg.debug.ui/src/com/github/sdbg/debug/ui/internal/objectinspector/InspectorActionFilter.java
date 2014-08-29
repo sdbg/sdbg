@@ -14,6 +14,9 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
+import com.github.sdbg.debug.core.model.ISDBGValue;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
+
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.Platform;
@@ -21,14 +24,30 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.ui.IActionFilter;
 
-import com.github.sdbg.debug.core.model.ISDBGValue;
-import com.github.sdbg.debug.core.model.ISDBGVariable;
-
 /**
  * An IActionFilter implementation used to determine whether inspect actions apply to certain
  * objects, and to manage the enablement state of those actions.
  */
 public class InspectorActionFilter implements IActionFilter {
+  static class InspectorAdapterFactory implements IAdapterFactory {
+    private InspectorActionFilter inspectorFilter = new InspectorActionFilter();
+
+    public InspectorAdapterFactory() {
+
+    }
+
+    @Override
+    @SuppressWarnings("rawtypes")
+    public Object getAdapter(Object adaptableObject, Class adapterType) {
+      return inspectorFilter;
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public Class[] getAdapterList() {
+      return new Class[] {IActionFilter.class};
+    }
+  }
 
   public static void registerAdapters() {
     IAdapterManager manager = Platform.getAdapterManager();
@@ -41,6 +60,21 @@ public class InspectorActionFilter implements IActionFilter {
 
   public InspectorActionFilter() {
 
+  }
+
+  @Override
+  public boolean testAttribute(Object object, String name, String value) {
+    if ("isInspectableObject".equals(name)) {
+      return Boolean.toString(isInspectableObject(object)).equals(value);
+    } else if ("canInspectObject".equals(name)) {
+      return Boolean.toString(canInspectObject(object)).equals(value);
+    } else if ("canInspectClass".equals(name)) {
+      return Boolean.toString(canInspectClass(object)).equals(value);
+    } else if ("canInspectLibrary".equals(name)) {
+      return Boolean.toString(canInspectLibrary(object)).equals(value);
+    } else {
+      return false;
+    }
   }
 
   private boolean canInspectClass(Object object) {
@@ -113,40 +147,5 @@ public class InspectorActionFilter implements IActionFilter {
     }
 
     return false;
-  }
-
-  @Override
-  public boolean testAttribute(Object object, String name, String value) {
-    if ("isInspectableObject".equals(name)) {
-      return Boolean.toString(isInspectableObject(object)).equals(value);
-    } else if ("canInspectObject".equals(name)) {
-      return Boolean.toString(canInspectObject(object)).equals(value);
-    } else if ("canInspectClass".equals(name)) {
-      return Boolean.toString(canInspectClass(object)).equals(value);
-    } else if ("canInspectLibrary".equals(name)) {
-      return Boolean.toString(canInspectLibrary(object)).equals(value);
-    } else {
-      return false;
-    }
-  }
-}
-
-class InspectorAdapterFactory implements IAdapterFactory {
-  private InspectorActionFilter inspectorFilter = new InspectorActionFilter();
-
-  public InspectorAdapterFactory() {
-
-  }
-
-  @Override
-  @SuppressWarnings("rawtypes")
-  public Object getAdapter(Object adaptableObject, Class adapterType) {
-    return inspectorFilter;
-  }
-
-  @SuppressWarnings("rawtypes")
-  @Override
-  public Class[] getAdapterList() {
-    return new Class[] {IActionFilter.class};
   }
 }

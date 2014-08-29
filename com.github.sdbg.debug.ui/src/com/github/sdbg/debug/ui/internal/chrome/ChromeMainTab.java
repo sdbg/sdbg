@@ -152,17 +152,11 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
       launchTargetGroup.setHtmlButtonSelection(false);
     }
 
-    if (showOutputButton != null) {
-      showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
-    }
+    showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
 
-    if (useWebComponentsButton != null) {
-      useWebComponentsButton.setSelection(chromeLauncher.isEnableExperimentalWebkitFeatures());
-    }
+    useWebComponentsButton.setSelection(chromeLauncher.isEnableExperimentalWebkitFeatures());
 
-    if (argumentText != null) {
-      argumentText.setText(chromeLauncher.getArguments());
-    }
+    argumentText.setText(chromeLauncher.getArguments());
   }
 
   @Override
@@ -190,16 +184,11 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     chromeLauncher.setUrl(launchTargetGroup.getUrlString());
     chromeLauncher.setProjectName(launchTargetGroup.getProject());
 
-    if (showOutputButton != null) {
-      chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
-    }
+    chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
 
-    if (useWebComponentsButton != null) {
-      chromeLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
-    }
-    if (argumentText != null) {
-      chromeLauncher.setArguments(argumentText.getText().trim());
-    }
+    chromeLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
+
+    chromeLauncher.setArguments(argumentText.getText().trim());
   }
 
   @Override

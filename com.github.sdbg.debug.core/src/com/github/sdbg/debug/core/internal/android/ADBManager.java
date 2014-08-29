@@ -87,13 +87,6 @@ public class ADBManager {
   public ADBManager() {
   }
 
-  public void addChromiumForward(String deviceId, int localTCPPort) throws CoreException {
-    addForward(
-        deviceId,
-        "tcp:" + Integer.toString(localTCPPort),
-        "localabstract:chrome_devtools_remote");
-  }
-
   public void addForward(String deviceId, String local, String remote) throws CoreException {
     String forward = deviceId + "=" + local;
     if (!forwards.contains(forward)) {
@@ -110,9 +103,11 @@ public class ADBManager {
     }
   }
 
-  public Process asyncShell(String deviceId, String command) throws CoreException {
+  public Process asyncShell(String deviceId, String... commands) throws CoreException {
     try {
-      return prepareADB("-s", deviceId, "shell", command).start();
+      List<String> all = new ArrayList<String>(Arrays.asList("-s", deviceId, "shell"));
+      all.addAll(Arrays.asList(commands));
+      return prepareADB(all).start();
     } catch (IOException e) {
       throw new CoreException(new Status(
           IStatus.ERROR,
@@ -142,6 +137,10 @@ public class ADBManager {
         return null;
       }
     }, "devices");
+  }
+
+  public void install(String deviceId, File apkLocation) throws CoreException {
+    executeADB("-s", deviceId, "install", apkLocation.getAbsolutePath());
   }
 
   public void killServer() throws CoreException {
@@ -185,11 +184,17 @@ public class ADBManager {
     removeForward(deviceId, "tcp:" + Integer.toString(localTCPPort));
   }
 
-  public void shell(String deviceId, String command) throws CoreException {
-    executeADB("-s", deviceId, "shell", command);
+  public void shell(String deviceId, String... commands) throws CoreException {
+    List<String> all = new ArrayList<String>(Arrays.asList("-s", deviceId, "shell"));
+    all.addAll(Arrays.asList(commands));
+    executeADB(all);
   }
 
-  private String executeADB(String... arguments) throws CoreException {
+  public void uninstall(String deviceId, String appId) throws CoreException {
+    shell(deviceId, "pm", "uninstall", "-k", appId);
+  }
+
+  private String executeADB(List<String> arguments) throws CoreException {
     try {
       ProcessRunner runner = new ProcessRunner(prepareADB(arguments));
       runner.runSync(null);
@@ -209,7 +214,11 @@ public class ADBManager {
     }
   }
 
-  private <T> List<T> getData(Converter<T> converter, String... commands) throws CoreException {
+  private String executeADB(String... arguments) throws CoreException {
+    return executeADB(Arrays.asList(arguments));
+  }
+
+  private <T> List<T> getData(Converter<T> converter, List<String> commands) throws CoreException {
     try {
       List<T> data = new ArrayList<T>();
       BufferedReader reader = new BufferedReader(new StringReader(executeADB(commands)));
@@ -231,11 +240,15 @@ public class ADBManager {
     }
   }
 
-  private ProcessBuilder prepareADB(String... arguments) throws CoreException {
+  private <T> List<T> getData(Converter<T> converter, String... commands) throws CoreException {
+    return getData(converter, Arrays.asList(commands));
+  }
+
+  private ProcessBuilder prepareADB(List<String> arguments) throws CoreException {
     try {
       List<String> cmdLine = new ArrayList<String>();
       cmdLine.add(getAdbExecutable().getAbsolutePath());
-      cmdLine.addAll(Arrays.asList(arguments));
+      cmdLine.addAll(arguments);
 
       return new ProcessBuilder(cmdLine);
     } catch (IOException e) {
@@ -246,4 +259,8 @@ public class ADBManager {
           e));
     }
   }
+//
+//  private ProcessBuilder prepareADB(String... arguments) throws CoreException {
+//    return prepareADB(Arrays.asList(arguments));
+//  }
 }

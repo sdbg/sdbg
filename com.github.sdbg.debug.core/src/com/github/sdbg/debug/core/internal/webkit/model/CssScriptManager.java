@@ -17,18 +17,14 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeParticipant;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitStyleSheetRef;
 import com.github.sdbg.utilities.IFileUtilities;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Manage known css scripts loaded in the target browser. Listen for resource change events (using
@@ -37,8 +33,6 @@ import java.util.List;
  */
 class CssScriptManager implements ResourceChangeParticipant {
   private WebkitDebugTarget target;
-
-  private List<WebkitStyleSheetRef> styleSheets = Collections.synchronizedList(new ArrayList<WebkitStyleSheetRef>());
 
   public CssScriptManager(WebkitDebugTarget target) {
     this.target = target;
@@ -61,7 +55,9 @@ class CssScriptManager implements ResourceChangeParticipant {
       String fileUrl = target.getResourceResolver().getUrlForResource(file);
 
       if (fileUrl != null) {
-        for (WebkitStyleSheetRef ref : styleSheets) {
+        List<WebkitStyleSheetRef> scripts = target.getConnection().getCSS().getStyleSheets();
+
+        for (WebkitStyleSheetRef ref : scripts) {
           if (fileUrl.equals(ref.getSourceURL())) {
             uploadNewSource(ref, file);
           }
@@ -73,32 +69,6 @@ class CssScriptManager implements ResourceChangeParticipant {
   @Override
   public void handleFileRemoved(IFile file) {
 
-  }
-
-  public void handleLoadEventFired() {
-    // Flush everything.
-    styleSheets.clear();
-
-    // Re-load the list of scripts.
-    try {
-      target.getConnection().getCSS().getAllStyleSheets(
-          new WebkitCallback<WebkitStyleSheetRef[]>() {
-            @Override
-            public void handleResult(WebkitResult<WebkitStyleSheetRef[]> result) {
-              handleStyleSheetResults(result);
-            }
-          });
-    } catch (IOException e) {
-      SDBGDebugCorePlugin.logError(e);
-    }
-  }
-
-  private void handleStyleSheetResults(WebkitResult<WebkitStyleSheetRef[]> result) {
-    if (!result.isError()) {
-      for (WebkitStyleSheetRef ref : result.getResult()) {
-        styleSheets.add(ref);
-      }
-    }
   }
 
   private void uploadNewSource(WebkitStyleSheetRef ref, IFile file) {

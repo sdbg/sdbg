@@ -35,6 +35,7 @@ import java.util.Map;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IMarkerDelta;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -49,6 +50,48 @@ import org.eclipse.debug.core.model.ILineBreakpoint;
  * Handle adding a removing breakpoints to the WebKit connection for the WebkitDebugTarget class.
  */
 public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointManager {
+  public static class NullBreakpointManager implements ISDBGBreakpointManager {
+
+    public NullBreakpointManager() {
+
+    }
+
+    @Override
+    public void addBreakpointsConcerningScript(IStorage script) {
+
+    }
+
+    @Override
+    public void connect() throws IOException {
+
+    }
+
+    @Override
+    public void dispose(boolean deleteAll) {
+
+    }
+
+    @Override
+    public SDBGBreakpoint getBreakpointFor(WebkitLocation location) {
+      return null;
+    }
+
+    @Override
+    public void handleBreakpointResolved(WebkitBreakpoint breakpoint) {
+
+    }
+
+    @Override
+    public void handleGlobalObjectCleared() {
+
+    }
+
+    @Override
+    public void removeBreakpointsConcerningScript(IStorage script) {
+
+    }
+  }
+
   static synchronized Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
     if (breakpointPathResolvers == null) {
       breakpointPathResolvers = new ArrayList<IBreakpointPathResolver>();
@@ -202,8 +245,18 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
           ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
 
           if (breakpoint.getLineNumber() == line) {
-            String bpUrl = getResourceResolver().getUrlForResource(
-                breakpoint.getMarker().getResource());
+            String bpUrl = null;
+            if (breakpoint instanceof SDBGBreakpoint) {
+              SDBGBreakpoint sdbgBreakpoint = (SDBGBreakpoint) breakpoint;
+              IFile file = sdbgBreakpoint.getFile();
+              if (file != null) {
+                bpUrl = getResourceResolver().getUrlForResource(file);
+              } else {
+                bpUrl = sdbgBreakpoint.getFilePath();
+              }
+            } else {
+              bpUrl = getResourceResolver().getUrlForResource(breakpoint.getMarker().getResource());
+            }
 
             if (bpUrl != null && bpUrl.equals(url)) {
               return breakpoint;
@@ -231,8 +284,10 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
         if (breakpoint.getLineNumber() != eclipseLine) {
           ignoredBreakpoints.add(breakpoint);
 
-          String message = "[breakpoint in " + breakpoint.getMarker().getResource().getName()
-              + " moved from line " + breakpoint.getLineNumber() + " to " + eclipseLine + "]";
+          String message = "[breakpoint in "
+              + (breakpoint instanceof SDBGBreakpoint ? ((SDBGBreakpoint) breakpoint).getName()
+                  : breakpoint.getMarker().getResource().getName()) + " moved from line "
+              + breakpoint.getLineNumber() + " to " + eclipseLine + "]";
           debugTarget.writeToStdout(message);
 
           breakpoint.getMarker().setAttribute(IMarker.LINE_NUMBER, eclipseLine);
@@ -369,7 +424,16 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
     }
 
     if (path == null) {
-      path = getResourceResolver().getUrlRegexForResource(bp.getMarker().getResource());
+      if (bp instanceof SDBGBreakpoint) {
+        IResource file = ((SDBGBreakpoint) bp).getFile();
+        if (file != null) {
+          path = getResourceResolver().getUrlRegexForResource(file);
+        } else {
+          path = ((SDBGBreakpoint) bp).getFilePath();
+        }
+      } else {
+        path = getResourceResolver().getUrlRegexForResource(bp.getMarker().getResource());
+      }
     }
 
     return path;
@@ -381,64 +445,5 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
   private boolean isJSBreakpoint(IBreakpoint breakpoint) {
     return breakpoint instanceof SDBGBreakpoint; // TODO: Extend IBreakpointPathResolver so that it has a say on that as well 
-  }
-}
-
-interface ISDBGBreakpointManager {
-
-  public void addBreakpointsConcerningScript(IStorage script);
-
-  public void connect() throws IOException;
-
-  public void dispose(boolean deleteAll);
-
-  public IBreakpoint getBreakpointFor(WebkitLocation location);
-
-  public void handleBreakpointResolved(WebkitBreakpoint breakpoint);
-
-  public void handleGlobalObjectCleared();
-
-  public void removeBreakpointsConcerningScript(IStorage script);
-}
-
-class NullBreakpointManager implements ISDBGBreakpointManager {
-
-  public NullBreakpointManager() {
-
-  }
-
-  @Override
-  public void addBreakpointsConcerningScript(IStorage script) {
-
-  }
-
-  @Override
-  public void connect() throws IOException {
-
-  }
-
-  @Override
-  public void dispose(boolean deleteAll) {
-
-  }
-
-  @Override
-  public IBreakpoint getBreakpointFor(WebkitLocation location) {
-    return null;
-  }
-
-  @Override
-  public void handleBreakpointResolved(WebkitBreakpoint breakpoint) {
-
-  }
-
-  @Override
-  public void handleGlobalObjectCleared() {
-
-  }
-
-  @Override
-  public void removeBreakpointsConcerningScript(IStorage script) {
-
   }
 }

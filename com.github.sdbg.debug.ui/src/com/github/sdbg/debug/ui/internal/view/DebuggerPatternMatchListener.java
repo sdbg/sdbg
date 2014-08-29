@@ -59,7 +59,7 @@ public/*&&&*/abstract class DebuggerPatternMatchListener implements IPatternMatc
 //
 //      IPath path = new Path(filePath);
 //
-//      return ResourceUtil2.getFile(path.toFile());
+//      return ResourceUtil.getFile(path.toFile());
 //    }
 //
 //    public int getLine() {

@@ -10,6 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Streams {
+  public static String load(Reader reader) throws IOException {
+    StringBuilder sb = new StringBuilder();
+    char[] buf = new char[4000];
+    for (int read = reader.read(buf); read >= 0; read = reader.read(buf)) {
+      sb.append(buf, 0, read);
+    }
+
+    return sb.toString();
+  }
+
   public static byte[] loadAndClose(InputStream in) throws IOException {
     byte[] buf = new byte[4000];
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -22,14 +32,10 @@ public class Streams {
   }
 
   public static String loadAndClose(Reader reader) throws IOException {
-    StringBuilder sb = new StringBuilder();
-    char[] buf = new char[4000];
-    for (int read = reader.read(buf); read >= 0; read = reader.read(buf)) {
-      sb.append(buf, 0, read);
-    }
-
+    String s = load(reader);
     reader.close();
-    return sb.toString();
+
+    return s;
   }
 
   public static List<String> loadLinesAndClose(Reader reader) throws IOException {

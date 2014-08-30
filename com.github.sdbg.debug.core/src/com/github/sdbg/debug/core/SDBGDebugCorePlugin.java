@@ -58,16 +58,6 @@ public class SDBGDebugCorePlugin extends Plugin {
    */
   public static final String DEBUG_MODEL_ID = "com.github.sdbg.debug.core"; //$NON-NLS-1$
 
-  // TODO(devoncarew): remove this when the debugger supports value modification
-  public static boolean VM_SUPPORTS_VALUE_MODIFICATION = false;
-
-  // TODO(devoncarew): the vm/webkit protocol claims to support source modification, but it does
-  // not yet do anything
-  public static boolean SEND_MODIFIED_DART = false;
-
-  // TODO(devoncarew): this causes Dartium to crash
-  public static boolean SEND_MODIFIED_HTML = false;
-
   public static final String BROWSER_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.browserLaunchConfig";
 
   public static final String CHROME_LAUNCH_CONFIG_ID = "com.github.sdbg.debug.core.chromeLaunchConfig";
@@ -97,6 +87,10 @@ public class SDBGDebugCorePlugin extends Plugin {
   public static final String PREFS_INVOKE_TOSTRING = "invokeToString";
 
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
+
+  private IEclipsePreferences prefs;
+
+  private IUserAgentManager userAgentManager;
 
   /**
    * Create a Status object with the given message and this plugin's ID.
@@ -210,10 +204,6 @@ public class SDBGDebugCorePlugin extends Plugin {
       getPlugin().getLog().log(new Status(IStatus.WARNING, PLUGIN_ID, message));
     }
   }
-
-  private IEclipsePreferences prefs;
-
-  private IUserAgentManager userAgentManager;
 
   public boolean canShowRunResumeDialog() {
     return getPrefs().getBoolean(PREFS_SHOW_RUN_RESUME_DIALOG, true);

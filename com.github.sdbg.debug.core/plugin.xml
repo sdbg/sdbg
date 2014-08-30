@@ -6,6 +6,7 @@
    <extension-point id="sourceLookupExtensions" name="Source Lookup Extensions" schema="schema/sourceLookupExtensions.exsd"/>
    <extension-point id="uiBrowserTabChooser" name="Browser Tab Chooser UI" schema="schema/uiBrowserTabChooser.exsd"/>
    <extension-point id="uiDeviceChooser" name="Device Chooser UI" schema="schema/uiDeviceChooser.exsd"/>
+   <extension-point id="domResourceTracker" name="DOM Resource Tracker" schema="schema/domResourceTracker.exsd"/>
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
       <launchConfigurationType
@@ -102,5 +103,11 @@
          description="SDBG Maps"
          modelIdentifier="com.github.sdbg.debug.core">
       </logicalStructureType>
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.core.domResourceTracker">
+      <tracker
+            class="com.github.sdbg.debug.core.internal.util.GenericDOMResourceTracker">
+      </tracker>
    </extension>
 </plugin>

@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarkerDelta;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.debug.core.DebugException;
@@ -79,6 +80,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
   private boolean canSetScriptSource;
   private SourceMapManager sourceMapManager;
   private ADBManager adbManager;
+  private IProject project;
 
   private WebkitNode rootNode;
 
@@ -94,8 +96,8 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
    * @param target
    */
   public WebkitDebugTarget(String debugTargetName, WebkitConnection connection, ILaunch launch,
-      Process javaProcess, IResourceResolver resourceResolver, ADBManager adbManager,
-      boolean enableBreakpoints, boolean isRemote) {
+      Process javaProcess, IProject project, IResourceResolver resourceResolver,
+      ADBManager adbManager, boolean enableBreakpoints, boolean isRemote) {
     super(null);
 
     setActiveTarget(this);
@@ -103,6 +105,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     this.debugTargetName = debugTargetName;
     this.connection = connection;
     this.launch = launch;
+    this.project = project;
     this.resourceResolver = resourceResolver;
     this.adbManager = adbManager;
     this.enableBreakpoints = enableBreakpoints;
@@ -137,6 +140,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
         new WebkitConnection(target.connection),
         target.launch,
         null,
+        target.project,
         target.resourceResolver,
         target.adbManager,
         target.enableBreakpoints,
@@ -642,6 +646,10 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
   protected boolean shouldUseSourceMapping() {
     return SDBGDebugCorePlugin.getPlugin().getUseSourceMaps();
+  }
+
+  IProject getProject() {
+    return project;
   }
 
   WebkitNode getRootNode() {

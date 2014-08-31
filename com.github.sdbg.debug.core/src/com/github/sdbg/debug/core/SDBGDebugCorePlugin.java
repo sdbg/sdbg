@@ -206,8 +206,12 @@ public class SDBGDebugCorePlugin extends Plugin {
     }
   }
 
-  public static CoreException wrap(Exception e) {
-    return new CoreException(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage(), e));
+  public static CoreException wrapError(Exception e) {
+    return wrapError(PLUGIN_ID, e);
+  }
+
+  public static CoreException wrapError(String pluginId, Exception e) {
+    return new CoreException(new Status(IStatus.ERROR, pluginId, e.getMessage(), e));
   }
 
   public boolean canShowRunResumeDialog() {

@@ -7,6 +7,7 @@ import com.github.sdbg.debug.core.model.IDOMResources;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
@@ -27,14 +28,14 @@ public class DOMResourceTrackersManager {
     trackers.clear();
   }
 
-  protected void initialize(IDOMResources domResources) {
+  protected void initialize(IProject project, IDOMResources domResources) {
     trackers = new ArrayList<IDOMResourceTracker>();
     IExtensionPoint extensionPoint = Platform.getExtensionRegistry().getExtensionPoint(
         "com.github.sdbg.debug.core.domResourceTracker");
     for (IConfigurationElement element : extensionPoint.getConfigurationElements()) {
       try {
         IDOMResourceTracker tracker = (IDOMResourceTracker) element.createExecutableExtension("class");
-        tracker.initialize(domResources);
+        tracker.initialize(project, domResources);
         trackers.add(tracker);
       } catch (CoreException e) {
         SDBGDebugCorePlugin.logError(e);

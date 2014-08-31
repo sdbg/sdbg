@@ -95,7 +95,7 @@ public class GenericDOMResourceTracker implements ResourceChangeParticipant, IDO
   }
 
   @Override
-  public void initialize(IDOMResources domResources) {
+  public void initialize(IProject project, IDOMResources domResources) {
     this.domResources = domResources;
     ResourceChangeManager.getManager().addChangeParticipant(this);
   }

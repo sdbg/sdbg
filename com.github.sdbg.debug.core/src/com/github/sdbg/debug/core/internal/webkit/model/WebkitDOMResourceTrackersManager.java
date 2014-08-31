@@ -64,7 +64,7 @@ class WebkitDOMResourceTrackersManager extends DOMResourceTrackersManager implem
 
   public WebkitDOMResourceTrackersManager(WebkitDebugTarget target) {
     this.target = target;
-    initialize(this);
+    initialize(target.getProject(), this);
   }
 
   @Override
@@ -109,14 +109,17 @@ class WebkitDOMResourceTrackersManager extends DOMResourceTrackersManager implem
         target.getConnection().getDebugger().setScriptSource(
             resourceReference.getId(),
             Streams.load(newContent));
+        break;
       case CSS:
         target.getConnection().getCSS().setStyleSheetText(
             resourceReference.getId(),
             Streams.load(newContent));
+        break;
       case ROOT:
         target.getConnection().getDom().setOuterHTML(
             Integer.parseInt(resourceReference.getId()),
             Streams.load(newContent));
+        break;
       default:
         throw new UnsupportedOperationException();
     }

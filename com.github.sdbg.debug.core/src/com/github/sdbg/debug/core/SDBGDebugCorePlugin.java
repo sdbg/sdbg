@@ -21,6 +21,7 @@ import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.StringUtilities;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.Status;
@@ -203,6 +204,10 @@ public class SDBGDebugCorePlugin extends Plugin {
     if (getPlugin() != null) {
       getPlugin().getLog().log(new Status(IStatus.WARNING, PLUGIN_ID, message));
     }
+  }
+
+  public static CoreException wrap(Exception e) {
+    return new CoreException(new Status(IStatus.ERROR, PLUGIN_ID, e.getMessage(), e));
   }
 
   public boolean canShowRunResumeDialog() {

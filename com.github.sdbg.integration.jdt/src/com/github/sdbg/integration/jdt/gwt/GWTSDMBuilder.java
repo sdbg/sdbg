@@ -4,6 +4,8 @@ import com.github.sdbg.integration.jdt.SDBGJDTIntegrationPlugin;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import org.eclipse.core.resources.IMarker;
@@ -21,13 +23,7 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
 
   private static final String MARKER_TYPE = SDBGJDTIntegrationPlugin.PLUGIN_ID + ".gwtsdmmarker";
 
-  private GWTSDMCodeServerAPI codeServerAPI;
-
   public GWTSDMBuilder() {
-  }
-
-  public void setCodeServerAPI(GWTSDMCodeServerAPI codeServerAPI) {
-    this.codeServerAPI = codeServerAPI;
   }
 
   @Override
@@ -52,6 +48,9 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
   }
 
   protected void fullBuild(final IProgressMonitor monitor) throws CoreException {
+    GWTSDMProperties properties = new GWTSDMProperties(getProject());
+    GWTSDMCodeServerAPI codeServerAPI = properties.isRecompileEnabled()
+        ? getCodeServerAPI(properties) : null;
     if (codeServerAPI == null) {
       return;
     }
@@ -66,7 +65,7 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
         marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
       } else {
         getProject().deleteMarkers(MARKER_TYPE, true, IResource.DEPTH_INFINITE);
-        notifyBuildCompleted();
+        notifyBuildCompleted(properties, codeServerAPI);
       }
     } catch (JSONException e) {
       throw SDBGJDTIntegrationPlugin.wrapError(e);
@@ -82,12 +81,31 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
     fullBuild(monitor);
   }
 
-  private void notifyBuildCompleted() throws MalformedURLException, IOException, JSONException,
-      CoreException {
-    for (GWTSDMDOMResourceTracker tracker : GWTSDMDOMResourceTracker.getInitialized()) {
-      if (getProject() != null && tracker.getProject() != null
-          && getProject().getName().equals(tracker.getProject().getName())) {
-        tracker.uploadLatestScript(codeServerAPI);
+  private GWTSDMCodeServerAPI getCodeServerAPI(GWTSDMProperties properties) {
+    try {
+      return new GWTSDMCodeServerAPI(new URI(
+          "http",
+          null,
+          properties.getCodeServerHost(),
+          properties.getCodeServerPort(),
+          "/",
+          null,
+          null), properties.getModuleName());
+    } catch (CoreException e) {
+      throw new RuntimeException(e);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private void notifyBuildCompleted(GWTSDMProperties properties, GWTSDMCodeServerAPI codeServerAPI)
+      throws MalformedURLException, IOException, JSONException, CoreException {
+    if (properties.isChromeLiveEditEnabled()) {
+      for (GWTSDMDOMResourceTracker tracker : GWTSDMDOMResourceTracker.getInitialized()) {
+        if (getProject() != null && tracker.getProject() != null
+            && getProject().getName().equals(tracker.getProject().getName())) {
+          tracker.uploadLatestScript(codeServerAPI);
+        }
       }
     }
   }

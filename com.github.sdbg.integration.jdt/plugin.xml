@@ -117,4 +117,20 @@
             class="com.github.sdbg.integration.jdt.gwt.GWTSDMDOMResourceTracker">
       </tracker>
    </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            adaptable="false"
+            class="com.github.sdbg.integration.jdt.gwt.ui.GWTSDMPropertyPage"
+            id="com.github.sdbg.integration.jdt.gwtsdmproperties"
+            name="GWT SDM Compiler"
+            nameFilter="*.*"
+            objectClass="org.eclipse.core.resources.IProject"
+            selectionFilter="single">
+		 <filter name="nature" value="com.github.sdbg.integration.jdt.gwtsdmnature"/>         
+		 <enabledWhen>
+            <instanceof value="org.eclipse.core.resources.IProject"/>
+         </enabledWhen>
+      </page>         
+   </extension>
 </plugin>

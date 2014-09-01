@@ -58,7 +58,7 @@ public class GWTSDMCodeServerAPI {
       JSONException {
     final SubMonitor subMonitor = SubMonitor.convert(monitor);
 
-    subMonitor.beginTask("Running GWT Super Development Mode recompilation", 100);
+    subMonitor.beginTask("Running GWT SDM Recompiler", 100);
 
     try {
       final Timer timer = new Timer();
@@ -70,8 +70,18 @@ public class GWTSDMCodeServerAPI {
             try {
               JSONObject progress = progress();
               if ("compiling".equals(progress.getString("status"))) {
-                subMonitor.setWorkRemaining(100 - (int) (progress.getInt("finishedSteps")
-                    / (double) progress.getInt("totalSteps") * 100));
+                String message = progress.getString("message");
+                if (message == null) {
+                  message = "Compiling";
+                }
+
+                String module = progress.getString("inputModule");
+                if (module == null) {
+                  message = "(Unknown)";
+                }
+
+                subMonitor.setWorkRemaining(IProgressMonitor.UNKNOWN);
+                subMonitor.subTask(message + " module " + module);
               } else {
                 subMonitor.setWorkRemaining(0);
               }
@@ -81,9 +91,7 @@ public class GWTSDMCodeServerAPI {
               // Best effort
             }
           }
-        },
-            0,
-            1000);
+        }, 0, 1000);
 
         return recompile(module);
       } finally {

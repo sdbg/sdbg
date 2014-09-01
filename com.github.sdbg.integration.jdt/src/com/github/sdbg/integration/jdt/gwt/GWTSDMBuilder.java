@@ -4,8 +4,6 @@ import com.github.sdbg.integration.jdt.SDBGJDTIntegrationPlugin;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 
 import org.eclipse.core.resources.IMarker;
@@ -26,12 +24,6 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
   private GWTSDMCodeServerAPI codeServerAPI;
 
   public GWTSDMBuilder() {
-    try {
-      setCodeServerAPI(new GWTSDMCodeServerAPI(new URI("http://localhost:9996"), "fuelui_draft"));
-    } catch (URISyntaxException e) {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
-    }
   }
 
   public void setCodeServerAPI(GWTSDMCodeServerAPI codeServerAPI) {

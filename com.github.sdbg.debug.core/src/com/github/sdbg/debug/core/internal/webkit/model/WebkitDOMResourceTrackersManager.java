@@ -27,11 +27,6 @@ import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 
-/**
- * Manage known css scripts loaded in the target browser. Listen for resource change events (using
- * the ResourceChangeManager class). When a css scripts changes on disk that the browser knows
- * about, send the new contents to the browser using the Webkit inspector protocol.
- */
 class WebkitDOMResourceTrackersManager extends DOMResourceTrackersManager implements IDOMResources {
   private static class WebkitDOMResourceReference implements IDOMResourceReference {
     private Type type;

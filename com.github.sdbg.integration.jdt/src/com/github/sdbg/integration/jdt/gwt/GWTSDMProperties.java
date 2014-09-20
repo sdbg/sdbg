@@ -19,10 +19,12 @@ public class GWTSDMProperties {
       SDBGJDTIntegrationPlugin.PLUGIN_ID,
       "chromeLiveEditEnabled");
 
-  public static final String DEFVALUE_CODE_SERVER_HOST = "localhost",
-      DEFVALUE_CODE_SERVER_PORT = "9996", DEFVALUE_MODULE_NAME = "",
-      DEFVALUE_RECOMPILE_ENABLED = Boolean.FALSE.toString(),
-      DEFVALUE_CHROME_LIVE_EDIT_ENABLED = Boolean.FALSE.toString();
+  public static final String DEFVALUE_CODE_SERVER_HOST = "localhost", DEFVALUE_MODULE_NAME = "";
+
+  public static final boolean DEFVALUE_RECOMPILE_ENABLED = false,
+      DEFVALUE_CHROME_LIVE_EDIT_ENABLED = false;
+
+  public static final int DEFVALUE_CODE_SERVER_PORT = 9996;
 
   private IProject project;
 
@@ -35,7 +37,9 @@ public class GWTSDMProperties {
   }
 
   public int getCodeServerPort() throws CoreException {
-    return Integer.parseInt(getProperty(PROPERTY_CODE_SERVER_PORT, DEFVALUE_CODE_SERVER_PORT));
+    return Integer.parseInt(getProperty(
+        PROPERTY_CODE_SERVER_PORT,
+        Integer.toString(DEFVALUE_CODE_SERVER_PORT)));
   }
 
   public String getModuleName() throws CoreException {
@@ -45,11 +49,13 @@ public class GWTSDMProperties {
   public boolean isChromeLiveEditEnabled() throws CoreException {
     return Boolean.parseBoolean(getProperty(
         PROPERTY_CHROME_LIVE_EDIT_ENABLED,
-        DEFVALUE_CHROME_LIVE_EDIT_ENABLED));
+        Boolean.toString(DEFVALUE_CHROME_LIVE_EDIT_ENABLED)));
   }
 
   public boolean isRecompileEnabled() throws CoreException {
-    return Boolean.parseBoolean(getProperty(PROPERTY_RECOMPILE_ENABLED, DEFVALUE_RECOMPILE_ENABLED));
+    return Boolean.parseBoolean(getProperty(
+        PROPERTY_RECOMPILE_ENABLED,
+        Boolean.toString(DEFVALUE_RECOMPILE_ENABLED)));
   }
 
   public void setChromeLiveEditEnabled(boolean value) throws CoreException {

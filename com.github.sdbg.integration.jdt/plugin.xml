@@ -19,4 +19,118 @@
             class="com.github.sdbg.integration.jdt.ui.JDTSourcePresentation">
       </extensions>
    </extension>
+
+   <extension
+         id="gwtsdmbuilder"
+         name="GWT Super Development Mode Project Builder"
+         point="org.eclipse.core.resources.builders">
+      <builder hasNature="true">
+         <run class="com.github.sdbg.integration.jdt.gwt.GWTSDMBuilder"/>
+      </builder>
+   </extension>
+   <extension
+         id="gwtsdmnature"
+         name="GWT Super Development Mode Project Nature"
+         point="org.eclipse.core.resources.natures">
+      <runtime>
+         <run class="com.github.sdbg.integration.jdt.gwt.GWTSDMNature"/>
+      </runtime>
+      <builder id="com.github.sdbg.integration.jdt.gwtsdmbuilder"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="GWT Super Development Mode Project Nature commands"
+            id="com.github.sdbg.integration.jdt.gwtsdmnature.category">
+      </category>
+      <command
+            name="Add/Remove GWT Super Development Mode Project Nature"
+            defaultHandler="com.github.sdbg.integration.jdt.gwt.GWTSDMNatureHandler"
+            categoryId="com.github.sdbg.integration.jdt.gwtsdmnature.category"
+            id="com.github.sdbg.integration.jdt.addremovegwtsdmnature">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="popup:org.eclipse.ui.projectConfigure?after=additions">
+         <command
+               commandId="com.github.sdbg.integration.jdt.addremovegwtsdmnature"
+               label="Disable GWT SDM builder"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                        <test
+                              value="com.github.sdbg.integration.jdt.gwtsdmnature"
+                              property="org.eclipse.core.resources.projectNature">
+                        </test>
+                     </adapt>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+         <command
+               commandId="com.github.sdbg.integration.jdt.addremovegwtsdmnature"
+               label="Enable GWT SDM builder"
+               style="push">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="selection">
+                  <count
+                        value="1">
+                  </count>
+                  <iterate>
+                     <adapt
+                           type="org.eclipse.core.resources.IProject">
+                        <not>
+                           <test
+                                 value="com.github.sdbg.integration.jdt.gwtsdmnature"
+                                 property="org.eclipse.core.resources.projectNature">
+                           </test>
+                        </not>
+                     </adapt>
+                  </iterate>
+               </with>
+            </visibleWhen>
+         </command>
+      </menuContribution>
+   </extension>
+   <extension
+         id="gwtsdmmarker"
+         name="GWT SDM Build Problem"
+         point="org.eclipse.core.resources.markers">
+      <super type="org.eclipse.core.resources.problemmarker"/>
+      <persistent value="true"/>
+   </extension>
+   <extension
+         point="com.github.sdbg.debug.core.domResourceTracker">
+      <tracker
+            class="com.github.sdbg.integration.jdt.gwt.GWTSDMDOMResourceTracker">
+      </tracker>
+   </extension>
+   <extension
+         point="org.eclipse.ui.propertyPages">
+      <page
+            adaptable="true"
+            class="com.github.sdbg.integration.jdt.gwt.ui.GWTSDMPropertyPage"
+            id="com.github.sdbg.integration.jdt.gwtsdmproperties"
+            name="GWT SDM Compiler"
+            objectClass="org.eclipse.core.resources.IProject"
+            selectionFilter="single">
+		 <filter name="nature" value="com.github.sdbg.integration.jdt.gwtsdmnature"/>       
+		 <!--  
+		 <enabledWhen>
+            <instanceof value="org.eclipse.core.resources.IProject"/>
+         </enabledWhen>-->
+      </page>         
+   </extension>
 </plugin>

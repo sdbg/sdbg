@@ -25,8 +25,11 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.sourcelookup.ISourceContainerType;
 import org.eclipse.debug.core.sourcelookup.containers.AbstractSourceContainer;
@@ -44,7 +47,78 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
   }
 
   @Override
-  public Object[] findSourceElements(String name) throws CoreException {
+  public Object[] findSourceElements(final String name) throws CoreException {
+    if (name == null) {
+      return EMPTY;
+    }
+
+    // The fetch of large script files can be very slow, so use a job for that
+    final Object[] result = new Object[1];
+    Job job = new Job("Browser Script Loader") {
+      @Override
+      protected IStatus run(IProgressMonitor monitor) {
+        SubMonitor subMonitor = SubMonitor.convert(monitor);
+
+        subMonitor.beginTask("Looking up " + name, IProgressMonitor.UNKNOWN);
+
+        try {
+          result[0] = doFindSourceElements(name);
+        } catch (CoreException e) {
+          result[0] = e;
+        } finally {
+          subMonitor.done();
+        }
+
+        return Status.OK_STATUS;
+      }
+    };
+
+    job.setPriority(Job.SHORT);
+    job.setUser(true);
+    job.schedule();
+
+    try {
+      job.join();
+    } catch (InterruptedException e) {
+      SDBGDebugCorePlugin.wrapError(e);
+    }
+
+    if (result[0] instanceof CoreException) {
+      throw (CoreException) result[0];
+    } else {
+      return (Object[]) result[0];
+    }
+  }
+
+  @Override
+  public String getName() {
+    return "Remote Scripts";
+  }
+
+  @Override
+  public ISourceContainerType getType() {
+    return getSourceContainerType(TYPE_ID);
+  }
+
+  private String convertDataUrl(String url) {
+    // convert data:application/dart;base64,CiAgICAgICAgaW1wb...3J0ICd== to
+    // script:application/dart
+
+    url = url.substring("data".length());
+    url = "script" + url;
+
+    if (url.indexOf(';') != -1) {
+      url = url.substring(0, url.indexOf(';'));
+    }
+
+    if (url.length() > 40) {
+      url = url.substring(0, 40);
+    }
+
+    return url;
+  }
+
+  private Object[] doFindSourceElements(String name) throws CoreException {
     if (name == null) {
       return EMPTY;
     }
@@ -80,34 +154,6 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
     }
 
     return EMPTY;
-  }
-
-  @Override
-  public String getName() {
-    return "Remote Scripts";
-  }
-
-  @Override
-  public ISourceContainerType getType() {
-    return getSourceContainerType(TYPE_ID);
-  }
-
-  private String convertDataUrl(String url) {
-    // convert data:application/dart;base64,CiAgICAgICAgaW1wb...3J0ICd== to
-    // script:application/dart
-
-    url = url.substring("data".length());
-    url = "script" + url;
-
-    if (url.indexOf(';') != -1) {
-      url = url.substring(0, url.indexOf(';'));
-    }
-
-    if (url.length() > 40) {
-      url = url.substring(0, 40);
-    }
-
-    return url;
   }
 
   private LocalFileStorage getCreateStorageFor(WebkitScript script) throws IOException {

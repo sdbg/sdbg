@@ -13,7 +13,6 @@
  */
 package com.github.sdbg.debug.core.internal.webkit.model;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
@@ -175,20 +174,13 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   @Override
   public void setValue(String expression) throws DebugException {
-    if (SDBGDebugCorePlugin.VM_SUPPORTS_VALUE_MODIFICATION) {
-      // TODO(devoncarew):
-
-      Trace.trace("Change: " + expression);
-    }
+    // TODO(devoncarew):
+    Trace.trace("Change: " + expression);
   }
 
   @Override
   public boolean supportsValueModification() {
-    if (SDBGDebugCorePlugin.VM_SUPPORTS_VALUE_MODIFICATION) {
-      return descriptor.isWritable() && descriptor.getValue().isPrimitive();
-    } else {
-      return false;
-    }
+    return descriptor.isWritable() && descriptor.getValue().isPrimitive();
   }
 
   @Override

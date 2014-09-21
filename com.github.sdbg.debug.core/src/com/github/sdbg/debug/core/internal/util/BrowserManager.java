@@ -389,6 +389,7 @@ public class BrowserManager {
           connection,
           launch,
           runtimeProcess,
+          launchConfig.getProject(),
           resolver,
           adbManager,
           enableBreakpoints,

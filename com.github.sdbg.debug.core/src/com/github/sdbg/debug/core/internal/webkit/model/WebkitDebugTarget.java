@@ -19,6 +19,7 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 import com.github.sdbg.debug.core.internal.android.ADBManager;
+import com.github.sdbg.debug.core.internal.util.DOMResourceTrackersManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
@@ -29,6 +30,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PauseO
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDebugger.PausedReasonType;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.DomListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitDom.InspectorListener;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitNode;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.core.resources.IMarkerDelta;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.debug.core.DebugException;
@@ -62,6 +65,25 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     ISDBGDebugTarget {
   private static WebkitDebugTarget activeTarget;
 
+  private String debugTargetName;
+
+  private String disconnectMessage;
+
+  private WebkitConnection connection;
+  private ILaunch launch;
+  private WebkitDebugProcess process;
+  private IResourceResolver resourceResolver;
+  private boolean enableBreakpoints;
+  private WebkitDebugThread debugThread;
+  private ISDBGBreakpointManager breakpointManager;
+  private DOMResourceTrackersManager domResourceTrackersManager;
+  private boolean canSetScriptSource;
+  private SourceMapManager sourceMapManager;
+  private ADBManager adbManager;
+  private IProject project;
+
+  private WebkitNode rootNode;
+
   public static WebkitDebugTarget getActiveTarget() {
     return activeTarget;
   }
@@ -70,28 +92,12 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     activeTarget = target;
   }
 
-  private String debugTargetName;
-  private String disconnectMessage;
-  private WebkitConnection connection;
-  private ILaunch launch;
-  private WebkitDebugProcess process;
-  private IResourceResolver resourceResolver;
-  private boolean enableBreakpoints;
-  private WebkitDebugThread debugThread;
-  private ISDBGBreakpointManager breakpointManager;
-  private CssScriptManager cssScriptManager;
-  private HtmlScriptManager htmlScriptManager;
-  private DartCodeManager dartCodeManager;
-  private boolean canSetScriptSource;
-  private SourceMapManager sourceMapManager;
-  private ADBManager adbManager;
-
   /**
    * @param target
    */
   public WebkitDebugTarget(String debugTargetName, WebkitConnection connection, ILaunch launch,
-      Process javaProcess, IResourceResolver resourceResolver, ADBManager adbManager,
-      boolean enableBreakpoints, boolean isRemote) {
+      Process javaProcess, IProject project, IResourceResolver resourceResolver,
+      ADBManager adbManager, boolean enableBreakpoints, boolean isRemote) {
     super(null);
 
     setActiveTarget(this);
@@ -99,6 +105,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     this.debugTargetName = debugTargetName;
     this.connection = connection;
     this.launch = launch;
+    this.project = project;
     this.resourceResolver = resourceResolver;
     this.adbManager = adbManager;
     this.enableBreakpoints = enableBreakpoints;
@@ -115,26 +122,9 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       breakpointManager = new BreakpointManager.NullBreakpointManager();
     }
 
-    cssScriptManager = new CssScriptManager(this);
-
-    if (SDBGDebugCorePlugin.SEND_MODIFIED_HTML) {
-      htmlScriptManager = new HtmlScriptManager(this);
-    }
-
-    if (SDBGDebugCorePlugin.SEND_MODIFIED_DART) {
-      dartCodeManager = new DartCodeManager(this);
-    }
-
-//&&&    
-//    SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(launch.getLaunchConfiguration());
+    domResourceTrackersManager = new WebkitDOMResourceTrackersManager(this);
 
     sourceMapManager = new SourceMapManager(resourceResolver);
-//&&&    
-//    if (wrapper.getProject() != null) {
-//      sourceMapManager = new SourceMapManager(wrapper.getProject());
-//    } else {
-//      sourceMapManager = new SourceMapManager(ResourcesPlugin.getWorkspace().getRoot());
-//    }
 
     connection.getDebugger().setResteppingManager(new WebkitResteppingManagerImpl(this));
   }
@@ -150,6 +140,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
         new WebkitConnection(target.connection),
         target.launch,
         null,
+        target.project,
         target.resourceResolver,
         target.adbManager,
         target.enableBreakpoints,
@@ -222,18 +213,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     breakpointManager.dispose(false);
     breakpointManager = null;
 
-    cssScriptManager.dispose();
-    cssScriptManager = null;
-
-    if (htmlScriptManager != null) {
-      htmlScriptManager.dispose();
-      htmlScriptManager = null;
-    }
-
-    if (dartCodeManager != null) {
-      dartCodeManager.dispose();
-      dartCodeManager = null;
-    }
+    domResourceTrackersManager.dispose();
 
     sourceMapManager.dispose();
     sourceMapManager = null;
@@ -361,25 +341,19 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     connection.getPage().addPageListener(new WebkitPage.PageListenerAdapter() {
       @Override
       public void loadEventFired(int timestamp) {
-        if (htmlScriptManager != null) {
-          htmlScriptManager.handleLoadEventFired();
-        }
+        resyncRootNode();
       }
     });
     connection.getPage().enable();
 
     connection.getCSS().enable();
 
-    if (SDBGDebugCorePlugin.SEND_MODIFIED_HTML) {
-      connection.getDom().addDomListener(new DomListener() {
-        @Override
-        public void documentUpdated() {
-          if (htmlScriptManager != null) {
-            htmlScriptManager.handleDocumentUpdated();
-          }
-        }
-      });
-    }
+    connection.getDom().addDomListener(new DomListener() {
+      @Override
+      public void documentUpdated() {
+        resyncRootNode();
+      }
+    });
 
     if (listenForInspectorDetach) {
       connection.getDom().addInspectorListener(new InspectorListener() {
@@ -674,6 +648,14 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     return SDBGDebugCorePlugin.getPlugin().getUseSourceMaps();
   }
 
+  IProject getProject() {
+    return project;
+  }
+
+  WebkitNode getRootNode() {
+    return rootNode;
+  }
+
   /**
    * Check for the presence of Chrome extensions content scripts. It seems like many (all?) of these
    * prevent debugging from working.
@@ -712,5 +694,25 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     }
 
     return pauseType;
+  }
+
+  private void resyncRootNode() {
+    // Flush everything.
+    rootNode = null;
+
+    // Get the root node.
+    try {
+      // TODO(devoncarew): check if the connection is no longer open?
+
+      // {"id":13,"result":{"root":{"childNodeCount":3,"localName":"","nodeId":1,"documentURL":"http://127.0.0.1:3030/Users/devoncarew/projects/dart/dart/samples/solar/solar.html","baseURL":"http://127.0.0.1:3030/Users/devoncarew/projects/dart/dart/samples/solar/solar.html","nodeValue":"","nodeName":"#document","xmlVersion":"","children":[{"localName":"","nodeId":2,"internalSubset":"","publicId":"","nodeValue":"","nodeName":"html","systemId":"","nodeType":10},{"localName":"","nodeId":3,"nodeValue":" Copyright (c) 2012, the Dart project authors.  Please see the AUTHORS file\n     for details. All rights reserved. Use of this source code is governed by a\n     BSD-style license that can be found in the LICENSE file. ","nodeName":"","nodeType":8},{"childNodeCount":2,"localName":"html","nodeId":4,"nodeValue":"","nodeName":"HTML","children":[{"childNodeCount":3,"localName":"head","nodeId":5,"nodeValue":"","nodeName":"HEAD","attributes":[],"nodeType":1},{"childNodeCount":6,"localName":"body","nodeId":6,"nodeValue":"","nodeName":"BODY","attributes":[],"nodeType":1}],"attributes":[],"nodeType":1}],"nodeType":9}}}
+      getConnection().getDom().getDocument(new WebkitCallback<WebkitNode>() {
+        @Override
+        public void handleResult(WebkitResult<WebkitNode> result) {
+          rootNode = result.getResult();
+        }
+      });
+    } catch (IOException e) {
+      SDBGDebugCorePlugin.logError(e);
+    }
   }
 }

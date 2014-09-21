@@ -71,11 +71,13 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
         try {
           JSONObject result = codeServerAPI.recompile(subMonitor.newChild(1));
           if (!"ok".equals(result.getString("status"))) {
-            String log = codeServerAPI.getLog();
+            URI logUri = codeServerAPI.getLogUri();
 
             IMarker marker = getProject().createMarker(MARKER_TYPE);
-            marker.setAttribute(IMarker.MESSAGE, "GWT SDM recompilation failed for module "
-                + codeServerAPI.getModule() + ".\nCode Server log:\n\n" + log);
+            marker.setAttribute(
+                IMarker.MESSAGE,
+                "GWT SDM recompilation failed for module " + codeServerAPI.getModule()
+                    + ". Check your Code Server log (" + logUri.toASCIIString() + ").");
 
             marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
           } else {

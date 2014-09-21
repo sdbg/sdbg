@@ -44,8 +44,8 @@ public class GWTSDMCodeServerAPI {
     return null;
   }
 
-  public String getLog() throws MalformedURLException, IOException, JSONException {
-    return getString(URIUtil.append(codeServerUri, "/log"));
+  public URI getLogUri() throws MalformedURLException, IOException, JSONException {
+    return URIUtil.append(URIUtil.append(codeServerUri, "/log"), module);
   }
 
   public String getModule() {

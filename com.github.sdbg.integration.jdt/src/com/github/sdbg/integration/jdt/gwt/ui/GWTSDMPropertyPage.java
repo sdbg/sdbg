@@ -8,6 +8,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -28,6 +30,37 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
   private Button[] hotCodeReplacePolicyRadio;
 
   public GWTSDMPropertyPage() {
+  }
+
+  @Override
+  public String getErrorMessage() {
+    if (recompileEnabledCheck.getSelection()) {
+      if (codeServerHostText.getText().trim().length() == 0) {
+        return "Code Server Host cannot be empty";
+      } else if (codeServerPortText.getText().trim().length() == 0) {
+        return "Code Server Port cannot be empty";
+      } else if (moduleNamesText.getText().trim().length() == 0) {
+        return "At least one GWT Module should be specified";
+      } else {
+        try {
+          int port = Integer.parseInt(codeServerPortText.getText().trim());
+          if (port < 0) {
+            return "Code Server Port cannot be less than 0";
+          } else if (port > 65535) {
+            return "Code Server Port cannot be greater than less than 65535";
+          }
+        } catch (Exception e) {
+          return "Invalid Code Server Port number: " + e.getMessage();
+        }
+      }
+    }
+
+    return null;
+  }
+
+  @Override
+  public boolean isValid() {
+    return getErrorMessage() == null;
   }
 
   @Override
@@ -52,6 +85,7 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
         @Override
         public void widgetSelected(SelectionEvent event) {
           updateControls();
+          validate();
         }
       });
 
@@ -71,6 +105,12 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
           true,
           false).create());
       codeServerHostText.setText(properties.getCodeServerHost());
+      codeServerHostText.addModifyListener(new ModifyListener() {
+        @Override
+        public void modifyText(ModifyEvent event) {
+          validate();
+        }
+      });
 
       label = new Label(codeServerGroup, SWT.NONE);
       label.setLayoutData(new GridData());
@@ -79,6 +119,12 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
       codeServerPortText = new Text(codeServerGroup, SWT.BORDER);
       codeServerPortText.setLayoutData(GridDataFactory.swtDefaults().hint(60, SWT.DEFAULT).create());
       codeServerPortText.setText(Integer.toString(properties.getCodeServerPort()));
+      codeServerPortText.addModifyListener(new ModifyListener() {
+        @Override
+        public void modifyText(ModifyEvent event) {
+          validate();
+        }
+      });
 
       Group gwtModulesGroup = new Group(contents, SWT.NONE);
       gwtModulesGroup.setText("GWT Modules");
@@ -92,6 +138,12 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
           true,
           false).create());
       moduleNamesText.setText(properties.getModuleNames());
+      moduleNamesText.addModifyListener(new ModifyListener() {
+        @Override
+        public void modifyText(ModifyEvent event) {
+          validate();
+        }
+      });
 
       label = new Label(gwtModulesGroup, SWT.WRAP);
       label.setLayoutData(GridDataFactory.swtDefaults().align(SWT.RIGHT, SWT.TOP).create());
@@ -111,6 +163,12 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
         radio.setText(policy.getDescription());
         radio.setData(HotCodeReplacePolicy.class.getName(), policy);
         radio.setLayoutData(GridDataFactory.swtDefaults().span(2, 1).create());
+        radio.addSelectionListener(new SelectionAdapter() {
+          @Override
+          public void widgetSelected(SelectionEvent e) {
+            validate();
+          }
+        });
 
         hotCodeReplacePolicyRadio[count++] = radio;
       }
@@ -122,9 +180,13 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
       }
 
       label = new Label(hotCodeReplacePolicyGroup, SWT.WRAP);
-      label.setText("\nNote: for Hot Code Replace to work, you need an active SDBG debug session");
+      label.setLayoutData(GridDataFactory.swtDefaults().hint(400, SWT.DEFAULT).create());
+      label.setText("\nNote:"
+          + "\n- For Hot Code Replace to work, you need an active SDBG debug session"
+          + "\n- Chrome Live Edit will likely crash your browser with anything but the smallest GWT project");
 
       updateControls();
+      validate();
 
       return contents;
     } catch (CoreException e) {
@@ -159,9 +221,9 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
     try {
       GWTSDMProperties properties = getProperties();
       properties.setRecompileEnabled(recompileEnabledCheck.getSelection());
-      properties.setCodeServerHost(codeServerHostText.getText());
-      properties.setCodeServerPort(Integer.parseInt(codeServerPortText.getText()));
-      properties.setModuleNames(moduleNamesText.getText());
+      properties.setCodeServerHost(codeServerHostText.getText().trim());
+      properties.setCodeServerPort(Integer.parseInt(codeServerPortText.getText().trim()));
+      properties.setModuleNames(moduleNamesText.getText().trim());
       for (Button radio : hotCodeReplacePolicyRadio) {
         if (radio.getSelection()) {
           properties.setHotCodeReplacePolicy((HotCodeReplacePolicy) radio.getData(HotCodeReplacePolicy.class.getName()));
@@ -184,5 +246,11 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
     for (Button radio : hotCodeReplacePolicyRadio) {
       radio.setEnabled(enabled);
     }
+  }
+
+  private void validate() {
+    setErrorMessage(getErrorMessage());
+    setValid(isValid());
+    //updateApplyButton();
   }
 }

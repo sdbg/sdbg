@@ -37,7 +37,7 @@ public class GWTSDMProperties {
 
   public static final String DEFVALUE_CODE_SERVER_HOST = "localhost", DEFVALUE_MODULE_NAMES = "";
   public static final boolean DEFVALUE_RECOMPILE_ENABLED = false;
-  public static final int DEFVALUE_CODE_SERVER_PORT = 9996;
+  public static final int DEFVALUE_CODE_SERVER_PORT = 9876;
   public static final HotCodeReplacePolicy DEFVALUE_HOT_CODE_REPLACE_POLICY = HotCodeReplacePolicy.DISABLED;
 
   private IProject project;

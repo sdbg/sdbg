@@ -1,9 +1,11 @@
 package com.github.sdbg.integration.jdt.gwt;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.integration.jdt.SDBGJDTIntegrationPlugin;
 import com.github.sdbg.integration.jdt.gwt.GWTSDMProperties.HotCodeReplacePolicy;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -79,6 +81,11 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
           } else {
             notifyBuildCompleted(properties, codeServerAPI);
           }
+        } catch (ConnectException e) {
+          // The code server is not running. That's OK - stay silent
+          SDBGDebugCorePlugin.log("Code Server " + codeServerAPI.getCodeServerUri().toString()
+              + " seems to be down. Skipping GWT SDM recompilation for module "
+              + codeServerAPI.getModule());
         } catch (JSONException e) {
           throw SDBGJDTIntegrationPlugin.wrapError(e);
         } catch (MalformedURLException e) {

@@ -170,7 +170,7 @@ public class GWTSDMCodeServerAPI {
 
               String module = progress.getString("inputModule");
               if (module == null) {
-                message = "(Unknown)";
+                module = getModule();
               }
 
               progressMonitor.subTask(message + " module " + module);
@@ -178,9 +178,9 @@ public class GWTSDMCodeServerAPI {
               break;
             }
           } catch (IOException e) {
-            // Best effort
+            break;
           } catch (JSONException e) {
-            // Best effort
+            break;
           }
         }
 

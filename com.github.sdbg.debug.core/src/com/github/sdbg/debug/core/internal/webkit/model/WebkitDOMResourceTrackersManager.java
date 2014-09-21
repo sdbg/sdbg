@@ -97,6 +97,11 @@ class WebkitDOMResourceTrackersManager extends DOMResourceTrackersManager implem
   }
 
   @Override
+  public void reload() throws IOException {
+    target.getConnection().getPage().reload();
+  }
+
+  @Override
   public void uploadNewSource(IDOMResourceReference resourceReference, Reader newContent)
       throws IOException {
     switch (resourceReference.getType()) {

@@ -45,22 +45,36 @@ public class GWTSDMDOMResourceTracker implements IDOMResourceTracker {
     trackers.add(this);
   }
 
-  public void uploadLatestScript(GWTSDMCodeServerAPI codeServerAPI) throws MalformedURLException,
-      IOException, JSONException, CoreException {
+  public void uploadLatestScript(GWTSDMProperties properties, GWTSDMCodeServerAPI codeServerAPI)
+      throws MalformedURLException, IOException, JSONException, CoreException {
+
     String modulePath = codeServerAPI.getModule() + "-0.js";
     for (IDOMResourceReference ref : domResources.getResources()) {
       if (ref.getType() == IDOMResourceReference.Type.SCRIPT && ref.getUrl().equals(modulePath)) {
-        Reader script = codeServerAPI.getCompiledScript();
+        switch (properties.getHotCodeReplacePolicy()) {
+          case DISABLED:
+            // Do nothing
+            break;
+          case RELOAD_PAGE:
+            domResources.reload();
+            break;
+          case CHROME_LIVE_EDIT: {
+            Reader script = codeServerAPI.getCompiledScript();
 
-        if (script != null) {
-          try {
-            domResources.uploadNewSource(ref, script);
-          } finally {
-            script.close();
+            if (script != null) {
+              try {
+                domResources.uploadNewSource(ref, script);
+              } finally {
+                script.close();
+              }
+            }
+
+            break;
           }
+          default:
+            throw new IllegalArgumentException("Unknown hot code replace policy: "
+                + properties.getHotCodeReplacePolicy());
         }
-
-        break;
       }
     }
   }

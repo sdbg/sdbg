@@ -7,24 +7,38 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.QualifiedName;
 
 public class GWTSDMProperties {
+  public static enum HotCodeReplacePolicy {
+    DISABLED("Disabled"),
+    RELOAD_PAGE("Reload the page hosting the module"),
+    CHROME_LIVE_EDIT("Upload the recompiled module script via Chrome LiveEdit");
+
+    private String description;
+
+    private HotCodeReplacePolicy(String description) {
+      this.description = description;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+  }
+
   private static final QualifiedName PROPERTY_RECOMPILE_ENABLED = new QualifiedName(
       SDBGJDTIntegrationPlugin.PLUGIN_ID,
       "recompileEnabled"), PROPERTY_CODE_SERVER_HOST = new QualifiedName(
       SDBGJDTIntegrationPlugin.PLUGIN_ID,
       "codeServerHost"), PROPERTY_CODE_SERVER_PORT = new QualifiedName(
       SDBGJDTIntegrationPlugin.PLUGIN_ID,
-      "codeServerPort"), PROPERTY_MODULE_NAME = new QualifiedName(
+      "codeServerPort"), PROPERTY_MODULE_NAMES = new QualifiedName(
       SDBGJDTIntegrationPlugin.PLUGIN_ID,
-      "moduleName"), PROPERTY_CHROME_LIVE_EDIT_ENABLED = new QualifiedName(
+      "moduleName"), PROPERTY_HOT_CODE_REPLACE_POLICY = new QualifiedName(
       SDBGJDTIntegrationPlugin.PLUGIN_ID,
-      "chromeLiveEditEnabled");
+      "hotCodeReplacePolicy");
 
-  public static final String DEFVALUE_CODE_SERVER_HOST = "localhost", DEFVALUE_MODULE_NAME = "";
-
-  public static final boolean DEFVALUE_RECOMPILE_ENABLED = false,
-      DEFVALUE_CHROME_LIVE_EDIT_ENABLED = false;
-
+  public static final String DEFVALUE_CODE_SERVER_HOST = "localhost", DEFVALUE_MODULE_NAMES = "";
+  public static final boolean DEFVALUE_RECOMPILE_ENABLED = false;
   public static final int DEFVALUE_CODE_SERVER_PORT = 9996;
+  public static final HotCodeReplacePolicy DEFVALUE_HOT_CODE_REPLACE_POLICY = HotCodeReplacePolicy.DISABLED;
 
   private IProject project;
 
@@ -42,14 +56,18 @@ public class GWTSDMProperties {
         Integer.toString(DEFVALUE_CODE_SERVER_PORT)));
   }
 
-  public String getModuleName() throws CoreException {
-    return getProperty(PROPERTY_MODULE_NAME, DEFVALUE_MODULE_NAME);
+  public HotCodeReplacePolicy getHotCodeReplacePolicy() throws CoreException {
+    try {
+      return HotCodeReplacePolicy.valueOf(getProperty(
+          PROPERTY_HOT_CODE_REPLACE_POLICY,
+          DEFVALUE_HOT_CODE_REPLACE_POLICY.toString()));
+    } catch (Exception e) {
+      return DEFVALUE_HOT_CODE_REPLACE_POLICY;
+    }
   }
 
-  public boolean isChromeLiveEditEnabled() throws CoreException {
-    return Boolean.parseBoolean(getProperty(
-        PROPERTY_CHROME_LIVE_EDIT_ENABLED,
-        Boolean.toString(DEFVALUE_CHROME_LIVE_EDIT_ENABLED)));
+  public String getModuleNames() throws CoreException {
+    return getProperty(PROPERTY_MODULE_NAMES, DEFVALUE_MODULE_NAMES);
   }
 
   public boolean isRecompileEnabled() throws CoreException {
@@ -58,24 +76,24 @@ public class GWTSDMProperties {
         Boolean.toString(DEFVALUE_RECOMPILE_ENABLED)));
   }
 
-  public void setChromeLiveEditEnabled(boolean value) throws CoreException {
-    setProperty(PROPERTY_CHROME_LIVE_EDIT_ENABLED, Boolean.toString(value));
-  }
-
   public void setCodeServerHost(String value) throws CoreException {
     setProperty(PROPERTY_CODE_SERVER_HOST, value);
   }
 
-  public void setCodeServerPort(int value) throws CoreException {
-    setProperty(PROPERTY_CODE_SERVER_PORT, Integer.toString(value));
+  public void setCodeServerPort(Integer value) throws CoreException {
+    setProperty(PROPERTY_CODE_SERVER_PORT, value != null ? value.toString() : null);
   }
 
-  public void setModuleName(String value) throws CoreException {
-    setProperty(PROPERTY_MODULE_NAME, value);
+  public void setHotCodeReplacePolicy(HotCodeReplacePolicy value) throws CoreException {
+    setProperty(PROPERTY_HOT_CODE_REPLACE_POLICY, value != null ? value.toString() : null);
   }
 
-  public void setRecompileEnabled(boolean value) throws CoreException {
-    setProperty(PROPERTY_RECOMPILE_ENABLED, Boolean.toString(value));
+  public void setModuleNames(String value) throws CoreException {
+    setProperty(PROPERTY_MODULE_NAMES, value);
+  }
+
+  public void setRecompileEnabled(Boolean value) throws CoreException {
+    setProperty(PROPERTY_RECOMPILE_ENABLED, value != null ? value.toString() : null);
   }
 
   private String getProperty(QualifiedName name, String defaultValue) throws CoreException {

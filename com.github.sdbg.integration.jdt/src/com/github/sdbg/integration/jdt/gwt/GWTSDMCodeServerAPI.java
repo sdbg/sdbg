@@ -44,6 +44,10 @@ public class GWTSDMCodeServerAPI {
     return null;
   }
 
+  public String getLog() throws MalformedURLException, IOException, JSONException {
+    return getString(URIUtil.append(codeServerUri, "/log"));
+  }
+
   public String getModule() {
     return module;
   }
@@ -55,7 +59,7 @@ public class GWTSDMCodeServerAPI {
   public JSONObject recompile(IProgressMonitor monitor) throws MalformedURLException, IOException,
       JSONException {
     final SubMonitor subMonitor = SubMonitor.convert(monitor);
-    subMonitor.beginTask("Running GWT SDM Recompiler", 100);
+    subMonitor.beginTask("Running GWT SDM Recompiler", 1);
 
     try {
       final boolean[] exitFlag = new boolean[] {false};
@@ -84,10 +88,9 @@ public class GWTSDMCodeServerAPI {
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
         }
-
-        subMonitor.setWorkRemaining(0);
       }
     } finally {
+      subMonitor.worked(1);
       subMonitor.done();
     }
   }
@@ -170,7 +173,6 @@ public class GWTSDMCodeServerAPI {
                 message = "(Unknown)";
               }
 
-              progressMonitor.setWorkRemaining(IProgressMonitor.UNKNOWN);
               progressMonitor.subTask(message + " module " + module);
             } else {
               break;

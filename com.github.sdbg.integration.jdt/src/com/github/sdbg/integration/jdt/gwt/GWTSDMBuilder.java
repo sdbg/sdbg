@@ -1,6 +1,7 @@
 package com.github.sdbg.integration.jdt.gwt;
 
 import com.github.sdbg.integration.jdt.SDBGJDTIntegrationPlugin;
+import com.github.sdbg.integration.jdt.gwt.GWTSDMProperties.HotCodeReplacePolicy;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -15,6 +16,7 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.SubMonitor;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -49,30 +51,44 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
 
   protected void fullBuild(final IProgressMonitor monitor) throws CoreException {
     GWTSDMProperties properties = new GWTSDMProperties(getProject());
-    GWTSDMCodeServerAPI codeServerAPI = properties.isRecompileEnabled()
-        ? getCodeServerAPI(properties) : null;
-    if (codeServerAPI == null) {
+    if (!properties.isRecompileEnabled()) {
       return;
     }
 
-    try {
-      JSONObject result = codeServerAPI.recompile(monitor);
+    getProject().deleteMarkers(MARKER_TYPE, true, IResource.DEPTH_INFINITE);
 
-      if (!"ok".equals(result.getString("status"))) {
-        IMarker marker = getProject().createMarker(MARKER_TYPE);
-        marker.setAttribute(IMarker.MESSAGE, "GWT SDM recompilation failed for module "
-            + codeServerAPI.getModule() + ". Please check your SDM Code Server logs for details");
-        marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
-      } else {
-        getProject().deleteMarkers(MARKER_TYPE, true, IResource.DEPTH_INFINITE);
-        notifyBuildCompleted(properties, codeServerAPI);
+    String[] modules = properties.getModuleNames().split("\\s\\,\\;");
+
+    final SubMonitor subMonitor = SubMonitor.convert(monitor);
+    subMonitor.beginTask("Running GWT SDM Recompiler", modules.length);
+
+    try {
+      for (int i = 0; i < modules.length; i++) {
+        GWTSDMCodeServerAPI codeServerAPI = getCodeServerAPI(properties, modules[i].trim());
+
+        try {
+          JSONObject result = codeServerAPI.recompile(subMonitor.newChild(1));
+          if (!"ok".equals(result.getString("status"))) {
+            String log = codeServerAPI.getLog();
+
+            IMarker marker = getProject().createMarker(MARKER_TYPE);
+            marker.setAttribute(IMarker.MESSAGE, "GWT SDM recompilation failed for module "
+                + codeServerAPI.getModule() + ".\nCode Server log:\n\n" + log);
+
+            marker.setAttribute(IMarker.SEVERITY, IMarker.SEVERITY_ERROR);
+          } else {
+            notifyBuildCompleted(properties, codeServerAPI);
+          }
+        } catch (JSONException e) {
+          throw SDBGJDTIntegrationPlugin.wrapError(e);
+        } catch (MalformedURLException e) {
+          throw SDBGJDTIntegrationPlugin.wrapError(e);
+        } catch (IOException e) {
+          throw SDBGJDTIntegrationPlugin.wrapError(e);
+        }
       }
-    } catch (JSONException e) {
-      throw SDBGJDTIntegrationPlugin.wrapError(e);
-    } catch (MalformedURLException e) {
-      throw SDBGJDTIntegrationPlugin.wrapError(e);
-    } catch (IOException e) {
-      throw SDBGJDTIntegrationPlugin.wrapError(e);
+    } finally {
+      subMonitor.done();
     }
   }
 
@@ -81,7 +97,7 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
     fullBuild(monitor);
   }
 
-  private GWTSDMCodeServerAPI getCodeServerAPI(GWTSDMProperties properties) {
+  private GWTSDMCodeServerAPI getCodeServerAPI(GWTSDMProperties properties, String moduleName) {
     try {
       return new GWTSDMCodeServerAPI(new URI(
           "http",
@@ -90,7 +106,7 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
           properties.getCodeServerPort(),
           "/",
           null,
-          null), properties.getModuleName());
+          null), moduleName);
     } catch (CoreException e) {
       throw new RuntimeException(e);
     } catch (URISyntaxException e) {
@@ -100,11 +116,11 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
 
   private void notifyBuildCompleted(GWTSDMProperties properties, GWTSDMCodeServerAPI codeServerAPI)
       throws MalformedURLException, IOException, JSONException, CoreException {
-    if (properties.isChromeLiveEditEnabled()) {
+    if (properties.getHotCodeReplacePolicy() != HotCodeReplacePolicy.DISABLED) {
       for (GWTSDMDOMResourceTracker tracker : GWTSDMDOMResourceTracker.getInitialized()) {
         if (getProject() != null && tracker.getProject() != null
             && getProject().getName().equals(tracker.getProject().getName())) {
-          tracker.uploadLatestScript(codeServerAPI);
+          tracker.uploadLatestScript(properties, codeServerAPI);
         }
       }
     }

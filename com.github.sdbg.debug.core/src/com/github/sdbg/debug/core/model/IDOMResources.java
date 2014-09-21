@@ -9,6 +9,8 @@ import org.eclipse.core.runtime.CoreException;
 public interface IDOMResources {
   Collection<IDOMResourceReference> getResources();
 
+  void reload() throws IOException, CoreException;
+
   void uploadNewSource(IDOMResourceReference resourceReference, Reader newContent)
       throws IOException, CoreException;
 }

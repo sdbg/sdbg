@@ -9,8 +9,6 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
@@ -57,45 +55,37 @@ public class GWTSDMCodeServerAPI {
   public JSONObject recompile(IProgressMonitor monitor) throws MalformedURLException, IOException,
       JSONException {
     final SubMonitor subMonitor = SubMonitor.convert(monitor);
-
     subMonitor.beginTask("Running GWT SDM Recompiler", 100);
 
     try {
-      final Timer timer = new Timer();
+      final boolean[] exitFlag = new boolean[] {false};
+      final Object syncMonitor = new Object();
+
+      Thread progressThread = new Thread("GWT SDM Recompiler Progress") {
+        @Override
+        public synchronized void run() {
+          try {
+            trackProgress(subMonitor, syncMonitor, exitFlag);
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
+        }
+      };
+
+      progressThread.start();
 
       try {
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            try {
-              JSONObject progress = progress();
-              if ("compiling".equals(progress.getString("status"))) {
-                String message = progress.getString("message");
-                if (message == null) {
-                  message = "Compiling";
-                }
-
-                String module = progress.getString("inputModule");
-                if (module == null) {
-                  message = "(Unknown)";
-                }
-
-                subMonitor.setWorkRemaining(IProgressMonitor.UNKNOWN);
-                subMonitor.subTask(message + " module " + module);
-              } else {
-                subMonitor.setWorkRemaining(0);
-              }
-            } catch (IOException e) {
-              // Best effort
-            } catch (JSONException e) {
-              // Best effort
-            }
-          }
-        }, 0, 1000);
-
         return recompile(module);
       } finally {
-        timer.cancel();
+        exitFlag[0] = true;
+
+        try {
+          progressThread.join();
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+
+        subMonitor.setWorkRemaining(0);
       }
     } finally {
       subMonitor.done();
@@ -155,6 +145,45 @@ public class GWTSDMCodeServerAPI {
           : new InputStreamReader(con.getInputStream());
     } else {
       return null;
+    }
+  }
+
+  private void trackProgress(SubMonitor progressMonitor, Object syncMonitor, boolean[] exitFlag)
+      throws InterruptedException {
+    synchronized (syncMonitor) {
+      long time = System.currentTimeMillis();
+      while (!exitFlag[0]) {
+        long newTime = System.currentTimeMillis();
+        if (newTime - time >= 500L) {
+          time = newTime;
+
+          try {
+            JSONObject progress = progress();
+            if ("compiling".equals(progress.getString("status"))) {
+              String message = progress.getString("message");
+              if (message == null) {
+                message = "Compiling";
+              }
+
+              String module = progress.getString("inputModule");
+              if (module == null) {
+                message = "(Unknown)";
+              }
+
+              progressMonitor.setWorkRemaining(IProgressMonitor.UNKNOWN);
+              progressMonitor.subTask(message + " module " + module);
+            } else {
+              break;
+            }
+          } catch (IOException e) {
+            // Best effort
+          } catch (JSONException e) {
+            // Best effort
+          }
+        }
+
+        syncMonitor.wait(100);
+      }
     }
   }
 }

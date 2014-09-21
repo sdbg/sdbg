@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Localization: plugin
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.github.sdbg.debug.ui;singleton:=true
-Bundle-Version: 0.8.2.qualifier
+Bundle-Version: 0.9.0.qualifier
 Bundle-Activator: com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.expressions,

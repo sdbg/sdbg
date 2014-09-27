@@ -57,6 +57,7 @@ public class ChromeConnLaunchConfigurationDelegate extends SDBGLaunchConfigurati
         new URLFilterTabChooser(launchConfig.getUrl(), UIBrowserTabChooser.get()),
         launchConfig.getConnectionHost(),
         launchConfig.getConnectionPort(),
+        null,
         monitor);
   }
 }

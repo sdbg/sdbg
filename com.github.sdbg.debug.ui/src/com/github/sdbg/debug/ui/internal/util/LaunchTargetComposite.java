@@ -59,8 +59,10 @@ public class LaunchTargetComposite extends Composite {
   private Button htmlButton;
   private Text htmlText;
   private Button htmlBrowseButton;
+  private Label urlLabel;
   private Button urlButton;
   private Text urlText;
+  private Button urlLaunchTabCheck;
   private Text projectText;
   private Button projectBrowseButton;
 
@@ -68,7 +70,12 @@ public class LaunchTargetComposite extends Composite {
 
   private Label projectLabel;
 
-  public LaunchTargetComposite(Composite parent, int style, boolean allowHtmlFile) {
+  public LaunchTargetComposite(Composite parent, int style) {
+    this(parent, style, false, false, false);
+  }
+
+  public LaunchTargetComposite(Composite parent, int style, boolean allowHtmlFile,
+      boolean urlIsFilter, boolean launchTabInUrl) {
     super(parent, style);
 
     GridLayout layout = new GridLayout(1, false);
@@ -89,7 +96,7 @@ public class LaunchTargetComposite extends Composite {
     Label filler = new Label(group, SWT.NONE);
     GridDataFactory.swtDefaults().span(3, 1).hint(-1, 4).applyTo(filler);
 
-    createUrlField(group, allowHtmlFile);
+    createUrlField(group, allowHtmlFile, urlIsFilter, launchTabInUrl);
   }
 
   public int getButtonWidthHint() {
@@ -153,6 +160,10 @@ public class LaunchTargetComposite extends Composite {
     return urlText.getText().trim();
   }
 
+  public boolean isLaunchTabWithUrl() {
+    return urlLaunchTabCheck != null && urlLaunchTabCheck.getSelection();
+  }
+
   public void setHtmlButtonSelection(boolean state) {
     if (htmlButton != null) {
       htmlButton.setSelection(state);
@@ -164,6 +175,12 @@ public class LaunchTargetComposite extends Composite {
   public void setHtmlTextValue(String string) {
     if (htmlText != null) {
       htmlText.setText(string);
+    }
+  }
+
+  public void setLaunchTabWithUrl(boolean value) {
+    if (urlLaunchTabCheck != null) {
+      urlLaunchTabCheck.setSelection(value);
     }
   }
 
@@ -207,10 +224,12 @@ public class LaunchTargetComposite extends Composite {
     });
   }
 
-  protected void createUrlField(Composite composite, boolean allowHtmlFile) {
+  protected void createUrlField(Composite composite, boolean allowHtmlFile, boolean urlIsFilter,
+      boolean launchTabInUrl) {
     if (allowHtmlFile) {
       urlButton = new Button(composite, SWT.RADIO);
-      urlButton.setText(ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel);
+      urlButton.setText(urlIsFilter ? ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel
+          : ChromeLaunchMessages.ChromeMainTab_UrlLabel);
       urlButton.addSelectionListener(new SelectionAdapter() {
         @Override
         public void widgetSelected(SelectionEvent e) {
@@ -219,9 +238,10 @@ public class LaunchTargetComposite extends Composite {
         }
       });
     } else {
-      Label urlLabel = new Label(composite, SWT.NONE);
-      urlLabel.setText(ChromeLaunchMessages.ChromeMainTab_UrlLabel);
-      GridDataFactory.swtDefaults().applyTo(urlLabel);
+      urlLabel = new Label(composite, SWT.NONE);
+      urlLabel.setText(urlIsFilter ? ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel
+          : ChromeLaunchMessages.ChromeMainTab_UrlLabel);
+      GridDataFactory.swtDefaults().hint(80, SWT.DEFAULT).applyTo(urlLabel);
     }
 
     urlText = new Text(composite, SWT.BORDER | SWT.SINGLE);
@@ -230,6 +250,26 @@ public class LaunchTargetComposite extends Composite {
 
     // spacer
     new Label(composite, SWT.NONE);
+
+    if (launchTabInUrl) {
+      new Label(composite, SWT.NONE);
+
+      urlLaunchTabCheck = new Button(composite, SWT.CHECK);
+      urlLaunchTabCheck.setText("Launch a new browser tab with this URL if there is none opened");
+      GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).span(2, 1).applyTo(
+          urlLaunchTabCheck);
+      urlLaunchTabCheck.addSelectionListener(new SelectionAdapter() {
+        @Override
+        public void widgetSelected(SelectionEvent e) {
+          updateUrlLabel();
+          notifyPanelChanged();
+        }
+      });
+
+      // spacer
+      Label label = new Label(composite, SWT.NONE);
+      GridDataFactory.swtDefaults().span(3, 1).hint(SWT.DEFAULT, 5).applyTo(label);
+    }
 
     projectLabel = new Label(composite, SWT.NONE);
     projectLabel.setText(ChromeLaunchMessages.ChromeMainTab_ProjectLabel);
@@ -256,6 +296,8 @@ public class LaunchTargetComposite extends Composite {
         handleProjectBrowseButton();
       }
     });
+
+    updateUrlLabel();
   }
 
   protected void handleApplicationBrowseButton() {
@@ -325,6 +367,20 @@ public class LaunchTargetComposite extends Composite {
       urlText.setEnabled(true);
       projectText.setEnabled(true);
       projectBrowseButton.setEnabled(true);
+    }
+  }
+
+  protected void updateUrlLabel() {
+    if (urlLaunchTabCheck != null) {
+      if (urlButton != null) {
+        urlButton.setText(urlLaunchTabCheck.getSelection()
+            ? ChromeLaunchMessages.ChromeMainTab_UrlLabel
+            : ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel);
+      } else {
+        urlLabel.setText(urlLaunchTabCheck.getSelection()
+            ? ChromeLaunchMessages.ChromeMainTab_UrlLabel
+            : ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel);
+      }
     }
   }
 

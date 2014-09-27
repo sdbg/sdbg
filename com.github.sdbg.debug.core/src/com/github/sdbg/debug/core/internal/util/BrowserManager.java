@@ -54,6 +54,12 @@ import org.eclipse.debug.core.model.IProcess;
  * A manager that launches and manages configured browsers.
  */
 public class BrowserManager {
+  public static enum ConnectionFailure {
+    CONNECTION_FAILED,
+    TAB_NOT_FOUND,
+    OTHER
+  }
+
   /** The initial page to navigate to. */
   private static final String INITIAL_PAGE = "chrome://version/";
 
@@ -79,7 +85,8 @@ public class BrowserManager {
 
   public WebkitDebugTarget connect(ILaunch launch, ILaunchConfiguration configuration,
       IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, String host,
-      int port, IProgressMonitor monitor) throws CoreException {
+      int port, ConnectionFailure[] connectionFailure, IProgressMonitor monitor)
+      throws CoreException {
     SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
 
     LogTimer timer = new LogTimer("Chrome debug connect");
@@ -105,7 +112,8 @@ public class BrowserManager {
             null/*processDescription*/,
             resourceResolver,
             browserTabChooser,
-            true/*remote*/);
+            true/*remote*/,
+            connectionFailure);
       } finally {
         timer.stopTask();
       }
@@ -132,24 +140,57 @@ public class BrowserManager {
 
       MobileBrowserUtils.addChromiumForward(adbManager, device.getId(), port);
 
-      try {
-        WebkitDebugTarget target = connect(
-            launch,
-            configuration,
-            resourceResolver,
-            browserTabChooser,
-            "127.0.0.1",
-            port,
-            monitor);
-        if (target != null) {
-          return target;
-        }
-      } catch (CoreException e) {
-        adbManager.removeAllForwards();
-        throw e;
-      }
+      boolean browserStarted = false;
+      boolean tabOpened = false;
+      for (int i = 0; i < 3; i++) {
+        ConnectionFailure[] connectionFailure = new ConnectionFailure[1];
 
-      adbManager.removeAllForwards();
+        try {
+          WebkitDebugTarget target = connect(
+              launch,
+              configuration,
+              resourceResolver,
+              browserTabChooser,
+              "127.0.0.1",
+              port,
+              connectionFailure,
+              monitor);
+          if (target != null) {
+            return target;
+          }
+
+          adbManager.removeAllForwards();
+        } catch (CoreException e) {
+          if (!browserStarted && connectionFailure[0] == ConnectionFailure.CONNECTION_FAILED) {
+            browserStarted = true;
+            MobileBrowserUtils.launchChromeBrowser(adbManager, device.getId());
+
+            try {
+              Thread.sleep(7000);
+            } catch (InterruptedException e1) {
+            }
+
+            continue;
+          } else if (!tabOpened && connectionFailure[0] == ConnectionFailure.TAB_NOT_FOUND) {
+            tabOpened = true;
+            SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
+            if (wrapper.isLaunchTabWithUrl() && wrapper.getUrl() != null
+                && wrapper.getUrl().length() > 0) {
+              MobileBrowserUtils.launchChromeBrowser(adbManager, device.getId(), wrapper.getUrl());
+
+              try {
+                Thread.sleep(7000);
+              } catch (InterruptedException e1) {
+              }
+
+              continue;
+            }
+          }
+
+          adbManager.removeAllForwards();
+          throw e;
+        }
+      }
     } else {
       throw new DebugException(new Status(
           IStatus.INFO,
@@ -266,7 +307,8 @@ public class BrowserManager {
               processDescription.toString(),
               resourceResolver,
               browserTabChooser,
-              false/*remote*/);
+              false/*remote*/,
+              null/*noTab*/);
         }
 
         DebugUIHelper.getHelper().activateApplication(browserExecutable, "Chrome");
@@ -332,7 +374,8 @@ public class BrowserManager {
       SDBGLaunchConfigWrapper launchConfig, String url, IProgressMonitor monitor,
       Process runtimeProcess, LogTimer timer, boolean enableBreakpoints, String host, int port,
       ListeningStream browserOutput, String processDescription, IResourceResolver resolver,
-      IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException {
+      IBrowserTabChooser browserTabChooser, boolean remote, ConnectionFailure[] connectionFailure)
+      throws CoreException {
     monitor.worked(1);
 
     try {
@@ -344,6 +387,7 @@ public class BrowserManager {
           browserTabChooser,
           host,
           port,
+          connectionFailure,
           browserOutput);
 
       monitor.worked(2);
@@ -613,8 +657,13 @@ public class BrowserManager {
   }
 
   private ChromiumTabInfo getChromiumTab(Process runtimeProcess,
-      IBrowserTabChooser browserTabChooser, String host, int port, ListeningStream dartiumOutput)
-      throws IOException, CoreException {
+      IBrowserTabChooser browserTabChooser, String host, int port,
+      ConnectionFailure[] connectionFailure, ListeningStream dartiumOutput) throws IOException,
+      CoreException {
+    if (connectionFailure != null) {
+      connectionFailure[0] = ConnectionFailure.OTHER;
+    }
+
     // Give Chromium 20 seconds to start up.
     int maxStartupDelay = 20 * 1000;
     long endTime = System.currentTimeMillis() + maxStartupDelay;
@@ -629,13 +678,19 @@ public class BrowserManager {
                 + getProcessStreamMessage(dartiumOutput.toString())));
       }
 
+      setConnectionFailure(connectionFailure, ConnectionFailure.OTHER);
+
       try {
-        ChromiumTabInfo targetTab = (ChromiumTabInfo) findTargetTab(
-            browserTabChooser,
-            ChromiumConnector.getAvailableTabs(host, port));
+        setConnectionFailure(connectionFailure, ConnectionFailure.CONNECTION_FAILED);
+        List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(host, port);
+
+        setConnectionFailure(connectionFailure, ConnectionFailure.TAB_NOT_FOUND);
+        ChromiumTabInfo targetTab = (ChromiumTabInfo) findTargetTab(browserTabChooser, tabs);
         if (targetTab != null || runtimeProcess == null) {
           return targetTab;
         }
+
+        setConnectionFailure(connectionFailure, ConnectionFailure.OTHER);
       } catch (IOException exception) {
         if (runtimeProcess == null || System.currentTimeMillis() > endTime) {
           throw exception;
@@ -753,6 +808,13 @@ public class BrowserManager {
     return output;
   }
 
+  private void setConnectionFailure(ConnectionFailure[] connectionFailureHolder,
+      ConnectionFailure reason) {
+    if (connectionFailureHolder != null) {
+      connectionFailureHolder[0] = reason;
+    }
+  }
+
   private void sleep(int millis) {
     try {
       Thread.sleep(millis);
@@ -857,5 +919,4 @@ public class BrowserManager {
       sleep(10);
     }
   }
-
 }

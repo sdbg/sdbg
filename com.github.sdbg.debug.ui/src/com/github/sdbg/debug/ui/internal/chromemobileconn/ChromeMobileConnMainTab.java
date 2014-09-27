@@ -69,7 +69,12 @@ public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
     deviceText.addModifyListener(textModifyListener);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(deviceText);
 
-    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, false/*allowHtmlFile*/);
+    launchTargetGroup = new LaunchTargetComposite(
+        composite,
+        SWT.NONE,
+        false/*allowHtmlFile*/,
+        true/*urlIsFilter*/,
+        true/*launchTabInUrl*/);
     launchTargetGroup.addListener(SWT.Modify, new Listener() {
       @Override
       public void handleEvent(Event event) {
@@ -109,6 +114,7 @@ public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
 
     deviceText.setText(chromeLauncher.getDevice());
     launchTargetGroup.setUrlTextValue(chromeLauncher.getUrl());
+    launchTargetGroup.setLaunchTabWithUrl(chromeLauncher.isLaunchTabWithUrl());
     launchTargetGroup.setProjectTextValue(chromeLauncher.getProjectName());
     launchTargetGroup.setHtmlButtonSelection(false);
   }
@@ -125,6 +131,7 @@ public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
     chromeLauncher.setDevice(deviceText.getText());
     chromeLauncher.setShouldLaunchFile(false);
     chromeLauncher.setUrl(launchTargetGroup.getUrlString());
+    chromeLauncher.setLaunchTabWithUrl(launchTargetGroup.isLaunchTabWithUrl());
     chromeLauncher.setProjectName(launchTargetGroup.getProject());
   }
 

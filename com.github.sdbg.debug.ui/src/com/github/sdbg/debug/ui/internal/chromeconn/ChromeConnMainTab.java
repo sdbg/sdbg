@@ -77,7 +77,12 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     portText.addModifyListener(textModifyListener);
     GridDataFactory.fillDefaults().grab(true, false).applyTo(portText);
 
-    launchTargetGroup = new LaunchTargetComposite(composite, SWT.NONE, false/*allowHtmlFile*/);
+    launchTargetGroup = new LaunchTargetComposite(
+        composite,
+        SWT.NONE,
+        false/*allowHtmlFile*/,
+        true/*urlIsFilter*/,
+        false/*launchTabInUrl*/);
     launchTargetGroup.addListener(SWT.Modify, new Listener() {
       @Override
       public void handleEvent(Event event) {

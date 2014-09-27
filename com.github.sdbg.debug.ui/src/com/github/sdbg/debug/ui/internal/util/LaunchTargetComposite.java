@@ -210,7 +210,7 @@ public class LaunchTargetComposite extends Composite {
   protected void createUrlField(Composite composite, boolean allowHtmlFile) {
     if (allowHtmlFile) {
       urlButton = new Button(composite, SWT.RADIO);
-      urlButton.setText(ChromeLaunchMessages.ChromeMainTab_UrlLabel);
+      urlButton.setText(ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel);
       urlButton.addSelectionListener(new SelectionAdapter() {
         @Override
         public void widgetSelected(SelectionEvent e) {
@@ -220,7 +220,7 @@ public class LaunchTargetComposite extends Composite {
       });
     } else {
       Label urlLabel = new Label(composite, SWT.NONE);
-      urlLabel.setText(ChromeLaunchMessages.ChromeMainTab_UrlFilterLabel);
+      urlLabel.setText(ChromeLaunchMessages.ChromeMainTab_UrlLabel);
       GridDataFactory.swtDefaults().applyTo(urlLabel);
     }
 

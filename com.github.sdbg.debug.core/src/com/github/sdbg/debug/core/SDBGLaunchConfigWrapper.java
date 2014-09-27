@@ -264,13 +264,13 @@ public class SDBGLaunchConfigWrapper {
   }
 
   public boolean getShouldLaunchFile() {
-    try {
-      return launchConfig.getAttribute(IS_FILE, true);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return true;
-    }
+//    try {
+    return false; //launchConfig.getAttribute(IS_FILE, true);
+//    } catch (CoreException e) {
+//      SDBGDebugCorePlugin.logError(e);
+//
+//      return true;
+//    }
   }
 
   public boolean getShowLaunchOutput() {
@@ -437,7 +437,7 @@ public class SDBGLaunchConfigWrapper {
   }
 
   public void setShouldLaunchFile(boolean value) {
-    getWorkingCopy().setAttribute(IS_FILE, value);
+    getWorkingCopy().setAttribute(IS_FILE, false/*value*/);
   }
 
   public void setShowLaunchOutput(boolean value) {

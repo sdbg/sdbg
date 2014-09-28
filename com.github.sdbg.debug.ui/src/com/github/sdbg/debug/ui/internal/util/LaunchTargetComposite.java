@@ -111,7 +111,7 @@ public class LaunchTargetComposite extends Composite {
     if (urlButton == null || urlButton.getSelection()) {
       String url = urlText.getText();
 
-      if (urlButton != null) {
+      if (urlButton != null || urlLaunchTabCheck != null && urlLaunchTabCheck.getSelection()) {
         if (url.length() == 0) {
           return ChromeLaunchMessages.ChromeMainTab_NoUrl;
         }
@@ -181,6 +181,7 @@ public class LaunchTargetComposite extends Composite {
   public void setLaunchTabWithUrl(boolean value) {
     if (urlLaunchTabCheck != null) {
       urlLaunchTabCheck.setSelection(value);
+      updateUrlLabel();
     }
   }
 

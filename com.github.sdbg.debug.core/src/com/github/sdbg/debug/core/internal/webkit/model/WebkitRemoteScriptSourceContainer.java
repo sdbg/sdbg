@@ -59,9 +59,10 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
       protected IStatus run(IProgressMonitor monitor) {
         SubMonitor subMonitor = SubMonitor.convert(monitor);
 
-        subMonitor.beginTask("Looking up " + name, IProgressMonitor.UNKNOWN);
+        subMonitor.beginTask("Looking up " + name, 2);
 
         try {
+          subMonitor.worked(1);
           result[0] = doFindSourceElements(name);
         } catch (CoreException e) {
           result[0] = e;

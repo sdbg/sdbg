@@ -516,7 +516,11 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     } catch (IOException e) {
 
     }
-    process.terminate();
+
+    if (process != null) {
+      process.terminate();
+    }
+
     process = null;
   }
 

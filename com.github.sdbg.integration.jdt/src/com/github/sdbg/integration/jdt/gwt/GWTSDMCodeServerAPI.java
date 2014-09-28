@@ -174,6 +174,7 @@ public class GWTSDMCodeServerAPI {
               }
 
               progressMonitor.subTask(message + " module " + module);
+              progressMonitor.setWorkRemaining(10000);
             } else {
               break;
             }

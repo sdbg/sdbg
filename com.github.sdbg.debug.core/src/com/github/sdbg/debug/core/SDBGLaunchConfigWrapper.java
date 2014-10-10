@@ -323,11 +323,11 @@ public class SDBGLaunchConfigWrapper {
 
   public boolean isEnableExperimentalWebkitFeatures() {
     try {
-      return launchConfig.getAttribute(ENABLE_EXPERIMENTAL_WEBKIT_FEATURES, true);
+      return launchConfig.getAttribute(ENABLE_EXPERIMENTAL_WEBKIT_FEATURES, false);
     } catch (CoreException e) {
       SDBGDebugCorePlugin.logError(e);
 
-      return true;
+      return false;
     }
   }
 

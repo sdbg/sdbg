@@ -54,6 +54,11 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
 
   private static Font italicFont;
 
+  private Text argumentText;
+
+  private Text htmlText;
+  private Button htmlBrowseButton;
+
   private static Font getItalicFont(Font font) {
     if (italicFont == null) {
       FontData data = font.getFontData()[0];
@@ -66,11 +71,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
 
     return italicFont;
   }
-
-  private Button useWebComponentsButton;
-  private Text argumentText;
-  private Text htmlText;
-  private Button htmlBrowseButton;
 
   public PubServeMainTab() {
     setMessage("Create a configuration to launch a Dart application in Dartium, use pub to serve contents");
@@ -120,18 +120,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
 
-    useWebComponentsButton = new Button(group, SWT.CHECK);
-    useWebComponentsButton.setText("Enable experimental browser features (Web Components)");
-    useWebComponentsButton.setToolTipText("--enable-experimental-webkit-features"
-        + " and --enable-devtools-experiments");
-    GridDataFactory.swtDefaults().span(3, 1).applyTo(useWebComponentsButton);
-    useWebComponentsButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        notifyPanelChanged();
-      }
-    });
-
     // additional browser arguments
     Label argsLabel = new Label(group, SWT.NONE);
     argsLabel.setText("Browser arguments:");
@@ -167,7 +155,6 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
     SDBGLaunchConfigWrapper dartLauncher = new SDBGLaunchConfigWrapper(configuration);
 
     htmlText.setText(dartLauncher.appendQueryParams(dartLauncher.getApplicationName()));
-    useWebComponentsButton.setSelection(dartLauncher.isEnableExperimentalWebkitFeatures());
     argumentText.setText(dartLauncher.getArguments());
   }
 
@@ -187,10 +174,7 @@ public class PubServeMainTab extends AbstractLaunchConfigurationTab {
       dartLauncher.setApplicationName(fileUrl.substring(0, index));
       dartLauncher.setUrlQueryParams(fileUrl.substring(index + 1));
     }
-
-    dartLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
     dartLauncher.setArguments(argumentText.getText().trim());
-
   }
 
   @Override

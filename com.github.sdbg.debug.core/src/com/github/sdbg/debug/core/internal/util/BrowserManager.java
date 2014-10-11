@@ -377,11 +377,6 @@ public class BrowserManager {
     arguments.add("--user-data-dir="
         + getCreateUserDataDirectory(browserDataDirName).getAbsolutePath());
 
-    if (launchConfig.isEnableExperimentalWebkitFeatures()) {
-      arguments.add("--enable-experimental-web-platform-features");
-      arguments.add("--enable-html-imports");
-    }
-
     // Whether or not it's actually the first run.
     arguments.add("--no-first-run");
 

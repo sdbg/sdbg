@@ -49,9 +49,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
   };
 
   private Button showOutputButton;
-
-  private Button useWebComponentsButton;
-
   private Text argumentText;
 
   private LaunchTargetComposite launchTargetGroup;
@@ -82,18 +79,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
-
-    useWebComponentsButton = new Button(group, SWT.CHECK);
-    useWebComponentsButton.setText("Enable experimental browser features (Web Components)");
-    useWebComponentsButton.setToolTipText("--enable-experimental-webkit-features"
-        + " and --enable-devtools-experiments");
-    GridDataFactory.swtDefaults().span(3, 1).applyTo(useWebComponentsButton);
-    useWebComponentsButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        notifyPanelChanged();
-      }
-    });
 
     showOutputButton = new Button(group, SWT.CHECK);
     showOutputButton.setText("Show browser stdout and stderr output");
@@ -153,9 +138,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     }
 
     showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
-
-    useWebComponentsButton.setSelection(chromeLauncher.isEnableExperimentalWebkitFeatures());
-
     argumentText.setText(chromeLauncher.getArguments());
   }
 
@@ -185,8 +167,6 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     chromeLauncher.setProjectName(launchTargetGroup.getProject());
 
     chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
-
-    chromeLauncher.setUseWebComponents(useWebComponentsButton.getSelection());
 
     chromeLauncher.setArguments(argumentText.getText().trim());
   }

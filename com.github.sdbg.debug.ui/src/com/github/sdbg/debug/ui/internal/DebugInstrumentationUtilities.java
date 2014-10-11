@@ -46,9 +46,6 @@ public class DebugInstrumentationUtilities {
     instrumentation.metric(
         "LaunchConfig-getUseDefaultBrowser",
         String.valueOf(SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser()));
-    instrumentation.metric(
-        "LaunchConfig-getUseWebComponents",
-        String.valueOf(launch.isEnableExperimentalWebkitFeatures()));
     instrumentation.metric("LaunchConfig-getVmArgumentsAsArray", launch.getVmArgumentsAsArray());
 
   }

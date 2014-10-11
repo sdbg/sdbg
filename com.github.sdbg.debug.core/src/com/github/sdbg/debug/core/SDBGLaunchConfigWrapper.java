@@ -41,9 +41,6 @@ public class SDBGLaunchConfigWrapper {
 
   private static final String SHOW_LAUNCH_OUTPUT = "showLaunchOutput";
 
-  // --enable-experimental-webkit-features and --enable-devtools-experiments
-  private static final String ENABLE_EXPERIMENTAL_WEBKIT_FEATURES = "enableExperimentalWebkitFeatures";
-
   private static final String IS_FILE = "launchFile";
 
   private static final String DEVICE = "device";
@@ -321,16 +318,6 @@ public class SDBGLaunchConfigWrapper {
     }
   }
 
-  public boolean isEnableExperimentalWebkitFeatures() {
-    try {
-      return launchConfig.getAttribute(ENABLE_EXPERIMENTAL_WEBKIT_FEATURES, false);
-    } catch (CoreException e) {
-      SDBGDebugCorePlugin.logError(e);
-
-      return false;
-    }
-  }
-
   public boolean isLaunchTabWithUrl() {
     try {
       return launchConfig.getAttribute(LAUNCH_TAB_WITH_URL, false);
@@ -440,10 +427,6 @@ public class SDBGLaunchConfigWrapper {
    */
   public void setUrlQueryParams(String value) {
     getWorkingCopy().setAttribute(URL_QUERY_PARAMS, value);
-  }
-
-  public void setUseWebComponents(boolean value) {
-    getWorkingCopy().setAttribute(ENABLE_EXPERIMENTAL_WEBKIT_FEATURES, value);
   }
 
   /**

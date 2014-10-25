@@ -82,9 +82,6 @@ public class ChromeMobileConnMainTab extends AbstractLaunchConfigurationTab {
       }
     });
 
-    // spacer
-    label = new Label(composite, SWT.NONE);
-
     final Label instructionsLabel = new Label(composite, SWT.WRAP);
     instructionsLabel.setText("Make sure that \"USB debugging\" is enabled on your Android device. Then connect it to your PC via USB.");
     GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(

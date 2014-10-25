@@ -15,6 +15,7 @@
 package com.github.sdbg.debug.ui.internal.chromeconn;
 
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.ui.internal.Fonts;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.util.LaunchTargetComposite;
 
@@ -89,6 +90,11 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
         notifyPanelChanged();
       }
     });
+
+    final Label noteLabel = new Label(composite, SWT.WRAP);
+    noteLabel.setText("Note for beginners: it is much easier to get started with the \"Launch Chrome\" Debug Configuration.\nConsider switching to it.");
+    noteLabel.setFont(Fonts.getFontRegistry().getBold(""));
+    GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(noteLabel);
 
     // spacer
     label = new Label(composite, SWT.NONE);

@@ -1,5 +1,7 @@
-# SDBG - Eclipse debugger for GWT SuperDevMode (and for JavaScript with Sourcemaps in general)
+# Eclipse debugger for GWT SuperDevMode
 
+*(and for JavaScript with Sourcemaps in general)*
+ 
 This is an Eclipse plugin designed to expose IDE debugging support for compiled JavaScript applications using [Sourcemaps](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/).
 
 The primary target is to support debugging of [GWT](http://gwtproject.org) apps running in [SuperDevMode](http://www.gwtproject.org/articles/superdevmode.html), but the plugin core is language-agnostic and can support other compile-to-JavaScript languages in future.
@@ -29,8 +31,7 @@ You can run new Eclipse installation with ./target/eclipse/eclipse from the inst
 
 Any coding or testing you can contribute would be greatly appreciated!  
 However, we do ask that if you want to commit code, please drop us a message on the Google Group;  
-if you want to work on a feature, we can may already have a branch under way,  
-or can at help you get caught up quickly.
+if you want to work on a feature, we may already have a branch under way, or can at help you get caught up quickly.
 
 ## License
 

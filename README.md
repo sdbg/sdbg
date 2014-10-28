@@ -1,6 +1,6 @@
 # Eclipse debugger for GWT SuperDevMode
 
-*(and for JavaScript with Sourcemaps in general)*
+**(and for JavaScript with Sourcemaps in general)**
  
 This is an Eclipse plugin designed to expose IDE debugging support for compiled JavaScript applications using [Sourcemaps](http://www.html5rocks.com/en/tutorials/developertools/sourcemaps/).
 

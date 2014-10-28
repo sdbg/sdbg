@@ -35,6 +35,6 @@ if you want to work on a feature, we may already have a branch under way, or can
 
 ## License
 
-This project is released under the [Eclipse Public License v1.0](http://www.eclipse.org/legal/epl-v10.html), with copyright attribution to the Dart project authors.
+This project is released under the [Eclipse Public License v1.0](http://www.eclipse.org/legal/epl-v10.html), with copyright attribution to the [Dart](http://dartlang.org) project authors.
 
-The attribution is necessary, because the original codebase was forked-off from the [Dart](http://dartlang.org) project. Many thanks to the Dart guys for the splendid code quality and their support!
+The attribution is necessary, because the original codebase was forked-off from the Dart project. Many thanks to the Dart guys for the splendid code quality and their support!

@@ -12,20 +12,25 @@ Any comments, bugs or issues should be directed to the SDBG [Forums](https://gro
 
 ## Build Instructions
 
+```
 git clone git@github.com:sdbg/sdbg.git
+```
+
 (forgive the large download; we have retained all Dart history for posterity and access via eGit)
 
-For development, you are recommended to simply import the root of the source as a maven project.  
-Inside the com.github.sdbg.debug.ui project, you will see a launch configuration called SDBG.launch.
+For development, you are recommended to import the root of the source as a Maven (Eclipse M4E) project.  
 
+Inside the **com.github.sdbg.debug.ui project**, you will see a launch configuration called **SDBG.launch**.
 Running this will open a new instance of Eclipse with the debugger plugin installed.  
+
+You may also do a full Maven build by running (at the root of the source): 
+```
+mvn install
+```
+
+The above command will also create the SDBG Eclipse P2 repository and ZIP.  
+
 If you encounter any issues, please post to the SDBG [Forum](https://groups.google.com/d/forum/sdbg)
-
-You may also build a p2 repository and zip by running mvn install from the root of the project ($SDBG_DIRECTORY),  
-and you can have tycho maven plugin create a fresh install of Eclipse, with sdbg installed by running:  
-cd $SDBG_DIRECTORY/com.github.sdbg.releng.install; mvn install
-
-You can run new Eclipse installation with ./target/eclipse/eclipse from the installer directory.
 
 ## Contributions
 

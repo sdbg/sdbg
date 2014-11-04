@@ -40,6 +40,10 @@ public class SDBGBreakpointAdapterFactory implements IAdapterFactory {
   @SuppressWarnings("rawtypes")
   @Override
   public Object getAdapter(Object adaptableObject, Class adapterType) {
+    if (adapterType == IRunToLineTarget.class) {
+      return new RunToLineAdapter();
+    }
+
     if (adaptableObject instanceof ITextEditor) {
       ITextEditor editorPart = (ITextEditor) adaptableObject;
 

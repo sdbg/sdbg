@@ -14,7 +14,6 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
 import com.github.sdbg.utilities.URIUtilities;
@@ -111,18 +110,6 @@ public class WebkitDebugger extends WebkitDomain {
    */
   @WebkitUnsupported
   public static class FunctionDetails {
-    public static FunctionDetails createFrom(JSONObject obj) throws JSONException {
-      FunctionDetails details = new FunctionDetails();
-
-      details.location = WebkitLocation.createFrom(obj.getJSONObject("location"));
-      details.displayName = obj.optString("displayName");
-      details.name = obj.optString("name");
-      details.inferredName = obj.optString("inferredName");
-      details.scopeChain = WebkitScope.createFrom(obj.optJSONArray("scopeChain"));
-
-      return details;
-    }
-
     /** Location of the function. */
     public WebkitLocation location;
 
@@ -137,6 +124,18 @@ public class WebkitDebugger extends WebkitDomain {
 
     /** Scope chain for this closure. */
     public WebkitScope[] scopeChain;
+
+    public static FunctionDetails createFrom(JSONObject obj) throws JSONException {
+      FunctionDetails details = new FunctionDetails();
+
+      details.location = WebkitLocation.createFrom(obj.getJSONObject("location"));
+      details.displayName = obj.optString("displayName");
+      details.name = obj.optString("name");
+      details.inferredName = obj.optString("inferredName");
+      details.scopeChain = WebkitScope.createFrom(obj.optJSONArray("scopeChain"));
+
+      return details;
+    }
   }
 
   public static enum PausedReasonType {
@@ -723,7 +722,7 @@ public class WebkitDebugger extends WebkitDomain {
         }
       }
     } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+      WIPTrace.trace("unhandled notification: " + method);
     }
   }
 

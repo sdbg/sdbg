@@ -14,16 +14,15 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A WIP console domain object.
@@ -37,6 +36,18 @@ import java.util.List;
 public class WebkitConsole extends WebkitDomain {
 
   public static class CallFrame {
+    /** JavaScript script column number. */
+    public int columnNumber;
+
+    /** JavaScript function name. */
+    public String functionName;
+
+    /** JavaScript script line number. */
+    public int lineNumber;
+
+    /** JavaScript script name or url. */
+    public String url;
+
     static List<CallFrame> createFrom(JSONArray arr) throws JSONException {
       if (arr == null) {
         return null;
@@ -61,18 +72,6 @@ public class WebkitConsole extends WebkitDomain {
 
       return frame;
     }
-
-    /** JavaScript script column number. */
-    public int columnNumber;
-
-    /** JavaScript function name. */
-    public String functionName;
-
-    /** JavaScript script line number. */
-    public int lineNumber;
-
-    /** JavaScript script name or url. */
-    public String url;
 
     @Override
     public String toString() {
@@ -192,7 +191,7 @@ public class WebkitConsole extends WebkitDomain {
         listener.messageRepeatCountUpdated(params.getInt("count"));
       }
     } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+      WIPTrace.trace("unhandled notification: " + method);
     }
   }
 

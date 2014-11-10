@@ -14,19 +14,18 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitNode.WebkitAttribute;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 // TODO: additional DOM functionality we could expose:
 // moveTo requestNode resolveNode setAttributesAsText setNodeName
@@ -593,7 +592,7 @@ public class WebkitDom extends WebkitDomain {
         listener.documentUpdated();
       }
     } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+      WIPTrace.trace("unhandled notification: " + method);
     }
   }
 
@@ -610,7 +609,7 @@ public class WebkitDom extends WebkitDomain {
         listener.targetCrashed();
       }
     } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+      WIPTrace.trace("unhandled notification: " + method);
     }
   }
 

@@ -1,44 +1,49 @@
 package com.github.sdbg.debug.core.util;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.utilities.StringUtilities;
 
-import org.eclipse.core.runtime.Platform;
+import org.eclipse.osgi.service.debug.DebugOptions;
+import org.eclipse.osgi.service.debug.DebugTrace;
 
 public class Trace {
-  public static final boolean TRACING = isOptionTrue("debug/all");
+  public static final String BROWSER_LAUNCHING = "/browser/launching",
+      BROWSER_OUTPUT = "/browser/output", SOURCEMAPS = "/sourcemaps", BREAKPOINTS = "/breakpoints",
+      ECLIPSE_DEBUGGER_EVENTS = "/eclipseDebuggerEvents", WIRE_PROTOCOL = "/wireProtocol",
+      RESOURCE_SERVING = "/resourceServing", TIMER = "/timer";
 
-  private static long tracingStart = System.currentTimeMillis();
+  private static DebugOptions options;
+  private static DebugTrace trace;
 
-  public static void trace(String trace) { // TODO: Switch to standard java.util.logging, with this class only supporting the enablement/disablement of various loggers
-    if (isTracingEnabled()) {
-      if (TRACING) {
-        System.out.printf(
-            "SDBG [%.3f]: %s\n",
-            ((System.currentTimeMillis() - tracingStart) / 1000.0),
-            trace);
-      }
+  public static synchronized DebugTrace get() {
+    return trace;
+  }
+
+  public static synchronized boolean isTracing() {
+    return options != null && options.isDebugEnabled();
+  }
+
+  public static synchronized boolean isTracing(String component) {
+    if (options != null) {
+      return options.isDebugEnabled() && options.getBooleanOption(component, false);
+    } else {
+      return false;
     }
   }
 
-  /**
-   * @return <code>true</code> if option has value "true".
-   */
-  private static boolean isOptionTrue(String optionSuffix) {
-    return isOptionValue(optionSuffix, "true");
+  public static synchronized void setOptions(DebugOptions options) {
+    Trace.options = options;
+    Trace.trace = options.newDebugTrace(SDBGDebugCorePlugin.PLUGIN_ID);
   }
 
-  /**
-   * @return <code>true</code> if option has "expected" value.
-   */
-  private static boolean isOptionValue(String optionSuffix, String expected) {
-    String option = SDBGDebugCorePlugin.PLUGIN_ID + "/" + optionSuffix;
-    String value = Platform.getDebugOption(option);
-    return StringUtilities.equalsIgnoreCase(value, expected);
+  public static void trace(String message) {
+    trace(null, message);
   }
 
-  private static boolean isTracingEnabled() {
-    return SDBGDebugCorePlugin.getPlugin().isDebugging();
+  public static void trace(String component, String message) {
+    DebugTrace dt = get();
+    if (dt != null) {
+      dt.trace(component, message);
+    }
   }
 
   private Trace() {

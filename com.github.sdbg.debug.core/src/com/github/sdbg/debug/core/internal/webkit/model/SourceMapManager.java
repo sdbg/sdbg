@@ -104,6 +104,14 @@ public class SourceMapManager {
   private Map<IStorage, IStorage> sourceMapsStorages = new HashMap<IStorage, IStorage>();
   private Map<IStorage, SourceMap> sourceMaps = new HashMap<IStorage, SourceMap>();
 
+  static boolean isTracing() {
+    return Trace.isTracing(Trace.SOURCEMAPS);
+  }
+
+  static void trace(String message) {
+    Trace.trace(Trace.SOURCEMAPS, message);
+  }
+
   public SourceMapManager(IResourceResolver resourceResolver) {
     this.resourceResolver = resourceResolver;
   }
@@ -121,8 +129,8 @@ public class SourceMapManager {
    * @return
    */
   public SourceLocation getMappingFor(IStorage storage, int line, int column) {
-    if (Trace.TRACING) {
-      Trace.trace("Get mappings for " + storage + ":" + line + ":" + column);
+    if (isTracing()) {
+      trace("Get mappings for " + storage + ":" + line + ":" + column);
     }
 
     synchronized (sourceMaps) {
@@ -140,8 +148,8 @@ public class SourceMapManager {
                 mapping.getColumn(),
                 mapping.getName());
 
-            if (Trace.TRACING) {
-              Trace.trace("Found mapping: " + location);
+            if (isTracing()) {
+              trace("Found mapping: " + location);
             }
 
             return location;
@@ -162,8 +170,8 @@ public class SourceMapManager {
    * @return
    */
   public List<SourceLocation> getReverseMappingsFor(String targetPath, int line) {
-    if (Trace.TRACING) {
-      Trace.trace("Get reverse mappings for " + targetPath + ":" + line);
+    if (isTracing()) {
+      trace("Get reverse mappings for " + targetPath + ":" + line);
     }
 
     List<SourceLocation> mappings = new ArrayList<SourceMapManager.SourceLocation>();
@@ -176,9 +184,9 @@ public class SourceMapManager {
         for (String path : map.getSourceNames()) {
           // TODO(devoncarew): the files in the maps should all be pre-resolved
           String relativePath = relativisePath(mapStorage, path);
-          if (Trace.TRACING
+          if (isTracing()
               && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
-            Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+            trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
           }
 
           if (targetPath.equals(relativePath)) {
@@ -198,8 +206,8 @@ public class SourceMapManager {
               }
             }
 
-            if (Trace.TRACING && !mappings.isEmpty()) {
-              Trace.trace("Found reverse mappings: " + mappings);
+            if (isTracing() && !mappings.isEmpty()) {
+              trace("Found reverse mappings: " + mappings);
             }
           }
         }
@@ -211,8 +219,8 @@ public class SourceMapManager {
 
   public IStorage getSource(String targetPath) { //&&&!!! There can be race conditions because of that method
     if (targetPath != null) {
-      if (Trace.TRACING) {
-        Trace.trace("Get source storage: " + targetPath);
+      if (isTracing()) {
+        trace("Get source storage: " + targetPath);
       }
 
       synchronized (sourceMaps) {
@@ -220,14 +228,14 @@ public class SourceMapManager {
           SourceMap map = sourceMaps.get(mapStorage);
           for (String path : map.getSourceNames()) {
             String relativePath = relativisePath(mapStorage, path);
-            if (Trace.TRACING
+            if (isTracing()
                 && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
-              Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+              trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
             }
 
             if (targetPath.equals(relativePath)) {
-              if (Trace.TRACING) {
-                Trace.trace("Confirmed - source storage");
+              if (isTracing()) {
+                trace("Confirmed - source storage");
               }
 
               return resolveStorage(mapStorage, path);
@@ -271,15 +279,15 @@ public class SourceMapManager {
    */
   public boolean isMapSource(IStorage storage) { //&&&!!! There can be race conditions because of that method
     if (storage != null) {
-      if (Trace.TRACING) {
-        Trace.trace("Check for map source: " + storage);
+      if (isTracing()) {
+        trace("Check for map source: " + storage);
       }
 
       synchronized (sourceMaps) {
         boolean result = sourceMapsStorages.containsKey(storage);
 
-        if (Trace.TRACING && result) {
-          Trace.trace("Confirmed - map source");
+        if (isTracing() && result) {
+          trace("Confirmed - map source");
         }
 
         return result;
@@ -291,8 +299,8 @@ public class SourceMapManager {
 
   public boolean isMapTarget(String targetPath) { //&&&!!! There can be race conditions because of that method
     if (targetPath != null) {
-      if (Trace.TRACING) {
-        Trace.trace("Check for map target: " + targetPath);
+      if (isTracing()) {
+        trace("Check for map target: " + targetPath);
       }
 
       synchronized (sourceMaps) {
@@ -300,14 +308,14 @@ public class SourceMapManager {
           SourceMap map = sourceMaps.get(mapStorage);
           for (String path : map.getSourceNames()) {
             String relativePath = relativisePath(mapStorage, path);
-            if (Trace.TRACING
+            if (isTracing()
                 && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
-              Trace.trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
+              trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
             }
 
             if (targetPath.equals(relativePath)) {
-              if (Trace.TRACING) {
-                Trace.trace("Confirmed - map target");
+              if (isTracing()) {
+                trace("Confirmed - map target");
               }
               return true;
             }
@@ -332,7 +340,7 @@ public class SourceMapManager {
       if (mapStorage != null) {
         sourceMaps.remove(script);
       }
-      Trace.trace("Checking script for sourcemaps: " + script);
+      trace("Checking script for sourcemaps: " + script);
       processScript(script, sourceMapUrl);
     }
   }
@@ -380,7 +388,7 @@ public class SourceMapManager {
             Properties properties = new Properties();
             properties.load(new StringReader(sourceMapUrlLine));
             sourceMapUrl = properties.getProperty("sourceMappingURL");
-            Trace.trace("Sourcemap detected in a // comment");
+            trace("Sourcemap detected in a // comment");
           }
         } finally {
           reader.close();
@@ -389,7 +397,7 @@ public class SourceMapManager {
 
       IStorage mapStorage;
       if (sourceMapUrl != null) {
-        Trace.trace("Found sourcemap with URL: " + sourceMapUrl);
+        trace("Found sourcemap with URL: " + sourceMapUrl);
         mapStorage = resolveStorage(script, sourceMapUrl);
       } else {
         mapStorage = null;
@@ -400,7 +408,7 @@ public class SourceMapManager {
         if (map != null) {
           sourceMapsStorages.put(script, mapStorage);
           sourceMaps.put(mapStorage, map);
-          Trace.trace("Parsing sourcemap succeeded: " + mapStorage);
+          trace("Parsing sourcemap succeeded: " + mapStorage);
         }
       }
     } catch (IOException e) {

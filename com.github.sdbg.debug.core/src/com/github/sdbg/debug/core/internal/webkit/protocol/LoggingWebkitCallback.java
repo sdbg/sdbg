@@ -14,8 +14,6 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-
 /**
  * Log the call's result to the editor's log file.
  */
@@ -28,7 +26,7 @@ public class LoggingWebkitCallback<T> implements WebkitCallback<T> {
 
   @Override
   public void handleResult(WebkitResult<T> result) {
-    SDBGDebugCorePlugin.logInfo(label + ": " + result);
+    WIPTrace.trace(label + ": " + result);
   }
 
 }

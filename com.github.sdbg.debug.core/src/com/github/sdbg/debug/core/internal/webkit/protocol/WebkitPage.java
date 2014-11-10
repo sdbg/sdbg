@@ -14,7 +14,6 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
 
@@ -97,6 +96,8 @@ public class WebkitPage extends WebkitDomain {
   private static final String PAGE_FRAMESTOPPEDLOADING = "Page.frameStoppedLoading";
   private static final String PAGE_FRAMESTARTEDLOADING = "Page.frameStartedLoading";
 
+  private List<PageListener> listeners = new ArrayList<PageListener>();
+
   /**
    * Convert base 64 data into a byte array. This method is provided for use with the
    * {@link #captureScreenshot(WebkitCallback)} method.
@@ -107,8 +108,6 @@ public class WebkitPage extends WebkitDomain {
   public static byte[] convertBase64ToBinary(String data) {
     return DatatypeConverter.parseBase64Binary(data);
   }
-
-  private List<PageListener> listeners = new ArrayList<PageListener>();
 
   public WebkitPage(WebkitConnection connection) {
     super(connection);
@@ -292,7 +291,7 @@ public class WebkitPage extends WebkitDomain {
         listener.frameStartedLoading(frameId);
       }
     } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+      WIPTrace.trace("unhandled notification: " + method);
     }
   }
 

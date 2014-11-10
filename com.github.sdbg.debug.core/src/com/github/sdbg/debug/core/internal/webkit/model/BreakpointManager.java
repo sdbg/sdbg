@@ -51,7 +51,6 @@ import org.eclipse.debug.core.model.ILineBreakpoint;
  */
 public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointManager {
   public static class NullBreakpointManager implements ISDBGBreakpointManager {
-
     public NullBreakpointManager() {
 
     }
@@ -92,6 +91,16 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
     }
   }
 
+  private WebkitDebugTarget debugTarget;
+
+  private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
+
+  private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
+
+  private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
+
+  private static Collection<IBreakpointPathResolver> breakpointPathResolvers;
+
   static synchronized Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
     if (breakpointPathResolvers == null) {
       breakpointPathResolvers = new ArrayList<IBreakpointPathResolver>();
@@ -110,16 +119,6 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
     return breakpointPathResolvers;
   }
-
-  private WebkitDebugTarget debugTarget;
-
-  private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
-
-  private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
-
-  private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
-
-  private static Collection<IBreakpointPathResolver> breakpointPathResolvers;
 
   public BreakpointManager(WebkitDebugTarget debugTarget) {
     this.debugTarget = debugTarget;
@@ -301,7 +300,7 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
   @Override
   public void handleGlobalObjectCleared() {
     // TODO: Breakpoints' cleanup code should be present here?!
-    Trace.trace("Global object cleared");
+    trace("Global object cleared");
   }
 
   @Override
@@ -329,7 +328,7 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
           if (isJSBreakpoint(breakpoint)) {
             // Handle pure JavaScript breakpoints
-            Trace.trace("Set breakpoint [" + path + "," + line + "]");
+            trace("Set breakpoint [" + path + "," + line + "]");
 
             debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
                 null,
@@ -364,11 +363,11 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
                 }
 
                 if (mappedPath != null) {
-                  Trace.trace("Breakpoint [" + path + ","
+                  trace("Breakpoint [" + path + ","
                       + (breakpoint instanceof ILineBreakpoint ? breakpoint.getLineNumber() : "")
                       + ",-1] ==> mapped to [" + mappedPath + "," + location.getLine() + ","
                       + location.getColumn() + "]");
-                  Trace.trace("Set breakpoint [" + mappedPath + "," + location.getLine() + "]");
+                  trace("Set breakpoint [" + mappedPath + "," + location.getLine() + "]");
 
                   debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(
                       null,
@@ -445,5 +444,9 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
   private boolean isJSBreakpoint(IBreakpoint breakpoint) {
     return breakpoint instanceof SDBGBreakpoint; // TODO: Extend IBreakpointPathResolver so that it has a say on that as well 
+  }
+
+  private void trace(String message) {
+    Trace.trace(Trace.BREAKPOINTS, message);
   }
 }

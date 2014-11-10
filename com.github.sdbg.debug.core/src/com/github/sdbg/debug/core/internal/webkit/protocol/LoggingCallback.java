@@ -14,7 +14,6 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 
 import org.json.JSONException;
@@ -32,7 +31,7 @@ class LoggingCallback implements Callback {
 
   @Override
   public void handleResult(JSONObject result) throws JSONException {
-    SDBGDebugCorePlugin.logInfo(label + ": " + result);
+    WIPTrace.trace(label + ": " + result);
   }
 
 }

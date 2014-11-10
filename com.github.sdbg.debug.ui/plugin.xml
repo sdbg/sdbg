@@ -989,6 +989,14 @@
             name="SDBG">
       </page>
    </extension>
+   <extension
+         point="org.eclipse.ui.trace.traceComponents">
+      <component
+            id="com.github.sdbg.debug.ui.all"
+            label="SDBG">
+            <bundle name="com.github.sdbg.debug.core"/>
+      </component>
+   </extension>
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"

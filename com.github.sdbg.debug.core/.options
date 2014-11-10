@@ -1,2 +1,8 @@
-com.github.sdbg.debug.core/debug = true
-com.github.sdbg.debug.core/debug/all = true
+com.github.sdbg.debug.core/browser/launching = true
+com.github.sdbg.debug.core/browser/output = false
+com.github.sdbg.debug.core/sourcemaps = false
+com.github.sdbg.debug.core/breakpoints = false
+com.github.sdbg.debug.core/eclipseDebuggerEvents = false
+com.github.sdbg.debug.core/wireProtocol = false
+com.github.sdbg.debug.core/resourceServing = false
+com.github.sdbg.debug.core/timer = false

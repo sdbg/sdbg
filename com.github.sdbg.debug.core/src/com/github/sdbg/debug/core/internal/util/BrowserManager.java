@@ -494,7 +494,7 @@ public class BrowserManager {
         debugTarget.openConnection();
       }
 
-      Trace.trace("Connected to WIP debug agent on host " + host + " and port " + port);
+      trace("Connected to WIP debug agent on host " + host + " and port " + port);
 
       timer.stopTask();
 
@@ -595,74 +595,74 @@ public class BrowserManager {
   }
 
   private File findChromeExecutable(String option, File location, boolean fileOrDir) {
-    Trace.trace("Trying to load Chrome from " + option + "=" + location.getPath());
+    trace("Trying to load Chrome from " + option + "=" + location.getPath());
     if (!location.exists()) {
-      Trace.trace("=> Failed, location does not exist");
+      trace("=> Failed, location does not exist");
     } else if (location.isFile()) {
       if (fileOrDir) {
-        Trace.trace("=> Found, location is a file, this is assumed to be the Chrome executable");
+        trace("=> Found, location is a file, this is assumed to be the Chrome executable");
         return location;
       } else {
-        Trace.trace("=> Failed, location is a file");
+        trace("=> Failed, location is a file");
         return null;
       }
     } else if (DartCore.isWindows()) {
       File exe = new File(location, "chrome.exe");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
     } else if (DartCore.isMac()) {
       // In case the directory just points to the parent of Google Chrome.app
       File exe = new File(location, "Google Chrome.app/Contents/MacOS/Google Chrome");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
 
       // In case the directory just points to Google Chrome.app
       exe = new File(location, "Contents/MacOS/Google Chrome");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
 
       // User was smart enough to enter inside the Google Chrome.app package
       exe = new File(location, "Google Chrome");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
     } else {
       // Linux, Unix...
 
       File exe = new File(location, "google-chrome");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
 
       exe = new File(location, "chrome");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
 
       exe = new File(location, "chromium");
-      Trace.trace("=> Trying " + exe.getPath());
+      trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
-        Trace.trace("=> Found");
+        trace("=> Found");
         return exe;
       }
     }
 
-    Trace.trace("=> Failed");
+    trace("=> Failed");
     return null;
   }
 
@@ -670,7 +670,7 @@ public class BrowserManager {
     if (location != null) {
       return findChromeExecutable(option, new File(location), fileOrDir);
     } else {
-      Trace.trace("Skipped loading Chrome from " + option + ": option not specified/null");
+      trace("Skipped loading Chrome from " + option + ": option not specified/null");
       return null;
     }
   }
@@ -681,10 +681,10 @@ public class BrowserManager {
 
     if (chosenTab != null) {
       for (IBrowserTabInfo tab : tabs) {
-        SDBGDebugCorePlugin.log("Found: " + tab.toString());
+        trace("Found: " + tab.toString());
       }
 
-      SDBGDebugCorePlugin.log("Choosing: " + chosenTab);
+      trace("Choosing: " + chosenTab);
 
       return chosenTab;
     }
@@ -793,10 +793,6 @@ public class BrowserManager {
     return msg.toString();
   }
 
-  private boolean isExistingDirectory(File dir) {
-    return dir != null && dir.exists() && dir.isDirectory();
-  }
-
   private boolean isProcessTerminated(Process process) {
     try {
       if (process != null) {
@@ -825,7 +821,7 @@ public class BrowserManager {
               String str = new String(buffer, 0, count);
 
               // Log any browser process output to stdout.
-              if (Trace.TRACING) {
+              if (Trace.isTracing(Trace.BROWSER_OUTPUT)) {
                 System.out.print(str);
               }
 
@@ -938,6 +934,10 @@ public class BrowserManager {
 
       browserProcess = null;
     }
+  }
+
+  private void trace(String message) {
+    Trace.trace(Trace.BROWSER_LAUNCHING, message);
   }
 
   private void waitForProcessToTerminate(Process process, int maxWaitTimeMs) {

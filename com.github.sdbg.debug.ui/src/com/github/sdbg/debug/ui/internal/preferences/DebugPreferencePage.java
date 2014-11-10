@@ -16,23 +16,16 @@ package com.github.sdbg.debug.ui.internal.preferences;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
 
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.layout.GridLayoutFactory;
-import org.eclipse.jface.layout.PixelConverter;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
@@ -45,19 +38,15 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
   private Combo exceptionsCombo;
   private Button invokeToStringButton;
 
-  private Button defaultBrowserButton;
-
-  private Text browserNameText;
-
-  private Button selectBrowserButton;
-
-  private Text browserArgumentText;
+//  private Button defaultBrowserButton;
+//  private Text browserNameText;
+//  private Button selectBrowserButton;
+//  private Text browserArgumentText;
 
   /**
    * Create a new preference page.
    */
   public DebugPreferencePage() {
-
   }
 
   @Override
@@ -71,11 +60,11 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
     SDBGDebugCorePlugin.getPlugin().setInvokeToString(invokeToStringButton.getSelection());
 
-    SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
-        defaultBrowserButton.getSelection(),
-        browserNameText.getText().trim(),
-        browserArgumentText.getText().trim());
-
+//    SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
+//        defaultBrowserButton.getSelection(),
+//        browserNameText.getText().trim(),
+//        browserArgumentText.getText().trim());
+//
     return true;
   }
 
@@ -94,7 +83,7 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     Label label = new Label(group, SWT.NONE);
     label.setText("Break on exceptions:");
     label.pack();
-    int labelWidth = label.getSize().x;
+//    int labelWidth = label.getSize().x;
 
     exceptionsCombo = new Combo(group, SWT.DROP_DOWN | SWT.READ_ONLY);
     exceptionsCombo.setItems(new String[] {
@@ -107,86 +96,84 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     invokeToStringButton.setText("Invoke toString() methods when debugging");
     GridDataFactory.swtDefaults().span(2, 1).applyTo(invokeToStringButton);
 
-    createBrowserConfig(composite, labelWidth);
+//    createBrowserConfig(composite, labelWidth);
 
+    initFromPrefs();
     return composite;
   }
 
-  private void createBrowserConfig(Composite composite, int labelWidth) {
-    Group browserGroup = new Group(composite, SWT.NONE);
-    browserGroup.setText("Launching");
-    GridDataFactory.fillDefaults().grab(true, false).applyTo(browserGroup);
-    GridLayoutFactory.swtDefaults().numColumns(3).applyTo(browserGroup);
-    ((GridLayout) browserGroup.getLayout()).marginBottom = 5;
-
-    defaultBrowserButton = new Button(browserGroup, SWT.CHECK);
-    defaultBrowserButton.setText(DebugPreferenceMessages.DebugPreferencePage_DefaultBrowserMessage);
-    GridDataFactory.swtDefaults().span(3, 1).applyTo(defaultBrowserButton);
-    defaultBrowserButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        if (defaultBrowserButton.getSelection()) {
-          setEnablement(false);
-        } else {
-          setEnablement(true);
-        }
-      }
-    });
-
-    Label browserLabel = new Label(browserGroup, SWT.NONE);
-    browserLabel.setText(DebugPreferenceMessages.DebugPreferencePage_BrowserLabel);
-    GridDataFactory.swtDefaults().hint(labelWidth, -1).applyTo(browserLabel);
-
-    browserNameText = new Text(browserGroup, SWT.BORDER | SWT.SINGLE);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
-        browserNameText);
-
-    selectBrowserButton = new Button(browserGroup, SWT.PUSH);
-    selectBrowserButton.setText(DebugPreferenceMessages.DebugPreferencePage_Select);
-    PixelConverter converter = new PixelConverter(selectBrowserButton);
-    int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
-    GridDataFactory.swtDefaults().hint(widthHint, -1).applyTo(selectBrowserButton);
-    selectBrowserButton.addSelectionListener(new SelectionAdapter() {
-      @Override
-      public void widgetSelected(SelectionEvent e) {
-        handleBrowserConfigBrowseButton();
-      }
-    });
-
-    Label argsLabel = new Label(browserGroup, SWT.NONE);
-    argsLabel.setText("Browser arguments:");
-    GridDataFactory.swtDefaults().hint(labelWidth, -1).applyTo(argsLabel);
-
-    browserArgumentText = new Text(browserGroup, SWT.BORDER | SWT.SINGLE);
-    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
-        browserArgumentText);
-
-    initFromPrefs();
-  }
-
-  private void handleBrowserConfigBrowseButton() {
-    FileDialog fd = new FileDialog(getShell(), SWT.OPEN);
-
-    String filePath = fd.open();
-
-    if (filePath != null) {
-      browserNameText.setText(filePath);
-    }
-  }
-
+//  private void createBrowserConfig(Composite composite, int labelWidth) {
+//    Group browserGroup = new Group(composite, SWT.NONE);
+//    browserGroup.setText("Launching");
+//    GridDataFactory.fillDefaults().grab(true, false).applyTo(browserGroup);
+//    GridLayoutFactory.swtDefaults().numColumns(3).applyTo(browserGroup);
+//    ((GridLayout) browserGroup.getLayout()).marginBottom = 5;
+//
+//    defaultBrowserButton = new Button(browserGroup, SWT.CHECK);
+//    defaultBrowserButton.setText(DebugPreferenceMessages.DebugPreferencePage_DefaultBrowserMessage);
+//    GridDataFactory.swtDefaults().span(3, 1).applyTo(defaultBrowserButton);
+//    defaultBrowserButton.addSelectionListener(new SelectionAdapter() {
+//      @Override
+//      public void widgetSelected(SelectionEvent e) {
+//        if (defaultBrowserButton.getSelection()) {
+//          setEnablement(false);
+//        } else {
+//          setEnablement(true);
+//        }
+//      }
+//    });
+//
+//    Label browserLabel = new Label(browserGroup, SWT.NONE);
+//    browserLabel.setText(DebugPreferenceMessages.DebugPreferencePage_BrowserLabel);
+//    GridDataFactory.swtDefaults().hint(labelWidth, -1).applyTo(browserLabel);
+//
+//    browserNameText = new Text(browserGroup, SWT.BORDER | SWT.SINGLE);
+//    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
+//        browserNameText);
+//
+//    selectBrowserButton = new Button(browserGroup, SWT.PUSH);
+//    selectBrowserButton.setText(DebugPreferenceMessages.DebugPreferencePage_Select);
+//    PixelConverter converter = new PixelConverter(selectBrowserButton);
+//    int widthHint = converter.convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
+//    GridDataFactory.swtDefaults().hint(widthHint, -1).applyTo(selectBrowserButton);
+//    selectBrowserButton.addSelectionListener(new SelectionAdapter() {
+//      @Override
+//      public void widgetSelected(SelectionEvent e) {
+//        handleBrowserConfigBrowseButton();
+//      }
+//    });
+//
+//    Label argsLabel = new Label(browserGroup, SWT.NONE);
+//    argsLabel.setText("Browser arguments:");
+//    GridDataFactory.swtDefaults().hint(labelWidth, -1).applyTo(argsLabel);
+//
+//    browserArgumentText = new Text(browserGroup, SWT.BORDER | SWT.SINGLE);
+//    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).applyTo(
+//        browserArgumentText);
+//  }
+//
+//  private void handleBrowserConfigBrowseButton() {
+//    FileDialog fd = new FileDialog(getShell(), SWT.OPEN);
+//
+//    String filePath = fd.open();
+//
+//    if (filePath != null) {
+//      browserNameText.setText(filePath);
+//    }
+//  }
+//
   private void initFromPrefs() {
-    boolean useDefaultBrowser = SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser();
-    defaultBrowserButton.setSelection(useDefaultBrowser);
-    browserNameText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserName());
-    browserArgumentText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
-    setEnablement(!useDefaultBrowser);
+//    boolean useDefaultBrowser = SDBGDebugCorePlugin.getPlugin().getIsDefaultBrowser();
+//    defaultBrowserButton.setSelection(useDefaultBrowser);
+//    browserNameText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserName());
+//    browserArgumentText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
+//    setEnablement(!useDefaultBrowser);
     invokeToStringButton.setSelection(SDBGDebugCorePlugin.getPlugin().getInvokeToString());
-
   }
-
-  private void setEnablement(boolean value) {
-    selectBrowserButton.setEnabled(value);
-    browserNameText.setEnabled(value);
-    browserArgumentText.setEnabled(value);
-  }
+//
+//  private void setEnablement(boolean value) {
+//    selectBrowserButton.setEnabled(value);
+//    browserNameText.setEnabled(value);
+//    browserArgumentText.setEnabled(value);
+//  }
 }

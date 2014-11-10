@@ -70,7 +70,6 @@ import org.json.JSONObject;
  * Handles an incoming http request, serving files from the workspace (or error pages) as necessary.
  */
 class ResourceServerHandler implements Runnable {
-
   private static class HttpHeader {
     public static final String METHOD_GET = "GET";
     public static final String METHOD_HEAD = "HEAD";
@@ -256,6 +255,10 @@ class ResourceServerHandler implements Runnable {
       {"/agent.js", TYPE_JS, "agent.js"},
       {"/apple-touch-icon-precomposed.png", TYPE_PNG, "/resources/apple-touch-icon-precomposed.png"}};
 
+  private ResourceServer resourceServer;
+
+  private Socket socket;
+
   @SuppressWarnings("unused")
   private static byte[] getJSAgentContent() {
     if (AGENT_CONTENT == null) {
@@ -294,10 +297,6 @@ class ResourceServerHandler implements Runnable {
     }
   }
 
-  private ResourceServer resourceServer;
-
-  private Socket socket;
-
   public ResourceServerHandler(ResourceServer resourceServer, Socket socket) {
     this.resourceServer = resourceServer;
     this.socket = socket;
@@ -311,7 +310,7 @@ class ResourceServerHandler implements Runnable {
       HttpHeader header = parseHeader(in);
 
       if (header == null) {
-        Trace.trace("Resource server: socket closed early");
+        trace("Resource server: socket closed early");
         safeClose(socket);
       } else if (isAllowableConnection(socket, header)) {
         HttpResponse response;
@@ -325,10 +324,10 @@ class ResourceServerHandler implements Runnable {
           response = createErrorResponse("Request type " + header.method + " not supported.");
         }
 
-        Trace.trace("Resource server: " + header);
-        if (Trace.TRACING) {
+        trace("Resource server: " + header);
+        if (isTracing()) {
           if (response.responseCode != HttpResponse.OK) {
-            Trace.trace("       response: " + response);
+            trace("       response: " + response);
           }
         }
 
@@ -655,13 +654,13 @@ class ResourceServerHandler implements Runnable {
         if (arr != null) {
           for (int i = 0; i < arr.length(); i++) {
             //&&&DartCore.getConsole().println(stripQuotes(arr.getString(i)));
-            SDBGDebugCorePlugin.log(stripQuotes(arr.getString(i)));
+            trace(stripQuotes(arr.getString(i)));
           }
         } else {
           String log = obj.getString("message");
 
           //&&&DartCore.getConsole().println(log);
-          SDBGDebugCorePlugin.log(log);
+          trace(log);
         }
       }
     } catch (JSONException ex) {
@@ -748,6 +747,10 @@ class ResourceServerHandler implements Runnable {
     }
 
     return false;
+  }
+
+  private boolean isTracing() {
+    return Trace.isTracing(Trace.RESOURCE_SERVING);
   }
 
   private File locateFile(String filePath) {
@@ -1001,5 +1004,9 @@ class ResourceServerHandler implements Runnable {
     } else {
       return str;
     }
+  }
+
+  private void trace(String message) {
+    Trace.trace(Trace.RESOURCE_SERVING, message);
   }
 }

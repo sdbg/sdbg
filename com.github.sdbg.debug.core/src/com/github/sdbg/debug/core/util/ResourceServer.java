@@ -14,6 +14,12 @@
 
 package com.github.sdbg.debug.core.util;
 
+import com.github.sdbg.core.DartCore;
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.model.IResourceResolver;
+import com.github.sdbg.utilities.NetUtils;
+import com.github.sdbg.utilities.Streams;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -36,12 +42,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-
-import com.github.sdbg.core.DartCore;
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.utilities.NetUtils;
-import com.github.sdbg.utilities.Streams;
 
 /**
  * A web server that serves up workspace resources.
@@ -191,7 +191,7 @@ public class ResourceServer implements IResourceResolver {
 //&&&      
 //      DartCore.getConsole().println(
 //          "Remote connection from " + hostAddress + " [" + userAgent + "]");
-      SDBGDebugCorePlugin.log("Remote connection from " + hostAddress + " [" + userAgent + "]");
+      trace("Remote connection from " + hostAddress + " [" + userAgent + "]");
     }
   }
 
@@ -276,6 +276,10 @@ public class ResourceServer implements IResourceResolver {
     }
   }
 
+  private void trace(String message) {
+    Trace.trace(Trace.RESOURCE_SERVING, message);
+  }
+
   private String webSafe(String s) {
     StringBuffer out = new StringBuffer();
 
@@ -291,5 +295,4 @@ public class ResourceServer implements IResourceResolver {
 
     return out.toString();
   }
-
 }

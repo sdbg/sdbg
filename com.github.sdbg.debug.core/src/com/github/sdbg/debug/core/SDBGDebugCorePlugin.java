@@ -21,6 +21,9 @@ import com.github.sdbg.debug.core.util.ResourceServerManager;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.StringUtilities;
 
+import java.util.Dictionary;
+import java.util.Hashtable;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
@@ -30,13 +33,16 @@ import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IDebugEventSetListener;
+import org.eclipse.osgi.service.debug.DebugOptions;
+import org.eclipse.osgi.service.debug.DebugOptionsListener;
 import org.osgi.framework.BundleContext;
 import org.osgi.service.prefs.BackingStoreException;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * The plugin activator for the com.github.sdbg.debug.core plugin.
  */
-public class SDBGDebugCorePlugin extends Plugin {
+public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener {
 
   public static enum BreakOnExceptions {
     none,
@@ -89,6 +95,8 @@ public class SDBGDebugCorePlugin extends Plugin {
 
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
 
+  private ServiceTracker<DebugOptions, Object> debugTracker;
+
   private IEclipsePreferences prefs;
 
   private IUserAgentManager userAgentManager;
@@ -108,33 +116,6 @@ public class SDBGDebugCorePlugin extends Plugin {
    */
   public static SDBGDebugCorePlugin getPlugin() {
     return plugin;
-  }
-
-  /**
-   * A light-weight logging mechanism for debugging the debugger.
-   * 
-   * @param str
-   */
-  public static void log(String str) {
-    Trace.trace(str);
-  }
-
-  /**
-   * For use during development - this method listens to and logs all Eclipse debugger events.
-   */
-  public static void logDebuggerEvents() {
-    if (debugEventListener == null) {
-      debugEventListener = new IDebugEventSetListener() {
-        @Override
-        public void handleDebugEvents(DebugEvent[] events) {
-          for (DebugEvent event : events) {
-            logInfo(event.toString());
-          }
-        }
-      };
-
-      DebugPlugin.getDefault().addDebugEventListener(debugEventListener);
-    }
   }
 
   /**
@@ -178,7 +159,7 @@ public class SDBGDebugCorePlugin extends Plugin {
    * @param message
    */
   public static void logInfo(String message) {
-    if (Trace.TRACING && getPlugin() != null) {
+    if (getPlugin() != null) {
       getPlugin().getLog().log(new Status(IStatus.INFO, PLUGIN_ID, message));
     }
   }
@@ -271,6 +252,11 @@ public class SDBGDebugCorePlugin extends Plugin {
     return getPrefs().getBoolean(PREFS_USE_SOURCE_MAPS, true);
   }
 
+  @Override
+  public void optionsChanged(DebugOptions options) {
+    Trace.setOptions(options);
+  }
+
   public void setBreakOnExceptions(BreakOnExceptions value) {
     getPrefs().put(PREFS_BREAK_ON_EXCEPTIONS, value.toString());
 
@@ -323,6 +309,29 @@ public class SDBGDebugCorePlugin extends Plugin {
     plugin = this;
 
     super.start(context);
+
+    debugTracker = new ServiceTracker<DebugOptions, Object>(context, DebugOptions.class, null);
+    debugTracker.open();
+    optionsChanged((DebugOptions) debugTracker.getService());
+
+    Dictionary<String, String> props = new Hashtable<String, String>(4);
+    props.put(DebugOptions.LISTENER_SYMBOLICNAME, PLUGIN_ID);
+    context.registerService(DebugOptionsListener.class.getName(), this, props);
+
+    if (debugEventListener == null) {
+      debugEventListener = new IDebugEventSetListener() {
+        @Override
+        public void handleDebugEvents(DebugEvent[] events) {
+          if (Trace.isTracing(Trace.ECLIPSE_DEBUGGER_EVENTS)) {
+            for (DebugEvent event : events) {
+              Trace.trace(Trace.ECLIPSE_DEBUGGER_EVENTS, event.toString());
+            }
+          }
+        }
+      };
+
+      DebugPlugin.getDefault().addDebugEventListener(debugEventListener);
+    }
   }
 
   @Override
@@ -337,13 +346,12 @@ public class SDBGDebugCorePlugin extends Plugin {
 
     if (debugEventListener != null) {
       DebugPlugin.getDefault().removeDebugEventListener(debugEventListener);
-
       debugEventListener = null;
     }
 
+    debugTracker.close();
     super.stop(context);
 
     plugin = null;
   }
-
 }

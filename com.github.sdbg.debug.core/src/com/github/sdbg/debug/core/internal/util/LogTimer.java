@@ -13,7 +13,7 @@
  */
 package com.github.sdbg.debug.core.internal.util;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.util.Trace;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -34,19 +34,10 @@ public class LogTimer {
     public void timerLog(String actionName, long durationMs);
   }
 
-  private static boolean ENABLE = false;
-
   private static List<LogListener> listeners = new ArrayList<LogTimer.LogListener>();
 
-  public static void addLogListener(LogListener listener) {
-    listeners.add(listener);
-  }
-
-  public static void removeLogListener(LogListener listener) {
-    listeners.remove(listener);
-  }
-
   private String name;
+
   private long startTime;
 
   private String taskName;
@@ -56,6 +47,14 @@ public class LogTimer {
    * This formatter always shows the thousandths position (0.000).
    */
   private static final NumberFormat numberFormat = new DecimalFormat("#.###");
+
+  public static void addLogListener(LogListener listener) {
+    listeners.add(listener);
+  }
+
+  public static void removeLogListener(LogListener listener) {
+    listeners.remove(listener);
+  }
 
   /**
    * Create a new LogTimer.
@@ -83,8 +82,8 @@ public class LogTimer {
   public void stopTask() {
     long duration = System.currentTimeMillis() - taskStart;
 
-    if (ENABLE) {
-      SDBGDebugCorePlugin.logInfo(taskName + " time: " + duration + "ms");
+    if (isTracing()) {
+      trace(taskName + " time: " + duration + "ms");
     }
 
     taskName = null;
@@ -96,8 +95,8 @@ public class LogTimer {
   public void stopTimer() {
     long duration = System.currentTimeMillis() - startTime;
 
-    if (ENABLE) {
-      SDBGDebugCorePlugin.logInfo(name + " total time: " + getSeconds(duration) + " sec");
+    if (isTracing()) {
+      trace(name + " total time: " + getSeconds(duration) + " sec");
     }
 
     for (LogListener listener : listeners) {
@@ -109,4 +108,11 @@ public class LogTimer {
     return numberFormat.format(durationMs / 1000.0);
   }
 
+  private boolean isTracing() {
+    return Trace.isTracing(Trace.TIMER);
+  }
+
+  private void trace(String message) {
+    Trace.trace(Trace.TIMER, message);
+  }
 }

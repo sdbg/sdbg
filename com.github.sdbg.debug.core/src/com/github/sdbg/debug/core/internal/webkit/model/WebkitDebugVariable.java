@@ -16,7 +16,6 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
-import com.github.sdbg.debug.core.util.Trace;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -175,7 +174,7 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   @Override
   public void setValue(String expression) throws DebugException {
     // TODO(devoncarew):
-    Trace.trace("Change: " + expression);
+    //Trace.trace("Change: " + expression);
   }
 
   @Override
@@ -247,5 +246,4 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
       return false;
     }
   }
-
 }

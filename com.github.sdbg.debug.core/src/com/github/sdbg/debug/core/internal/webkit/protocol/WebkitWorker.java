@@ -14,16 +14,15 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A WIP Worker domain object.
@@ -172,7 +171,7 @@ public class WebkitWorker extends WebkitDomain {
         listener.disconnectedFromWorker();
       }
     } else {
-      SDBGDebugCorePlugin.logInfo("unhandled notification: " + method);
+      WIPTrace.trace("unhandled notification: " + method);
     }
   }
 

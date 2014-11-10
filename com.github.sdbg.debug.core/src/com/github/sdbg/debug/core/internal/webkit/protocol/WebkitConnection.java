@@ -409,7 +409,7 @@ public class WebkitConnection {
       }
     }
 
-    SDBGDebugCorePlugin.logInfo("no handler for notification: " + object);
+    WIPTrace.trace("no handler for notification: " + object);
   }
 
   private void processResponse(JSONObject result) throws JSONException {
@@ -428,7 +428,7 @@ public class WebkitConnection {
         // If we get an error back, and nobody was listening for the result, then log it.
         WebkitResult<?> webkitResult = WebkitResult.createFrom(result);
 
-        SDBGDebugCorePlugin.logInfo("Error from command id " + id + ": " + webkitResult.getError());
+        WIPTrace.trace("Error from command id " + id + ": " + webkitResult.getError());
       }
     } catch (Throwable exception) {
       SDBGDebugCorePlugin.logError(exception);

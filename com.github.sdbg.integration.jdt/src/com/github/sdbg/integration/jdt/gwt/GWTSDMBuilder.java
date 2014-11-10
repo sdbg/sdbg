@@ -85,7 +85,7 @@ public class GWTSDMBuilder extends IncrementalProjectBuilder {
           }
         } catch (ConnectException e) {
           // The code server is not running. That's OK - stay silent
-          SDBGDebugCorePlugin.log("Code Server " + codeServerAPI.getCodeServerUri().toString()
+          SDBGDebugCorePlugin.logInfo("Code Server " + codeServerAPI.getCodeServerUri().toString()
               + " seems to be down. Skipping GWT SDM recompilation for module "
               + codeServerAPI.getModule());
         } catch (JSONException e) {

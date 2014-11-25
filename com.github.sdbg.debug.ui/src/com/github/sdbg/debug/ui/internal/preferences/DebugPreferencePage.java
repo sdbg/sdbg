@@ -38,6 +38,9 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
   private Combo exceptionsCombo;
   private Button invokeToStringButton;
 
+  private Button useSmartStepOverButton;
+  private Button useSmartStepInOutButton;
+
 //  private Button defaultBrowserButton;
 //  private Text browserNameText;
 //  private Button selectBrowserButton;
@@ -59,6 +62,8 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     SDBGDebugCorePlugin.getPlugin().setBreakOnExceptions(
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
     SDBGDebugCorePlugin.getPlugin().setInvokeToString(invokeToStringButton.getSelection());
+    SDBGDebugCorePlugin.getPlugin().setUseSmartStepOver(useSmartStepOverButton.getSelection());
+    SDBGDebugCorePlugin.getPlugin().setUseSmartStepInOut(useSmartStepInOutButton.getSelection());
 
 //    SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
 //        defaultBrowserButton.getSelection(),
@@ -95,6 +100,14 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     invokeToStringButton = new Button(group, SWT.CHECK);
     invokeToStringButton.setText("Invoke toString() methods when debugging");
     GridDataFactory.swtDefaults().span(2, 1).applyTo(invokeToStringButton);
+
+    useSmartStepOverButton = new Button(group, SWT.CHECK);
+    useSmartStepOverButton.setText("Execute the whole source language line when stepping-over");
+    GridDataFactory.swtDefaults().span(2, 1).applyTo(useSmartStepOverButton);
+
+    useSmartStepInOutButton = new Button(group, SWT.CHECK);
+    useSmartStepInOutButton.setText("(EXPERIMENTAL) Skip non-sourcemapped JavaScript frames when stepping-in and out");
+    GridDataFactory.swtDefaults().span(2, 1).applyTo(useSmartStepInOutButton);
 
 //    createBrowserConfig(composite, labelWidth);
 
@@ -169,6 +182,8 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
 //    browserArgumentText.setText(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
 //    setEnablement(!useDefaultBrowser);
     invokeToStringButton.setSelection(SDBGDebugCorePlugin.getPlugin().getInvokeToString());
+    useSmartStepOverButton.setSelection(SDBGDebugCorePlugin.getPlugin().getUseSmartStepOver());
+    useSmartStepInOutButton.setSelection(SDBGDebugCorePlugin.getPlugin().getUseSmartStepInOut());
   }
 //
 //  private void setEnablement(boolean value) {

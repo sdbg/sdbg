@@ -10,7 +10,7 @@ public class GWTSDMProperties {
   public static enum HotCodeReplacePolicy {
     DISABLED("Disabled"),
     RELOAD_PAGE("Reload the page hosting the module"),
-    CHROME_LIVE_EDIT("Upload the recompiled module script via Chrome LiveEdit");
+    CHROME_LIVE_EDIT("(EXPERIMENTAL) Upload the recompiled module script via Chrome LiveEdit");
 
     private String description;
 

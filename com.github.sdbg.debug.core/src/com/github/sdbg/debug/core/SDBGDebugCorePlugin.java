@@ -93,6 +93,10 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
 
   public static final String PREFS_INVOKE_TOSTRING = "invokeToString";
 
+  public static final String PREFS_USE_SMART_STEP_OVER = "useSmartStepOver";
+
+  public static final String PREFS_USE_SMART_STEP_IN_OUT = "useSmartStepInOut";
+
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
 
   private ServiceTracker<DebugOptions, Object> debugTracker;
@@ -245,6 +249,14 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
     return userAgentManager;
   }
 
+  public boolean getUseSmartStepInOut() {
+    return getPrefs().getBoolean(PREFS_USE_SMART_STEP_IN_OUT, false);
+  }
+
+  public boolean getUseSmartStepOver() {
+    return getPrefs().getBoolean(PREFS_USE_SMART_STEP_OVER, false);
+  }
+
   /**
    * @return whether to use source maps for debugging
    */
@@ -292,6 +304,26 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
 
   public void setUserAgentManager(IUserAgentManager userAgentManager) {
     this.userAgentManager = userAgentManager;
+  }
+
+  public void setUseSmartStepInOut(boolean value) {
+    getPrefs().putBoolean(PREFS_USE_SMART_STEP_IN_OUT, value);
+
+    try {
+      getPrefs().flush();
+    } catch (BackingStoreException e) {
+
+    }
+  }
+
+  public void setUseSmartStepOver(boolean value) {
+    getPrefs().putBoolean(PREFS_USE_SMART_STEP_OVER, value);
+
+    try {
+      getPrefs().flush();
+    } catch (BackingStoreException e) {
+
+    }
   }
 
   public void setUseSourceMaps(boolean value) {

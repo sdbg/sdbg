@@ -180,7 +180,7 @@ public class GWTSDMPropertyPage extends PropertyPage implements IWorkbenchProper
       }
 
       label = new Label(hotCodeReplacePolicyGroup, SWT.WRAP);
-      label.setLayoutData(GridDataFactory.swtDefaults().hint(400, SWT.DEFAULT).create());
+      label.setLayoutData(GridDataFactory.swtDefaults().hint(700, SWT.DEFAULT).create());
       label.setText("\nNote:"
           + "\n- For Hot Code Replace to work, you need an active SDBG debug session"
           + "\n- Chrome Live Edit will likely crash your browser with anything but the smallest GWT project");

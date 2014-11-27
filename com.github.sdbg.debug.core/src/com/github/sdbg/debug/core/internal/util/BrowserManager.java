@@ -584,7 +584,10 @@ public class BrowserManager {
       String path = System.getenv("PATH");
       if (path != null) {
         for (String dirStr : path.split(File.pathSeparator)) {
-          return findChromeExecutable("$PATH entry", dirStr, false/*fileOrDir*/);
+          file = findChromeExecutable("$PATH entry", dirStr, false/*fileOrDir*/);
+          if (file != null) {
+            return file;
+          }
         }
       }
     }

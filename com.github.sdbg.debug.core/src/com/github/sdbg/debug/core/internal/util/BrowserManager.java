@@ -574,11 +574,17 @@ public class BrowserManager {
       }
 
       // XP
-      return findChromeExecutable("heuristics", new File(
+      file = findChromeExecutable("heuristics", new File(
           userHome,
           "Local Settings\\Application Data\\Google\\Chrome\\Application"), false/*fileOrDir*/);
+      if (file != null) {
+        return file;
+      }
     } else if (DartCore.isMac()) {
-      return findChromeExecutable("heuristics", new File("/Applications"), false/*fileOrDir*/);
+      file = findChromeExecutable("heuristics", new File("/Applications"), false/*fileOrDir*/);
+      if (file != null) {
+        return file;
+      }
     } else {
       // Search $PATH
       String path = System.getenv("PATH");

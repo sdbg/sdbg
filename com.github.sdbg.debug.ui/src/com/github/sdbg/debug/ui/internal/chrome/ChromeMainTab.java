@@ -109,7 +109,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public Image getImage() {
-    return SDBGDebugUIPlugin.getImage("chromium_16.png"); //$NON-NLS-1$
+    return SDBGDebugUIPlugin.getImage("chrome.png"); //$NON-NLS-1$
   }
 
   @Override

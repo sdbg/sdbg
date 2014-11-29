@@ -250,11 +250,11 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
   }
 
   public boolean getUseSmartStepInOut() {
-    return getPrefs().getBoolean(PREFS_USE_SMART_STEP_IN_OUT, false);
+    return getPrefs().getBoolean(PREFS_USE_SMART_STEP_IN_OUT, true);
   }
 
   public boolean getUseSmartStepOver() {
-    return getPrefs().getBoolean(PREFS_USE_SMART_STEP_OVER, false);
+    return getPrefs().getBoolean(PREFS_USE_SMART_STEP_OVER, true);
   }
 
   /**

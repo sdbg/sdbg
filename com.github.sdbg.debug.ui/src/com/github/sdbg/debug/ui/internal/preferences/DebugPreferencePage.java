@@ -106,7 +106,7 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     GridDataFactory.swtDefaults().span(2, 1).applyTo(useSmartStepOverButton);
 
     useSmartStepInOutButton = new Button(group, SWT.CHECK);
-    useSmartStepInOutButton.setText("(EXPERIMENTAL) Skip non-sourcemapped JavaScript frames when stepping-in and out");
+    useSmartStepInOutButton.setText("Skip non-sourcemapped JavaScript frames when stepping-in and out");
     GridDataFactory.swtDefaults().span(2, 1).applyTo(useSmartStepInOutButton);
 
 //    createBrowserConfig(composite, labelWidth);

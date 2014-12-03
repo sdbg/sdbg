@@ -208,7 +208,7 @@ public class BrowserManager {
               throw new CoreException(new Status(
                   IStatus.ERROR,
                   SDBGDebugCorePlugin.PLUGIN_ID,
-                  "Unable to connect to Chrome: " + e.getMessage(),
+                  "Unable to connect to debugger in Chrome: " + e.getMessage(),
                   e));
             } catch (CoreException e) {
               adbManager.removeAllForwards();

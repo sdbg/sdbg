@@ -16,12 +16,23 @@ package com.github.sdbg.debug.core.internal.webkit.protocol;
 
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.List;
+//TODO(devoncarew): Add support for the Runtime.getProperty call.
+/*
+ * { "name": "getProperty", "parameters": [ { "name": "objectId", "$ref": "RemoteObjectId",
+ * "description": "Identifier of the object to return a property for." }, { "name": "propertyPath",
+ * "type": "array", "items": { "type": "string" } } ], "returns": [ { "name": "result", "$ref":
+ * "RemoteObject", "description": "Call result." }, { "name": "wasThrown", "type": "boolean",
+ * "optional": true, "description": "True if the result was thrown during the evaluation." } ],
+ * "description": "Returns a property of a given object. Object group of the result "
+ * "is inherited from the target object." },
+ */
 
 /**
  * A WIP runtime domain object.
@@ -37,6 +48,9 @@ import java.util.List;
 public class WebkitRuntime extends WebkitDomain {
 
   public static class CallArgument {
+    private Object value;
+
+    private String objectId;
 
     public static CallArgument fromDouble(double d) {
       CallArgument arg = new CallArgument();
@@ -61,9 +75,6 @@ public class WebkitRuntime extends WebkitDomain {
       arg.value = str;
       return arg;
     }
-
-    private Object value;
-    private String objectId;
 
     public JSONObject toJson() throws JSONException {
       JSONObject obj = new JSONObject();
@@ -129,6 +140,47 @@ public class WebkitRuntime extends WebkitDomain {
     }
   }
 
+  public void callListLength(String objectId, final WebkitCallback<Integer> callback)
+      throws IOException {
+    if (objectId == null) {
+      WebkitResult<Integer> result = new WebkitResult<Integer>();
+      result.setResult(new Integer(0));
+      callback.handleResult(result);
+      return;
+    }
+
+    try {
+      JSONObject request = new JSONObject();
+
+      request.put("method", "Runtime.callFunctionOn");
+      request.put(
+          "params",
+          new JSONObject().put("objectId", objectId).put("functionDeclaration", "() => length").put(
+              "returnByValue",
+              false));
+
+      connection.sendRequest(request, new Callback() {
+        @Override
+        public void handleResult(JSONObject result) throws JSONException {
+          WebkitResult<WebkitRemoteObject> functionResult = convertEvaluateResult(result);
+
+          WebkitResult<Integer> r = new WebkitResult<Integer>();
+
+          if (functionResult.getWasThrown()) {
+            r.setError(functionResult.getResult().getValue());
+          } else {
+            r.setResult(functionResult.getResult() == null ? new Integer(0) : new Integer(
+                functionResult.getResult().getValue()));
+          }
+
+          callback.handleResult(r);
+        }
+      });
+    } catch (JSONException exception) {
+      throw new IOException(exception);
+    }
+  }
+
   /**
    * Calls the toString() method on the given remote object. This is a convenience method for the
    * Runtime.callFunctionOn call.
@@ -138,15 +190,22 @@ public class WebkitRuntime extends WebkitDomain {
    */
   public void callToString(String objectId, final WebkitCallback<String> callback)
       throws IOException {
+    if (objectId == null) {
+      WebkitResult<String> result = new WebkitResult<String>();
+      result.setResult(null);
+      callback.handleResult(result);
+      return;
+    }
+
     try {
       JSONObject request = new JSONObject();
 
       request.put("method", "Runtime.callFunctionOn");
       request.put(
           "params",
-          new JSONObject().put("objectId", objectId).put(
-              "functionDeclaration",
-              "function(){return this.toString();}").put("returnByValue", false));
+          new JSONObject().put("objectId", objectId).put("functionDeclaration", "() => toString()").put(
+              "returnByValue",
+              false));
 
       connection.sendRequest(request, new Callback() {
         @Override
@@ -218,22 +277,27 @@ public class WebkitRuntime extends WebkitDomain {
    * @param object identifier of the object to return properties for
    * @param ownProperties if true, returns properties belonging only to the element itself, not to
    *          its prototype chain
+   * @param accessorPropertiesOnly if true, returns accessor properties (with getter/setter) only;
+   *          internal properties are not returned either
    * @param callback
    * @throws IOException
    */
   public void getProperties(final WebkitRemoteObject object, boolean ownProperties,
-      final WebkitCallback<WebkitPropertyDescriptor[]> callback) throws IOException {
+      boolean accessorPropertiesOnly, final WebkitCallback<WebkitPropertyDescriptor[]> callback)
+      throws IOException {
     if (callback == null) {
       throw new IllegalArgumentException("callback is required");
     }
 
     try {
-      JSONObject request = new JSONObject();
+      JSONObject params = new JSONObject();
+      params.put("objectId", object.getObjectId());
+      params.put("ownProperties", ownProperties);
+      params.put("accessorPropertiesOnly", accessorPropertiesOnly);
 
+      JSONObject request = new JSONObject();
       request.put("method", "Runtime.getProperties");
-      request.put(
-          "params",
-          new JSONObject().put("objectId", object.getObjectId()).put("ownProperties", ownProperties));
+      request.put("params", params);
 
       connection.sendRequest(request, new Callback() {
         @Override
@@ -298,10 +362,10 @@ public class WebkitRuntime extends WebkitDomain {
       throws JSONException {
     WebkitResult<WebkitRemoteObject> result = WebkitResult.createFrom(object);
 
-//    "result": {
-//      "result": <RemoteObject>,
-//      "wasThrown": <boolean> 
-//    }
+// "result": {
+//   "result": <RemoteObject>,
+//   "wasThrown": <boolean> 
+// }
 
     if (object.has("result")) {
       JSONObject obj = object.getJSONObject("result");

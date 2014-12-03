@@ -422,7 +422,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
     for (WebkitScope scope : webkitFrame.getScopeChain()) {
       if (scope.isClass()) {
-        classValue = new WebkitDebugValue(getTarget(), null, scope.getObject());
+        classValue = WebkitDebugValue.create(getTarget(), null, scope.getObject());
         break;
       }
     }
@@ -437,7 +437,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
     for (WebkitScope scope : webkitFrame.getScopeChain()) {
       if (scope.isGlobal()) {
-        globalScopeValue = new WebkitDebugValue(getTarget(), null, scope.getObject());
+        globalScopeValue = WebkitDebugValue.create(getTarget(), null, scope.getObject());
         break;
       }
     }
@@ -498,7 +498,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     }
 
     for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (!scope.isGlobalLike()) {
+      if (!scope.isGlobalLike() && !scope.isInstance()) {
         remoteObjects.add(scope.getObject());
       }
     }

@@ -299,8 +299,11 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
   @Override
   public void handleGlobalObjectCleared() {
-    // TODO: Breakpoints' cleanup code should be present here?!
-    trace("Global object cleared");
+    for (List<String> ids : breakpointToIdMap.values()) {
+      ids.clear();
+    }
+
+    breakpointsToUpdateMap.clear();
   }
 
   @Override

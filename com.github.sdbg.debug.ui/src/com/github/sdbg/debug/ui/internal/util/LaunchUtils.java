@@ -379,11 +379,6 @@ public class LaunchUtils {
               while (iterator.hasNext()) {
                 Object next = iterator.next();
 
-//&&&                
-//                if (next instanceof DartElement) {
-//                  next = ((DartElement) next).getResource();
-//                }
-//
                 if (next instanceof IResource) {
                   return (IResource) next;
                 } else if (next != null) {

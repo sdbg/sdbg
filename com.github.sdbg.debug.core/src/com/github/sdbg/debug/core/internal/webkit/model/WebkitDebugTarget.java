@@ -378,7 +378,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       @Override
       public void debuggerGlobalObjectCleared() {
         breakpointManager.handleGlobalObjectCleared();
-        //sourceMapManager.handleGlobalObjectCleared();
+        sourceMapManager.handleGlobalObjectCleared();
       }
 
       @Override
@@ -629,17 +629,19 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
               if (!result.isError()) {
                 String text = result.getResult();
 
-                if (exception.isPrimitive()) {
+                if (exception != null && exception.isPrimitive()) {
                   text = exception.getValue();
                 }
 
-                int index = text.indexOf('\n');
+                if (text != null) {
+                  int index = text.indexOf('\n');
 
-                if (index != -1) {
-                  text = text.substring(0, index).trim();
+                  if (index != -1) {
+                    text = text.substring(0, index).trim();
+                  }
+
+                  process.getStreamMonitor().messageAdded("Breaking on exception: " + text + "\n");
                 }
-
-                process.getStreamMonitor().messageAdded("Breaking on exception: " + text + "\n");
               }
             }
           });

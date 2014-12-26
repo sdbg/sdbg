@@ -274,7 +274,7 @@ public final class StringUtilities {
     return args.toArray(new String[args.size()]);
   }
 
-  private static String stripQuotes(String str) {
+  public static String stripQuotes(String str) {
     if (str.length() > 1) {
       if ((str.startsWith("'") && str.endsWith("'"))
           || (str.startsWith("\"") && str.endsWith("\""))) {

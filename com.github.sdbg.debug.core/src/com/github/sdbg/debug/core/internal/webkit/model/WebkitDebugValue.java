@@ -41,19 +41,21 @@ import org.json.JSONObject;
 public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDBGValue,
     IExpressionEvaluator {
 
+  private WebkitDebugVariable variable;
+
+  protected WebkitRemoteObject value;
+  protected VariableCollector variableCollector;
+
   static WebkitDebugValue create(WebkitDebugTarget target, WebkitDebugVariable variable,
       WebkitRemoteObject value) {
-    if (value.isList()) {
+    if (value == null) {
+      return new WebkitEmptyValue(target, variable);
+    } else if (value.isList()) {
       return new WebkitDebugIndexedValue(target, variable, value);
     } else {
       return new WebkitDebugValue(target, variable, value);
     }
   }
-
-  private WebkitDebugVariable variable;
-  protected WebkitRemoteObject value;
-
-  private VariableCollector variableCollector;
 
   protected WebkitDebugValue(WebkitDebugTarget target, WebkitDebugVariable variable,
       WebkitRemoteObject value) {
@@ -106,14 +108,20 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
 
     } else if (exprText.startsWith("[")) {
       exprText = "this" + exprText;
-    } else {
-      exprText = "this." + exprText;
     }
+
+    String evalText = exprText;
+
+    if (evalText.indexOf("return") == -1) {
+      evalText = "return " + evalText + ";";
+    }
+
+    evalText = "() {" + evalText + "}";
 
     try {
       getConnection().getRuntime().callFunctionOn(
           value.getObjectId(),
-          "function(){return " + exprText + ";}",
+          evalText,
           null,
           false,
           new WebkitCallback<WebkitRemoteObject>() {
@@ -132,7 +140,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
               } else {
                 listener.watchEvaluationFinished(WatchExpressionResult.value(
                     expression,
-                    new WebkitDebugValue(getTarget(), null, result.getResult())));
+                    WebkitDebugValue.create(getTarget(), null, result.getResult())));
               }
             }
           });
@@ -161,7 +169,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     try {
       for (WebkitPropertyDescriptor property : variableCollector.getWebkitProperties()) {
         if (WebkitPropertyDescriptor.STATIC_FIELDS_OBJECT.equals(property.getName())) {
-          return new WebkitDebugValue(getTarget(), null, property.getValue());
+          return WebkitDebugValue.create(getTarget(), null, property.getValue());
         }
       }
     } catch (InterruptedException e) {
@@ -195,9 +203,9 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
 
     if (isListValue()) {
       if (value.getClassName() != null) {
-        return value.getClassName() + "[" + value.getListLength() + "]";
+        return value.getClassName() + "[" + getListLength() + "]";
       } else {
-        return "List[" + value.getListLength() + "]";
+        return "List[" + getListLength() + "]";
       }
     }
 
@@ -225,7 +233,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     try {
       for (WebkitPropertyDescriptor property : variableCollector.getWebkitProperties()) {
         if (WebkitPropertyDescriptor.LIBRARY_OBJECT.equals(property.getName())) {
-          return new WebkitDebugValue(getTarget(), null, property.getValue());
+          return WebkitDebugValue.create(getTarget(), null, property.getValue());
         }
       }
     } catch (InterruptedException e) {
@@ -233,6 +241,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     }
 
     return null;
+  }
+
+  @Override
+  public int getListLength() {
+    return value.getListLength(getConnection());
   }
 
   @Override
@@ -265,11 +278,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public boolean hasVariables() throws DebugException {
     try {
-      if (isListValue()) {
-        return value.getListLength() > 0;
-      } else {
-        return value.hasObjectId();
-      }
+      return value.hasObjectId() && !value.isNull() && !value.isPrimitive();
     } catch (Throwable t) {
       throw createDebugException(t);
     }
@@ -302,6 +311,17 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     fireEvent(new DebugEvent(this, DebugEvent.CHANGE, DebugEvent.CONTENT));
   }
 
+  protected void populate() {
+    if (value.hasObjectId()) {
+      variableCollector = VariableCollector.createCollector(
+          getTarget(),
+          variable,
+          Collections.singletonList(value));
+    } else {
+      variableCollector = VariableCollector.empty();
+    }
+  }
+
   private void evalOnGlobalContext(final String expression,
       final WebkitResult<WebkitRemoteObject> originalResult, final IWatchExpressionListener listener) {
     try {
@@ -319,11 +339,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
               } else if (result.getResult().isSyntaxError()) {
                 listener.watchEvaluationFinished(WatchExpressionResult.value(
                     expression,
-                    new WebkitDebugValue(getTarget(), null, originalResult.getResult())));
+                    WebkitDebugValue.create(getTarget(), null, originalResult.getResult())));
               } else {
                 listener.watchEvaluationFinished(WatchExpressionResult.value(
                     expression,
-                    new WebkitDebugValue(getTarget(), null, result.getResult())));
+                    WebkitDebugValue.create(getTarget(), null, result.getResult())));
               }
             }
           });
@@ -348,17 +368,6 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       return obj.getString("id");
     } catch (Throwable t) {
       return null;
-    }
-  }
-
-  private void populate() {
-    if (value.hasObjectId()) {
-      variableCollector = VariableCollector.createCollector(
-          getTarget(),
-          variable,
-          Collections.singletonList(value));
-    } else {
-      variableCollector = VariableCollector.empty();
     }
   }
 

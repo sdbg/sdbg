@@ -16,10 +16,10 @@ package com.github.sdbg.debug.core.internal.webkit.protocol;
 
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 
+import java.io.IOException;
+
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.io.IOException;
 
 /**
  * The parent class of the WIP domain (debugger, page, ...) classes.

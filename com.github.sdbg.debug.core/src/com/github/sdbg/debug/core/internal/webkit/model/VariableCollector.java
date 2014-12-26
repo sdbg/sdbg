@@ -33,6 +33,16 @@ import org.eclipse.debug.core.model.IVariable;
  */
 class VariableCollector {
 
+  private WebkitDebugTarget target;
+
+  private WebkitDebugVariable parentVariable;
+
+  private CountDownLatch latch;
+
+  private List<IVariable> variables = new ArrayList<IVariable>();
+
+  private List<WebkitPropertyDescriptor> webkitProperties = new ArrayList<WebkitPropertyDescriptor>();
+
   public static VariableCollector createCollector(WebkitDebugTarget target,
       WebkitDebugVariable variable, List<WebkitRemoteObject> remoteObjects) {
     final VariableCollector collector = new VariableCollector(
@@ -45,6 +55,7 @@ class VariableCollector {
         target.getConnection().getRuntime().getProperties(
             obj,
             true,
+            false,
             new WebkitCallback<WebkitPropertyDescriptor[]>() {
               @Override
               public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
@@ -89,6 +100,7 @@ class VariableCollector {
         target.getConnection().getRuntime().getProperties(
             obj,
             true,
+            false,
             new WebkitCallback<WebkitPropertyDescriptor[]>() {
               @Override
               public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
@@ -118,13 +130,6 @@ class VariableCollector {
   public static VariableCollector fixed(WebkitDebugTarget target, List<IVariable> variables) {
     return new VariableCollector(target, variables);
   }
-
-  private WebkitDebugTarget target;
-  private WebkitDebugVariable parentVariable;
-
-  private CountDownLatch latch;
-  private List<IVariable> variables = new ArrayList<IVariable>();
-  private List<WebkitPropertyDescriptor> webkitProperties = new ArrayList<WebkitPropertyDescriptor>();
 
   public VariableCollector(WebkitDebugTarget target, List<IVariable> variables) {
     this.target = target;
@@ -200,6 +205,7 @@ class VariableCollector {
       target.getConnection().getRuntime().getProperties(
           classInfo,
           true,
+          false,
           new WebkitCallback<WebkitPropertyDescriptor[]>() {
             @Override
             public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {

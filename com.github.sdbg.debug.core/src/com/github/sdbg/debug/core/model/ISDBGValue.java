@@ -14,12 +14,14 @@
 
 package com.github.sdbg.debug.core.model;
 
+import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
+
 import org.eclipse.debug.core.model.IValue;
 
 /**
  * A sub-class of IValue that adds additional meta-information about the value.
  */
-public interface ISDBGValue extends IValue {
+public interface ISDBGValue extends IValue, IExpressionEvaluator {
   //&&&
   public static interface IValueCallback {
     public void detailComputed(String stringValue);
@@ -35,6 +37,11 @@ public interface ISDBGValue extends IValue {
    * @return a user-presentable id for this value
    */
   public String getId();
+
+  /**
+   * Returns the list length, if isListValue() is true.
+   */
+  public int getListLength();
 
   /**
    * @return whether this value represents a list
@@ -55,4 +62,5 @@ public interface ISDBGValue extends IValue {
    * Clears out any cached information about this value's fields.
    */
   public void reset();
+
 }

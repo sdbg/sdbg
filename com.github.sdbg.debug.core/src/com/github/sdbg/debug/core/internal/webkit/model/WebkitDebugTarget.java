@@ -378,7 +378,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       @Override
       public void debuggerGlobalObjectCleared() {
         breakpointManager.handleGlobalObjectCleared();
-        //sourceMapManager.handleGlobalObjectCleared();
+        sourceMapManager.handleGlobalObjectCleared();
       }
 
       @Override

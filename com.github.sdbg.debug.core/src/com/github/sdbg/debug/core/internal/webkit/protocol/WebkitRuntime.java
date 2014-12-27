@@ -203,7 +203,7 @@ public class WebkitRuntime extends WebkitDomain {
       request.put("method", "Runtime.callFunctionOn");
       request.put(
           "params",
-          new JSONObject().put("objectId", objectId).put("functionDeclaration", "() => toString()").put(
+          new JSONObject().put("objectId", objectId).put("functionDeclaration", "function(){return this.toString();}").put(
               "returnByValue",
               false));
 

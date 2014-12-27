@@ -115,7 +115,7 @@ public class WebkitDebugIndexedValue extends WebkitDebugValue implements IIndexe
 
     getConnection().getRuntime().callFunctionOn(
         listObject.getObjectId(),
-        "() => this[" + offset + "]",
+        "function(){return this[" + offset + "];}",
         null,
         false,
         new WebkitCallback<WebkitRemoteObject>() {

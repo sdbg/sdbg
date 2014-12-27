@@ -299,11 +299,14 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
   @Override
   public void handleGlobalObjectCleared() {
-    for (List<String> ids : breakpointToIdMap.values()) {
-      ids.clear();
+    for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+      if (!isJSBreakpoint(breakpoint)) {
+    	// This excercise is necessary so that the V8 breakpoints are removed 
+    	// and re-added later when the sourcemaps are re-parsed
+        breakpointRemoved(breakpoint, null/*delta*/);
+        breakpointAdded(breakpoint);
+      }
     }
-
-    breakpointsToUpdateMap.clear();
   }
 
   @Override

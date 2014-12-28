@@ -108,20 +108,14 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
 
     } else if (exprText.startsWith("[")) {
       exprText = "this" + exprText;
+    } else {
+      exprText = "this." + exprText;
     }
-
-    String evalText = exprText;
-
-    if (evalText.indexOf("return") == -1) {
-      evalText = "return " + evalText + ";";
-    }
-
-    evalText = "() {" + evalText + "}";
 
     try {
       getConnection().getRuntime().callFunctionOn(
           value.getObjectId(),
-          evalText,
+          "function(){return " + exprText + ";}",
           null,
           false,
           new WebkitCallback<WebkitRemoteObject>() {

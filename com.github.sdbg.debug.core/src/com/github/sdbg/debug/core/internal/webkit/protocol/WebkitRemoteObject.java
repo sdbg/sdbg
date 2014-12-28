@@ -203,7 +203,7 @@ public class WebkitRemoteObject {
   }
 
   public boolean isList() {
-    return "object".equals(type) && "List".equals(className);
+    return "array".equals(subtype);
   }
 
   public boolean isNode() {

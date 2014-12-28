@@ -134,6 +134,7 @@ class VariableCollector {
   public VariableCollector(WebkitDebugTarget target, List<IVariable> variables) {
     this.target = target;
     this.variables.addAll(variables);
+    this.latch = new CountDownLatch(0);
   }
 
   private VariableCollector(WebkitDebugTarget target, int work) {
@@ -143,8 +144,7 @@ class VariableCollector {
   private VariableCollector(WebkitDebugTarget target, int work, WebkitDebugVariable parentVariable) {
     this.target = target;
     this.parentVariable = parentVariable;
-
-    latch = new CountDownLatch(work);
+    this.latch = new CountDownLatch(work);
   }
 
   public IVariable[] getVariables() throws InterruptedException {

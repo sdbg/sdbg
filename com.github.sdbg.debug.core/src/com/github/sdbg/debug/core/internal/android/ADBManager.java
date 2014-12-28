@@ -30,6 +30,8 @@ public class ADBManager {
 
   private static File adbExecutable;
 
+  private Collection<String> forwards = new HashSet<String>();
+
   private static void copy(String resource, File toDir) throws IOException {
     InputStream in = SDBGDebugCorePlugin.getPlugin().getBundle().getResource(resource).openStream();
 
@@ -71,7 +73,10 @@ public class ADBManager {
       } else if (platform.equals("macosx_x86_64") || platform.equals("linux_x86")
           || platform.equals("linux_x86_64")) {
         copy(platformDir + adbExecutableName, adbDir);
-        new ProcessRunner(new ProcessBuilder("chmod", "+x", adbExecutable.getAbsolutePath())).runSync(null);
+        new ProcessRunner(new ProcessBuilder(
+            "chmod",
+            "+x",
+            new File(adbDir, adbExecutableName).getAbsolutePath())).runSync(null);
       } else {
         throw new IOException("Unsupported platform: " + platform);
       }
@@ -81,8 +86,6 @@ public class ADBManager {
 
     return adbExecutable;
   }
-
-  private Collection<String> forwards = new HashSet<String>();
 
   public ADBManager() {
   }

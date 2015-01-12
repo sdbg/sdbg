@@ -141,18 +141,18 @@ public class SourceMapManager {
           SourceMapInfo mapping = map.getMappingFor(line, column);
 
           if (mapping != null) {
-            SourceLocation location = new SourceLocation(
-                resolveStorage(mapStorage, mapping.getFile()),
-                relativisePath(mapStorage, mapping.getFile()),
-                mapping.getLine(),
-                mapping.getColumn(),
-                mapping.getName());
+            IStorage resolvedStorage = resolveStorage(mapStorage, mapping.getFile());
+            if (resolvedStorage != null) {
+              SourceLocation location = new SourceLocation(resolvedStorage, relativisePath(
+                  mapStorage,
+                  mapping.getFile()), mapping.getLine(), mapping.getColumn(), mapping.getName());
 
-            if (isTracing()) {
-              trace("Found mapping: " + location);
+              if (isTracing()) {
+                trace("Found mapping: " + location);
+              }
+
+              return location;
             }
-
-            return location;
           }
         }
       }
@@ -341,25 +341,26 @@ public class SourceMapManager {
         sourceMaps.remove(script);
       }
       trace("Checking script for sourcemaps: " + script);
-      processScript(script, sourceMapUrl);
-    }
-  }
 
-  private SourceMap parseSourceMap(IStorage mapStorage) {
-    if (mapStorage != null) {
       try {
-        return SourceMap.createFrom(mapStorage);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+        processScript(script, sourceMapUrl);
       } catch (CoreException e) {
-        throw new RuntimeException(e);
+        // Processing a source map is always a best effort, because the sourcemap could be missing or broken
+        SDBGDebugCorePlugin.logError(e);
+        trace("Processing script " + script + " failed: " + e.getMessage());
       }
     }
-
-    return null;
   }
 
-  private void processScript(IStorage script, String sourceMapUrl) {
+  private SourceMap parseSourceMap(IStorage mapStorage) throws IOException, CoreException {
+    if (mapStorage != null) {
+      return SourceMap.createFrom(mapStorage);
+    } else {
+      return null;
+    }
+  }
+
+  private void processScript(IStorage script, String sourceMapUrl) throws CoreException {
     try {
       if (sourceMapUrl == null) {
         BufferedReader reader;
@@ -412,9 +413,7 @@ public class SourceMapManager {
         }
       }
     } catch (IOException e) {
-      throw new RuntimeException(e);
-    } catch (CoreException e) {
-      throw new RuntimeException(e);
+      throw SDBGDebugCorePlugin.wrapError(e);
     }
   }
 
@@ -471,11 +470,11 @@ public class SourceMapManager {
         if (resource instanceof IFile) {
           return (IFile) resource;
         }
-      } catch (URISyntaxException ex) {
-        SDBGDebugCorePlugin.logError(ex);
+      } catch (URISyntaxException e) {
+        SDBGDebugCorePlugin.logError(e);
+        trace("Resolving storage " + relativeStorage + " with path " + path + " failed: "
+            + e.getMessage());
       }
-
-      return null;
     } else if (relativeStorage instanceof IFile) {
       IFile file = ((IFile) relativeStorage).getParent().getFile(new Path(path));
 
@@ -516,13 +515,17 @@ public class SourceMapManager {
             && uri.getHost() != null) {
           return new URLStorage(uri.toURL());
         }
-
-        return null;
       } catch (URISyntaxException e) {
-        throw new RuntimeException(e);
+        SDBGDebugCorePlugin.logError(e);
+        trace("Resolving storage " + relativeStorage + " with path " + path + " failed: "
+            + e.getMessage());
       } catch (MalformedURLException e) {
-        throw new RuntimeException(e);
+        SDBGDebugCorePlugin.logError(e);
+        trace("Resolving storage " + relativeStorage + " with path " + path + " failed: "
+            + e.getMessage());
       }
     }
+
+    return null;
   }
 }

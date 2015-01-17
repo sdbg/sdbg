@@ -184,7 +184,8 @@ class VariableCollector {
             variables.add(variable);
           }
         } else {
-          // Static fields are now shown using the object inspector (Inspect Type...).
+// TODO: Uncomment pars of this code, as it hides the __proto__ property (#102)        	
+            // Static fields are now shown using the object inspector (Inspect Type...).
 //          if (parentVariable != null && collectStatics) {
 //            if (WebkitPropertyDescriptor.STATIC_FIELDS.equals(descriptor.getName())) {
 //              gettingStaticFields = collectStaticFields(descriptor.getValue(), latch);

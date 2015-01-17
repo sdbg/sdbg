@@ -13,17 +13,22 @@
  */
 package com.github.sdbg.debug.ui.internal;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.ui.internal.objectinspector.InspectorActionFilter;
 import com.github.sdbg.debug.ui.internal.presentation.SDBGElementAdapterFactory;
+import com.github.sdbg.debug.ui.internal.util.PreferencesAdapter;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.eclipse.ui.texteditor.ChainedPreferenceStore;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -35,23 +40,12 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
 
   private static Map<ImageDescriptor, Image> imageCache = new HashMap<ImageDescriptor, Image>();
 
-  public static Image getImage(ImageDescriptor imageDescriptor) {
-    Image image = imageCache.get(imageDescriptor);
-
-    if (image == null) {
-      image = imageDescriptor.createImage();
-
-      imageCache.put(imageDescriptor, image);
-    }
-
-    return image;
-  }
-
-  public static ImageDescriptor getImageDescriptor(String path) {
-    return imageDescriptorFromPlugin(PLUGIN_ID, "icons/" + path);
-  }
-
   private Map<String, Image> imageMap;
+
+  /**
+   * The combined preference store.
+   */
+  private IPreferenceStore combinedPreferenceStore;
 
   /**
    * The shared instance
@@ -67,6 +61,18 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
     return plugin;
   }
 
+  public static Image getImage(ImageDescriptor imageDescriptor) {
+    Image image = imageCache.get(imageDescriptor);
+
+    if (image == null) {
+      image = imageDescriptor.createImage();
+
+      imageCache.put(imageDescriptor, image);
+    }
+
+    return image;
+  }
+
   /**
    * Get a image from this plugin's icons directory.
    * 
@@ -75,6 +81,10 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
    */
   public static Image getImage(String imagePath) {
     return getDefault().getPluginImage(imagePath);
+  }
+
+  public static ImageDescriptor getImageDescriptor(String path) {
+    return imageDescriptorFromPlugin(PLUGIN_ID, "icons/" + path);
   }
 
   /**
@@ -94,6 +104,23 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
   public static void logError(Throwable e) {
     getDefault().getLog().log(
         new Status(IStatus.ERROR, SDBGDebugUIPlugin.PLUGIN_ID, e.toString(), e));
+  }
+
+  /**
+   * Returns a combined preference store, this store is read-only.
+   * 
+   * @return the combined preference store
+   */
+  @SuppressWarnings("deprecation")
+  public IPreferenceStore getCombinedPreferenceStore() {
+    if (combinedPreferenceStore == null) {
+      IPreferenceStore generalTextStore = EditorsUI.getPreferenceStore();
+      combinedPreferenceStore = new ChainedPreferenceStore(new IPreferenceStore[] {
+          getPreferenceStore(),
+          new PreferencesAdapter(SDBGDebugCorePlugin.getPlugin().getPluginPreferences()),
+          generalTextStore});
+    }
+    return combinedPreferenceStore;
   }
 
   /**
@@ -151,5 +178,4 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
 
     return imageMap.get(imagePath);
   }
-
 }

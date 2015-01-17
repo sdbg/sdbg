@@ -14,6 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.expr;
 
+import com.github.sdbg.debug.core.model.IExpressionEvaluator;
 import com.github.sdbg.utilities.AdapterUtilities;
 
 import org.eclipse.debug.core.model.IDebugElement;

@@ -497,8 +497,11 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
       thisObject = webkitFrame.getThisObject();
     }
 
+    WebkitRemoteObject globalsObject = null;
     for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (!scope.isGlobalLike() && !scope.isInstance()) {
+      if (scope.isGlobalLike()) {
+        globalsObject = scope.getObject();
+      } else if (!scope.isInstance()) {
         remoteObjects.add(scope.getObject());
       }
     }
@@ -508,6 +511,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
         thisObject,
         remoteObjects,
         null,
+        globalsObject,
         exception);
   }
 

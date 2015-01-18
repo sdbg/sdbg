@@ -68,8 +68,8 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public void computeDetail(final IValueCallback callback) {
     // If the value is a primitive type, just return the display string.
-    if (value.isPrimitive() || (variable != null && variable.isLibraryObject())
-        || !SDBGDebugCorePlugin.getPlugin().getInvokeToString()) {
+    if (value.isPrimitive() || variable != null && variable.isLibraryObject() || variable != null
+        && variable.isGlobalsObject() || !SDBGDebugCorePlugin.getPlugin().getInvokeToString()) {
       callback.detailComputed(getDisplayString());
 
       return;
@@ -179,7 +179,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
    */
   @Override
   public String getDisplayString() {
-    if (variable != null && variable.isLibraryObject()) {
+    if (variable != null && (variable.isLibraryObject() || variable.isGlobalsObject())) {
       return "";
     }
 
@@ -244,7 +244,15 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
 
   @Override
   public String getReferenceTypeName() {
-    return value.getClassName();
+    if (value.getClassName() != null) {
+      return value.getClassName();
+    } else if (value.getType() != null) {
+      return value.getType();
+    } else {
+      // Do not return null or else LazyModelPResentation.getText(Object) throws a NPE
+      // (seems like a bug in Eclipse though)
+      return "";
+    }
   }
 
   @Override
@@ -281,6 +289,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public boolean isAllocated() throws DebugException {
     return true;
+  }
+
+  @Override
+  public boolean isFunction() {
+    return value.isFunction();
   }
 
   @Override

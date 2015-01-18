@@ -24,8 +24,12 @@ public interface ISDBGVariable extends IVariable {
   //&&&
   public String getDisplayName() throws DebugException;
 
+  public boolean isGlobalsObject();
+
+  // TODO: Get rid of this everywhere
   public boolean isLibraryObject();
 
+  // TODO: Get rid of this everywhere
   public boolean isLocal();
 
   public boolean isStatic();

@@ -30,7 +30,6 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
 
   public LogicalDebugVariable(String name, IValue value) {
     super(value.getDebugTarget());
-
     this.name = name;
     this.value = value;
   }
@@ -66,6 +65,11 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
   }
 
   @Override
+  public boolean isGlobalsObject() {
+    return false;
+  }
+
+  @Override
   public boolean isLibraryObject() {
     return false;
   }
@@ -92,12 +96,10 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
 
   @Override
   public void setValue(IValue value) throws DebugException {
-
   }
 
   @Override
   public void setValue(String expression) throws DebugException {
-
   }
 
   @Override
@@ -114,5 +116,4 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
   public boolean verifyValue(String expression) throws DebugException {
     return false;
   }
-
 }

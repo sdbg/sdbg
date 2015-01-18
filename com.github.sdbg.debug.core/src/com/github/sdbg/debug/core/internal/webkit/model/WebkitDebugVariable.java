@@ -36,6 +36,7 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   private boolean isLocal;
   private boolean isStatic;
   private boolean isLibraryObject;
+  private boolean isGlobalsObject;
 
   /**
    * Create a new Webkit Debug Variable
@@ -126,6 +127,11 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   }
 
   @Override
+  public boolean isGlobalsObject() {
+    return isGlobalsObject;
+  }
+
+  @Override
   public boolean isLibraryObject() {
     return isLibraryObject;
   }
@@ -201,6 +207,10 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   protected boolean isClassDescriptor() {
     return descriptor.isClassDescriptor();
+  }
+
+  protected void setIsGlobalsObject(boolean value) {
+    this.isGlobalsObject = value;
   }
 
   protected void setIsLibraryObject(boolean value) {

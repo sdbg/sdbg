@@ -42,8 +42,14 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
   public int getListLength();
 
   /**
+   * @return whether this value represents a function
+   */
+  public boolean isFunction();
+
+  /**
    * @return whether this value represents a list
    */
+  // TODO: Get rid of this or rename it to array
   public boolean isListValue();
 
   /**
@@ -60,5 +66,4 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
    * Clears out any cached information about this value's fields.
    */
   public void reset();
-
 }

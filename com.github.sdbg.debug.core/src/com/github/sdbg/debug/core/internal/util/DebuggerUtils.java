@@ -80,39 +80,7 @@ public class DebuggerUtils {
       return null;
     }
 
-    int atIndex = name.indexOf('@');
-
-    while (atIndex != -1) {
-      // check for _foo@76876.bar (or _Process@14117cc4._reportError@14117cc4)
-      int endIndex = name.indexOf('.', atIndex);
-
-      if (endIndex == -1) {
-        name = name.substring(0, atIndex);
-      } else {
-        name = name.substring(0, atIndex) + name.substring(endIndex);
-      }
-
-      atIndex = name.indexOf('@');
-    }
-
-    // Also remove the trailing '.' for default constructors.
-    if (name.endsWith(".")) {
-      name = name.substring(0, name.length() - 1);
-    }
-
-    // remove "set:" and "get:"
-    // Cat.get:color() ==> Cat.color()
-    if (name.indexOf(".set:") != -1) {
-      int index = name.indexOf(".set:");
-      name = name.substring(0, index + 1) + name.substring(index + 5);
-    }
-
-    if (name.indexOf(".get:") != -1) {
-      int index = name.indexOf(".get:");
-      name = name.substring(0, index + 1) + name.substring(index + 5);
-    }
-
-    return name;
+    return name.replaceAll("_[0-9]+_g\\$$", "");
   }
 
   public static boolean isInternalMethodName(String methodName) {

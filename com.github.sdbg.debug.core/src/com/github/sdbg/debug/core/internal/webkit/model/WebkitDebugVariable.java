@@ -35,8 +35,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   private boolean isSpecialObject;
   private boolean isLocal;
   private boolean isStatic;
-  private boolean isLibraryObject;
-  private boolean isGlobalsObject;
 
   /**
    * Create a new Webkit Debug Variable
@@ -83,6 +81,10 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
       return convertLibraryRefName(descriptor.getName());
     }
 
+    if (isScope()) {
+      return "(" + getName() + ")";
+    }
+
     // The names of private fields are mangled by the VM.
     // _foo@652376 ==> _foo
     return getName();
@@ -91,7 +93,11 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   @Override
   public String getName() throws DebugException {
     try {
-      return DebuggerUtils.demangleVmName(descriptor.getName());
+      if (isSpecialObject) {
+        return descriptor.getName();
+      } else {
+        return DebuggerUtils.demangleVariableName(descriptor.getName());
+      }
     } catch (Throwable t) {
       throw createDebugException(t);
     }
@@ -122,18 +128,12 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   @Override
   public boolean hasValueChanged() throws DebugException {
     // TODO(keertip): check to see if value has changed
-
     return false;
   }
 
   @Override
-  public boolean isGlobalsObject() {
-    return isGlobalsObject;
-  }
-
-  @Override
   public boolean isLibraryObject() {
-    return isLibraryObject;
+    return false;
   }
 
   public boolean isListValue() {
@@ -155,6 +155,11 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     } catch (DebugException e) {
       return false;
     }
+  }
+
+  @Override
+  public boolean isScope() {
+    return isSpecialObject && !isThisObject();
   }
 
   @Override
@@ -207,14 +212,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   protected boolean isClassDescriptor() {
     return descriptor.isClassDescriptor();
-  }
-
-  protected void setIsGlobalsObject(boolean value) {
-    this.isGlobalsObject = value;
-  }
-
-  protected void setIsLibraryObject(boolean value) {
-    this.isLibraryObject = value;
   }
 
   protected void setIsLocal(boolean value) {

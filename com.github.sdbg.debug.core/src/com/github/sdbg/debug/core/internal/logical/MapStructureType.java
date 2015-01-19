@@ -16,6 +16,8 @@ package com.github.sdbg.debug.core.internal.logical;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.model.ISDBGValue;
+import com.github.sdbg.debug.core.util.LogicalDebugValue;
+import com.github.sdbg.debug.core.util.LogicalDebugVariable;
 import com.github.sdbg.utilities.StringUtilities;
 
 import java.util.ArrayList;

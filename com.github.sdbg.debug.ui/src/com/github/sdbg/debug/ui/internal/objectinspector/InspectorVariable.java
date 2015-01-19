@@ -74,17 +74,17 @@ public class InspectorVariable extends DebugElement implements ISDBGVariable, IV
   }
 
   @Override
-  public boolean isGlobalsObject() {
-    return false;
-  }
-
-  @Override
   public boolean isLibraryObject() {
     return false;
   }
 
   @Override
   public boolean isLocal() {
+    return false;
+  }
+
+  @Override
+  public boolean isScope() {
     return false;
   }
 

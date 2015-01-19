@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.github.sdbg.debug.core.internal.logical;
+package com.github.sdbg.debug.core.util;
 
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
@@ -24,7 +24,7 @@ import org.eclipse.debug.core.model.IValue;
  * A logical debug variable - used to display implementation formats in more user friendly
  * structures.
  */
-class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
+public class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
   private final String name;
   private final IValue value;
 
@@ -65,17 +65,17 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
   }
 
   @Override
-  public boolean isGlobalsObject() {
-    return false;
-  }
-
-  @Override
   public boolean isLibraryObject() {
     return false;
   }
 
   @Override
   public boolean isLocal() {
+    return false;
+  }
+
+  @Override
+  public boolean isScope() {
     return false;
   }
 

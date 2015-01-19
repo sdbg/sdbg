@@ -68,8 +68,8 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public void computeDetail(final IValueCallback callback) {
     // If the value is a primitive type, just return the display string.
-    if (value.isPrimitive() || variable != null && variable.isLibraryObject() || variable != null
-        && variable.isGlobalsObject() || !SDBGDebugCorePlugin.getPlugin().getInvokeToString()) {
+    if (value.isPrimitive() || variable != null && variable.isScope()
+        || !SDBGDebugCorePlugin.getPlugin().getInvokeToString()) {
       callback.detailComputed(getDisplayString());
 
       return;
@@ -179,7 +179,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
    */
   @Override
   public String getDisplayString() {
-    if (variable != null && (variable.isLibraryObject() || variable.isGlobalsObject())) {
+    if (variable != null && (variable.isLibraryObject() || variable.isScope())) {
       return "";
     }
 
@@ -199,11 +199,12 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       if (value.getClassName() != null) {
         return value.getClassName() + "[" + getListLength() + "]";
       } else {
-        return "List[" + getListLength() + "]";
+        return "array[" + getListLength() + "]";
       }
     }
 
-    return value.getDescription();
+    // &&& return value.getDescription();
+    return getReferenceTypeName();
   }
 
   @Override
@@ -245,7 +246,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public String getReferenceTypeName() {
     if (value.getClassName() != null) {
-      return value.getClassName();
+      return DebuggerUtils.demangleClassName(value.getClassName());
     } else if (value.getType() != null) {
       return value.getType();
     } else {
@@ -298,7 +299,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
 
   @Override
   public boolean isListValue() {
-    return false;
+    return value.isList();
   }
 
   @Override

@@ -96,6 +96,7 @@
          delegateClass="com.github.sdbg.debug.core.internal.expr.WatchExpressionDelegate"/>
    </extension>
 
+<!--
    <extension point="org.eclipse.debug.core.logicalStructureTypes">
       <logicalStructureType
          id="com.github.sdbg.debug.core.logical.mapStructureType"
@@ -104,6 +105,8 @@
          modelIdentifier="com.github.sdbg.debug.core">
       </logicalStructureType>
    </extension>
+-->   
+   
    <extension
          point="com.github.sdbg.debug.core.domResourceTracker">
       <tracker

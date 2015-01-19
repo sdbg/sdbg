@@ -15,6 +15,7 @@ package com.github.sdbg.debug.ui.internal.actions;
 
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
+import org.eclipse.debug.core.DebugException;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.Viewer;
@@ -45,7 +46,11 @@ public class GlobalVariablesFilterAction extends ViewFilterAction {
   public boolean select(Viewer viewer, Object parentElement, Object element) {
     if (!getValue() && element instanceof ISDBGVariable) {
       ISDBGVariable variable = (ISDBGVariable) element;
-      return !variable.isGlobalsObject();
+      try {
+        return !variable.isScope() || !"global".equals(variable.getName());
+      } catch (DebugException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     return true;

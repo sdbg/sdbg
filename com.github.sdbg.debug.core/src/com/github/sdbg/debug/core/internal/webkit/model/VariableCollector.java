@@ -19,6 +19,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScope;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,10 +61,13 @@ class VariableCollector {
               @Override
               public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
                 try {
-                  collector.collectFields(result, !obj.isList(), variable.isGlobalsObject());
+                  collector.collectFields(
+                      result,
+                      !obj.isList(),
+                      variable.isScope() && "global".equals(variable.getName()),
+                      variable.isScope() && "local".equals(variable.getName()));
                 } catch (Throwable t) {
                   SDBGDebugCorePlugin.logError(t);
-
                   collector.worked();
                 }
               }
@@ -79,49 +83,48 @@ class VariableCollector {
   }
 
   public static VariableCollector createCollector(WebkitDebugTarget target,
-      WebkitRemoteObject thisObject, List<WebkitRemoteObject> remoteObjects,
-      WebkitRemoteObject libraryObject, WebkitRemoteObject globalsObject,
-      WebkitRemoteObject exception) {
-    final VariableCollector collector = new VariableCollector(target, remoteObjects.size());
-
-    if (exception != null) {
-      collector.createExceptionVariable(exception);
-    }
-
-//    if (libraryObject != null) {
-//      collector.createLibraryVariable(libraryObject);
-//    }
-
-    if (globalsObject != null) {
-      collector.createGlobalsVariable(globalsObject);
-    }
+      WebkitRemoteObject thisObject, WebkitRemoteObject exception, boolean flattenLocalScope,
+      WebkitScope... scopes) {
+    final VariableCollector collector = new VariableCollector(target, flattenLocalScope ? 1 : 0);
 
     if (thisObject != null) {
       collector.createThisVariable(thisObject);
     }
 
-    for (final WebkitRemoteObject obj : remoteObjects) {
-      try {
-        target.getConnection().getRuntime().getProperties(
-            obj,
-            true,
-            false,
-            new WebkitCallback<WebkitPropertyDescriptor[]>() {
-              @Override
-              public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
-                try {
-                  collector.collectFields(result, false, false);
-                } catch (Throwable t) {
-                  SDBGDebugCorePlugin.logError(t);
+    if (exception != null) {
+      collector.createExceptionVariable(exception);
+    }
 
-                  collector.worked();
-                }
-              }
-            });
-      } catch (Throwable e) {
-        SDBGDebugCorePlugin.logError(e);
+    if (flattenLocalScope) {
+      for (WebkitScope scope : scopes) {
+        if (scope.isLocal()) {
+          try {
+            target.getConnection().getRuntime().getProperties(
+                scope.getObject(),
+                true,
+                false,
+                new WebkitCallback<WebkitPropertyDescriptor[]>() {
+                  @Override
+                  public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
+                    try {
+                      collector.collectFields(result, true, false, true);
+                    } catch (Throwable t) {
+                      SDBGDebugCorePlugin.logError(t);
+                      collector.worked();
+                    }
+                  }
+                });
+          } catch (Throwable e) {
+            SDBGDebugCorePlugin.logError(e);
+            collector.worked();
+          }
+        }
+      }
+    }
 
-        collector.worked();
+    for (WebkitScope scope : scopes) {
+      if (!flattenLocalScope || !scope.isLocal()) {
+        collector.createScopeVariable(scope.getObject(), scope.getType());
       }
     }
 
@@ -165,7 +168,7 @@ class VariableCollector {
   }
 
   private void collectFields(WebkitResult<WebkitPropertyDescriptor[]> results, boolean shouldSort,
-      boolean isStatic) {
+      boolean isStatic, boolean isLocal) {
     if (!results.isError()) {
       WebkitPropertyDescriptor[] properties = results.getResult();
 
@@ -185,6 +188,7 @@ class VariableCollector {
             }
 
             variable.setIsStatic(isStatic);
+            variable.setIsLocal(isLocal);
             variables.add(variable);
           }
         }
@@ -254,11 +258,11 @@ class VariableCollector {
 //    variables.add(variable);
 //  }
 
-  private void createGlobalsVariable(WebkitRemoteObject globalsObject) {
+  private void createScopeVariable(WebkitRemoteObject object, String name) {
     WebkitDebugVariable variable = new WebkitDebugVariable(
         target,
-        WebkitPropertyDescriptor.createObjectDescriptor(globalsObject, "(globals)"));
-    variable.setIsGlobalsObject(true);
+        WebkitPropertyDescriptor.createObjectDescriptor(object, name),
+        true);
     variables.add(variable);
   }
 

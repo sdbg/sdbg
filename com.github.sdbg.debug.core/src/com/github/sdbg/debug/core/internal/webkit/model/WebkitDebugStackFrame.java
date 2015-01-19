@@ -30,8 +30,6 @@ import com.github.sdbg.debug.core.model.ISDBGValue.IValueCallback;
 import com.github.sdbg.debug.core.model.IVariableResolver;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -489,30 +487,17 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   private void fillInWebkitVariables(WebkitRemoteObject exception) {
     isExceptionStackFrame = (exception != null);
 
-    List<WebkitRemoteObject> remoteObjects = new ArrayList<WebkitRemoteObject>();
-
     WebkitRemoteObject thisObject = null;
-
     if (!webkitFrame.isStaticMethod()) {
       thisObject = webkitFrame.getThisObject();
-    }
-
-    WebkitRemoteObject globalsObject = null;
-    for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (scope.isGlobalLike()) {
-        globalsObject = scope.getObject();
-      } else if (!scope.isInstance()) {
-        remoteObjects.add(scope.getObject());
-      }
     }
 
     variableCollector = VariableCollector.createCollector(
         getTarget(),
         thisObject,
-        remoteObjects,
-        null,
-        globalsObject,
-        exception);
+        exception,
+        true,
+        webkitFrame.getScopeChain());
   }
 
   private String getCallerName() {
@@ -524,7 +509,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     }
 
     if (name == null) {
-      name = DebuggerUtils.demangleVmName(webkitFrame.getFunctionName());
+      name = DebuggerUtils.demangleFunctionName(webkitFrame.getFunctionName());
     }
 
     return name;

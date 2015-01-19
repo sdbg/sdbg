@@ -90,6 +90,10 @@ public class WebkitScope {
     return "library".equals(type);
   }
 
+  public boolean isLocal() {
+    return "local".equals(type);
+  }
+
   @Override
   public String toString() {
     return "[" + type + "," + object + "]";

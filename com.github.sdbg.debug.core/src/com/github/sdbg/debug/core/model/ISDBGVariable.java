@@ -24,13 +24,13 @@ public interface ISDBGVariable extends IVariable {
   //&&&
   public String getDisplayName() throws DebugException;
 
-  public boolean isGlobalsObject();
-
   // TODO: Get rid of this everywhere
   public boolean isLibraryObject();
 
   // TODO: Get rid of this everywhere
   public boolean isLocal();
+
+  public boolean isScope();
 
   public boolean isStatic();
 
@@ -40,5 +40,4 @@ public interface ISDBGVariable extends IVariable {
    * @return whether this variable represents a thrown exception
    */
   public boolean isThrownException();
-
 }

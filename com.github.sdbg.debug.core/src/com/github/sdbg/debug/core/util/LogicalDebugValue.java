@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.github.sdbg.debug.core.internal.logical;
+package com.github.sdbg.debug.core.util;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.DebugElement;
@@ -22,7 +22,7 @@ import org.eclipse.debug.core.model.IVariable;
 /**
  * A logical debug value - used to display implementation formats in more user friendly structures.
  */
-class LogicalDebugValue extends DebugElement implements IValue {
+public class LogicalDebugValue extends DebugElement implements IValue {
   private final IValue proxyValue;
   private final IVariable[] variables;
 

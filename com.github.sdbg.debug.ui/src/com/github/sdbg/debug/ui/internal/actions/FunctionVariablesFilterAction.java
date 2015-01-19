@@ -20,20 +20,21 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.jface.viewers.Viewer;
 
 /**
- * Viewer filter action for <code>proto</code> variables
+ * Viewer filter action for function variables
  */
 public class FunctionVariablesFilterAction extends ViewFilterAction {
+  public FunctionVariablesFilterAction() {
+  }
+
   @Override
   public boolean select(Viewer viewer, Object parentElement, Object element) {
-    if (element instanceof ISDBGVariable) {
+    if (!getValue() && element instanceof ISDBGVariable) {
       ISDBGVariable variable = (ISDBGVariable) element;
 
       try {
         if (variable.getValue() instanceof ISDBGValue) {
           ISDBGValue value = (ISDBGValue) variable.getValue();
-          if (value.isFunction()) {
-            return getValue();
-          }
+          return !value.isFunction();
         }
       } catch (DebugException e) {
         throw new RuntimeException(e);
@@ -41,10 +42,5 @@ public class FunctionVariablesFilterAction extends ViewFilterAction {
     }
 
     return true;
-  }
-
-  @Override
-  protected String getPreferenceKey() {
-    return "show_function_variables"; // TODO: Un-hardcode
   }
 }

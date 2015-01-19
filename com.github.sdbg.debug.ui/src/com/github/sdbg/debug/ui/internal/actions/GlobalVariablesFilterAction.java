@@ -13,38 +13,41 @@
  */
 package com.github.sdbg.debug.ui.internal.actions;
 
-import com.github.sdbg.debug.core.model.ISDBGValue;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
-import org.eclipse.debug.core.DebugException;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.widgets.Event;
 
 /**
- * Viewer filter action for <code>proto</code> variables
+ * Viewer filter action for global variables
  */
 public class GlobalVariablesFilterAction extends ViewFilterAction {
-  @Override
-  public boolean select(Viewer viewer, Object parentElement, Object element) {
-    if (element instanceof ISDBGVariable) {
-      ISDBGVariable variable = (ISDBGVariable) element;
-
-      try {
-        if (variable.getValue() instanceof ISDBGValue) {
-          ISDBGValue value = (ISDBGValue) variable.getValue();
-          if (value.isFunction()) {
-            return getValue();
-          }
-        }
-      } catch (DebugException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    return true;
+  public GlobalVariablesFilterAction() {
   }
 
   @Override
-  protected String getPreferenceKey() {
-    return "show_function_variables"; // TODO: Un-hardcode
+  public void runWithEvent(IAction action, Event event) {
+    if (action.isChecked()) {
+      if (!MessageDialog.openConfirm(
+          view.getViewSite().getShell(),
+          "Warning",
+          "Vizualizing global variables can significantly slow down the debugger.\nWould you like to still shown them?")) {
+        return;
+      }
+    }
+
+    super.runWithEvent(action, event);
+  }
+
+  @Override
+  public boolean select(Viewer viewer, Object parentElement, Object element) {
+    if (!getValue() && element instanceof ISDBGVariable) {
+      ISDBGVariable variable = (ISDBGVariable) element;
+      return !variable.isGlobalsObject();
+    }
+
+    return true;
   }
 }

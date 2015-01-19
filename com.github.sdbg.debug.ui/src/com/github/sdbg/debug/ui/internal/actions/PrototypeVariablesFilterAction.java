@@ -19,27 +19,23 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.jface.viewers.Viewer;
 
 /**
- * Viewer filter action for <code>proto</code> variables
+ * Viewer filter action for __proto__ variables
  */
 public class PrototypeVariablesFilterAction extends ViewFilterAction {
+  public PrototypeVariablesFilterAction() {
+  }
+
   @Override
   public boolean select(Viewer viewer, Object parentElement, Object element) {
-    if (element instanceof ISDBGVariable) {
+    if (!getValue() && element instanceof ISDBGVariable) {
       ISDBGVariable variable = (ISDBGVariable) element;
       try {
-        if ("__proto__".equals(variable.getName())) {
-          return getValue();
-        }
+        return !"__proto__".equals(variable.getName());
       } catch (DebugException e) {
         throw new RuntimeException(e);
       }
     }
 
     return true;
-  }
-
-  @Override
-  protected String getPreferenceKey() {
-    return "show_global_variables"; // TODO: Un-hardcode
   }
 }

@@ -230,7 +230,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     try {
       latch.await(1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
-      return "Exception: " + exceptionValue.getDisplayString();
+      return "Exception: " + exceptionValue.getValueString();
     }
 
     return "Exception: " + result[0];

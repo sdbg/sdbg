@@ -22,13 +22,12 @@ import org.eclipse.debug.core.model.IVariable;
 /**
  * A logical debug value - used to display implementation formats in more user friendly structures.
  */
-public class LogicalDebugValue extends DebugElement implements IValue {
+public class DecoratingValue extends DebugElement implements IValue {
   private final IValue proxyValue;
   private final IVariable[] variables;
 
-  public LogicalDebugValue(IValue proxyValue, IVariable[] variables) {
+  public DecoratingValue(IValue proxyValue, IVariable[] variables) {
     super(proxyValue.getDebugTarget());
-
     this.proxyValue = proxyValue;
     this.variables = variables;
   }
@@ -50,7 +49,7 @@ public class LogicalDebugValue extends DebugElement implements IValue {
 
   @Override
   public IVariable[] getVariables() throws DebugException {
-    return variables;
+    return variables != null ? variables : proxyValue.getVariables();
   }
 
   @Override
@@ -62,5 +61,4 @@ public class LogicalDebugValue extends DebugElement implements IValue {
   public boolean isAllocated() throws DebugException {
     return proxyValue.isAllocated();
   }
-
 }

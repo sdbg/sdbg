@@ -203,28 +203,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     return null;
   }
 
-  public String getFormattedValueText(IValue value) throws DebugException {
-    String valueString = null;
-
-    if (value instanceof ISDBGValue) {
-      ISDBGValue sdbgValue = (ISDBGValue) value;
-
-      valueString = getValueText(sdbgValue);
-    } else if (value != null) {
-      valueString = value.getValueString();
-
-      if (valueString == null) {
-        valueString = "<unknown value>";
-      }
-    }
-
-    if (valueString == null) {
-      valueString = "<unknown value>";
-    }
-
-    return valueString;
-  }
-
   /**
    * This method allows us to customize images for Dart objects that are displayed in the debugger.
    */
@@ -272,7 +250,6 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
       }
     } catch (Throwable t) {
       SDBGDebugUIPlugin.logError(t);
-
       return null;
     }
   }
@@ -338,24 +315,40 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
   @Override
   public String getText(Object element) {
     if (element instanceof IBreakpoint) {
-      IBreakpoint bp = (IBreakpoint) element;
-
-      return getBreakpointText(bp);
+      return getBreakpointText((IBreakpoint) element);
+    } else if (element instanceof IVariable) {
+      return getVariableText((IVariable) element);
+    } else if (element instanceof IValue) {
+      return getValueText((IValue) element);
     }
 
     return null;
   }
 
+  public String getVariableName(IVariable var) {
+    try {
+      if (var instanceof ISDBGVariable) {
+        ISDBGVariable svar = (ISDBGVariable) var;
+
+        // TODO XXX FIXME
+        /*if (svar.isListMember()) {
+          return "[" + svar.getName() + "]";
+        } else*/if (svar.isScope()) {
+          return "(" + svar.getName() + ")";
+        }
+      }
+
+      return var.getName();
+    } catch (DebugException e) {
+      return null;
+    }
+  }
+
   public String getVariableText(IVariable var) {
     try {
-      StringBuffer buff = new StringBuffer();
+      StringBuilder buff = new StringBuilder(getVariableName(var));
 
-      buff.append(var.getName());
-
-      IValue value = var.getValue();
-
-      String valueString = getFormattedValueText(value);
-
+      String valueString = getValueText(var.getValue());
       if (valueString.length() != 0) {
         buff.append(" = ");
         buff.append(valueString);
@@ -458,7 +451,32 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
       return valueString[0];
     } else {
-      return value.getDisplayString();
+      return value.getValueString();
+    }
+  }
+
+  protected String getValueText(IValue value) {
+    try {
+      String valueString = null;
+
+      if (value instanceof ISDBGValue) {
+        ISDBGValue sdbgValue = (ISDBGValue) value;
+        valueString = getValueText(sdbgValue);
+      } else if (value != null) {
+        valueString = value.getValueString();
+
+        if (valueString == null) {
+          valueString = "<unknown value>";
+        }
+      }
+
+      if (valueString == null) {
+        valueString = "<unknown value>";
+      }
+
+      return valueString;
+    } catch (DebugException e) {
+      return null;
     }
   }
 

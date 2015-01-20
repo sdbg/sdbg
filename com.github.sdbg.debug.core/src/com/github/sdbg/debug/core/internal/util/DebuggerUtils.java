@@ -19,7 +19,7 @@ package com.github.sdbg.debug.core.internal.util;
  */
 public class DebuggerUtils {
   public static String demangleClassName(String name) {
-    return demangle(name);
+    return name; // Note: now done with Logical Structure Types demangle(name);
   }
 
   public static String demangleFunctionName(String name) {
@@ -27,7 +27,7 @@ public class DebuggerUtils {
   }
 
   public static String demangleVariableName(String name) {
-    return demangle(name);
+    return name; // Note: now done with Logical Structure Types demangle(name);
   }
 
   /**
@@ -66,8 +66,7 @@ public class DebuggerUtils {
     if (name == null) {
       return null;
     } else {
-      // TODO XXX FIXME: GWT SuperDevMode-specific
-      return name.replaceAll("_[0-9]+_g\\$$", "");
+      return name.replaceAll("_[0-9]+_g\\$$", ""); // TODO XXX FIXME: GWT SuperDevMode-specific
     }
   }
 

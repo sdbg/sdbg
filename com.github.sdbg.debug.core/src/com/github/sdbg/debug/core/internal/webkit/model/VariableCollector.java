@@ -64,8 +64,8 @@ class VariableCollector {
                   collector.collectFields(
                       result,
                       !obj.isList(),
-                      variable.isScope() && "global".equals(variable.getName()),
-                      variable.isScope() && "local".equals(variable.getName()));
+                      variable != null && variable.isScope() && "global".equals(variable.getName()),
+                      variable != null && variable.isScope() && "local".equals(variable.getName()));
                 } catch (Throwable t) {
                   SDBGDebugCorePlugin.logError(t);
                   collector.worked();

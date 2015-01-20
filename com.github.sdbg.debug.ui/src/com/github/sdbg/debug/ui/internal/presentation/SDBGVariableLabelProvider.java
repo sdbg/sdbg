@@ -19,99 +19,24 @@ import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.internal.ui.model.elements.VariableLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.jface.viewers.TreePath;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.RGB;
-
-import com.github.sdbg.debug.core.model.ISDBGValue;
-import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 /**
- * A rich label provider for debug variables and values.
+ * Necessary or else the variable appears with its raw name in the Variables view when it is set to
+ * show columns.
  */
 @SuppressWarnings("restriction")
 public class SDBGVariableLabelProvider extends VariableLabelProvider {
-  private final static boolean TWEAK_DARTIUM_MAP_KEY_NAMES = true;
-
-  @Override
-  protected FontData getFontData(TreePath elementPath, IPresentationContext presentationContext,
-      String columnId) throws CoreException {
-    FontData fontData = super.getFontData(elementPath, presentationContext, columnId);
-
-    // Show static variables in italics.
-    if (columnId != null && columnId.endsWith("_NAME")) {
-      if (elementPath.getLastSegment() instanceof ISDBGVariable && fontData != null) {
-        ISDBGVariable variable = (ISDBGVariable) elementPath.getLastSegment();
-
-        if (variable.isStatic()) {
-          fontData = new FontData(fontData.getName(), fontData.getHeight(), SWT.ITALIC);
-        }
-      }
-    }
-
-    return fontData;
-  }
-
-  @Override
-  protected RGB getForeground(TreePath elementPath, IPresentationContext presentationContext,
-      String columnId) throws CoreException {
-    RGB rgb = super.getForeground(elementPath, presentationContext, columnId);
-
-    // Dartium sends us map keys as if they were object properties - we tweak their display a bit.
-    if (TWEAK_DARTIUM_MAP_KEY_NAMES) {
-      if (columnId != null && columnId.endsWith("_NAME")) {
-        if (elementPath.getLastSegment() instanceof ISDBGVariable) {
-          ISDBGVariable variable = (ISDBGVariable) elementPath.getLastSegment();
-
-          if (variable.getName().startsWith(":")) {
-            rgb = new RGB(0x66, 0x66, 0x66);
-          }
-        }
-      }
-    }
-
-    return rgb;
-  }
+  private static SDBGDebugModelPresentation presentation = new SDBGDebugModelPresentation();
 
   @Override
   protected String getValueText(IVariable variable, IValue value, IPresentationContext context)
       throws CoreException {
-    if (value instanceof ISDBGValue) {
-      ISDBGValue dartiumValue = (ISDBGValue) value;
-
-      String str = dartiumValue.getDisplayString();
-
-      if (str == null) {
-        str = "";
-      }
-
-      if (str.length() > 0 && dartiumValue.getId() != null) {
-        str += " [id=" + dartiumValue.getId() + "]";
-      }
-
-      return str;
-    } else {
-      return super.getValueText(variable, value, context);
-    }
+    return escapeSpecialChars(value.getValueString());
   }
 
   @Override
   protected String getVariableName(IVariable variable, IPresentationContext context)
       throws CoreException {
-    if (variable instanceof ISDBGVariable) {
-      ISDBGVariable dartiumVariable = (ISDBGVariable) variable;
-
-      // Dartium sends us map keys as if they were object properties - we tweak their display a bit.
-      if (TWEAK_DARTIUM_MAP_KEY_NAMES) {
-        if (variable.getName().startsWith(":")) {
-          return "[" + dartiumVariable.getDisplayName().substring(1) + "]";
-        }
-      }
-
-      return dartiumVariable.getDisplayName();
-    } else {
-      return super.getVariableName(variable, context);
-    }
+    return presentation.getVariableName(variable);
   }
 }

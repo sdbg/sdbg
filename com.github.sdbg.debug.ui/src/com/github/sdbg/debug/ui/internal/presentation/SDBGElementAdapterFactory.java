@@ -14,6 +14,9 @@
 
 package com.github.sdbg.debug.ui.internal.presentation;
 
+import com.github.sdbg.debug.core.model.ISDBGThread;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,27 +24,18 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.debug.core.ILaunch;
-import org.eclipse.debug.internal.ui.model.elements.DebugElementLabelProvider;
 import org.eclipse.debug.internal.ui.model.elements.ViewerInputProvider;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementContentProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
 import org.eclipse.debug.ui.IDebugUIConstants;
 
-import com.github.sdbg.debug.core.model.ISDBGThread;
-import com.github.sdbg.debug.core.model.ISDBGVariable;
-
 /**
- * An adaptor factory to map from Dartium debug elements to presentation label providers.
- * 
- * @see SDBGVariableLabelProvider
+ * An adaptor factory to map from SDBG debug elements to presentation label providers.
  */
 @SuppressWarnings("restriction")
 public class SDBGElementAdapterFactory implements IAdapterFactory {
-
   static class DartThreadInputProvider extends ViewerInputProvider {
     @Override
     protected Object getViewerInput(Object source, IPresentationContext context,
@@ -61,72 +55,39 @@ public class SDBGElementAdapterFactory implements IAdapterFactory {
     }
   }
 
-  public static void init() {
-    IAdapterManager manager = Platform.getAdapterManager();
-
-    SDBGElementAdapterFactory factory = new SDBGElementAdapterFactory();
-
-    //&&&
-    manager.registerAdapters(factory, ISDBGVariable.class);
-    manager.registerAdapters(factory, ISDBGThread.class);
-
-//&&&    
-//    if (!DartCore.isPluginsBuild()) {
-//      manager.registerAdapters(factory, Launch.class);
-//    }
-  }
-
   private IAdapterFactory defaultAdapter = new org.eclipse.debug.internal.ui.views.launch.DebugElementAdapterFactory();
 
-  private SDBGVariableLabelProvider dartiumLabelProvider = new SDBGVariableLabelProvider();
+  private static IElementLabelProvider variableLabelProvider = new SDBGVariableLabelProvider();
+  private static IViewerInputProvider threadInputProvider = new DartThreadInputProvider(); // TODO: Remove
 
-  private static IElementContentProvider launchContentProvider = new SDBGLaunchContentProvider();
-  private static IElementLabelProvider launchLabelProvider = new SDBGLaunchElementLabelProvider();
+  public static void init() {
+    SDBGElementAdapterFactory factory = new SDBGElementAdapterFactory();
 
-  private static IElementLabelProvider threadLabelProvider = new DebugElementLabelProvider();
-  private static IViewerInputProvider threadInputProvider = new DartThreadInputProvider();
+    IAdapterManager manager = Platform.getAdapterManager();
+    manager.registerAdapters(factory, ISDBGVariable.class);
+    manager.registerAdapters(factory, ISDBGThread.class);
+  }
 
   public SDBGElementAdapterFactory() {
-
   }
 
   @SuppressWarnings("rawtypes")
   @Override
   public Object getAdapter(Object adaptableObject, Class adapterType) {
-    if (adapterType.equals(IElementContentProvider.class)) {
-      if (adaptableObject instanceof ILaunch) {
-        return launchContentProvider;
-      }
-
-      // If we don't return the default debug adapter we won't be able to expand any variables.
-      return defaultAdapter.getAdapter(adaptableObject, adapterType);
-    }
-
-    if (adaptableObject instanceof ISDBGVariable) {
-      if (adapterType == IElementLabelProvider.class) {
-        return dartiumLabelProvider;
-      }
-    }
-
     if (adapterType.equals(IElementLabelProvider.class)) {
-      if (adaptableObject instanceof ILaunch) {
-        return launchLabelProvider;
+      if (adaptableObject instanceof ISDBGVariable) {
+        return variableLabelProvider;
       }
     }
 
-    if (adaptableObject instanceof ISDBGThread) {
-      // IElementLabelProvider
-      if (adapterType.equals(IElementLabelProvider.class)) {
-        return threadLabelProvider;
-      }
-
-      // IViewerInputProvider
-      if (adapterType.equals(IViewerInputProvider.class)) {
+    if (adapterType.equals(IViewerInputProvider.class)) {
+      if (adaptableObject instanceof ISDBGThread) {
         return threadInputProvider;
       }
     }
 
-    return null;
+    // If we don't return the default debug adapter we won't be able to expand any variables.
+    return defaultAdapter.getAdapter(adaptableObject, adapterType);
   }
 
   @SuppressWarnings("rawtypes")
@@ -137,14 +98,6 @@ public class SDBGElementAdapterFactory implements IAdapterFactory {
     adapterClasses.add(IElementLabelProvider.class);
     adapterClasses.add(IViewerInputProvider.class);
 
-//&&&    
-//    // For the RCP, we override the content provider for ILaunches on order to shave
-//    // one level off the process/thread/stack-frame tree.
-//    if (!DartCore.isPluginsBuild()) {
-//      adapterClasses.add(IElementContentProvider.class);
-//    }
-
     return adapterClasses.toArray(new Class[adapterClasses.size()]);
   }
-
 }

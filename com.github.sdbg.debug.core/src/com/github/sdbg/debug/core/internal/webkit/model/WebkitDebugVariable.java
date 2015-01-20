@@ -17,9 +17,6 @@ import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
 
@@ -68,27 +65,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 //    return null;
 //  }
 //
-  /**
-   * @return a user-consumable string for the variable name
-   */
-  @Override
-  public String getDisplayName() throws DebugException {
-    if (isListMember()) {
-      return "[" + getName() + "]";
-    }
-
-    if (isLibraryRef()) {
-      return convertLibraryRefName(descriptor.getName());
-    }
-
-    if (isScope()) {
-      return "(" + getName() + ")";
-    }
-
-    // The names of private fields are mangled by the VM.
-    // _foo@652376 ==> _foo
-    return getName();
-  }
 
   @Override
   public String getName() throws DebugException {
@@ -105,6 +81,7 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   @Override
   public String getReferenceTypeName() throws DebugException {
+    // TODO: How come?
     try {
       return getValue().getReferenceTypeName();
     } catch (Throwable t) {
@@ -225,36 +202,12 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   protected void setParent(WebkitDebugVariable parent) {
     this.parent = parent;
   }
-
-  private String convertLibraryRefName(String name) {
-    if (name.startsWith("file:") && name.indexOf('/') != -1) {
-      return "file:" + name.substring(name.lastIndexOf('/') + 1);
-    }
-
-    if (name.startsWith("http:")) {
-      try {
-        URL url = new URL(name);
-        return url.getFile();
-      } catch (MalformedURLException e) {
-      }
-    }
-
-    return name;
-  }
-
-  private boolean isLibraryRef() {
-    if (descriptor.getValue() == null) {
-      return false;
-    }
-
-    return descriptor.getValue().isLibraryRef();
-  }
-
-  private boolean isListMember() {
-    if (parent != null && parent.isListValue()) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+//
+//  private boolean isListMember() { // TODO XXX FIXME: How...
+//    if (parent != null && parent.isListValue()) {
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  }
 }

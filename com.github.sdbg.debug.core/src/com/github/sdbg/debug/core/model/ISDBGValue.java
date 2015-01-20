@@ -28,9 +28,6 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
   //&&&
   public void computeDetail(final IValueCallback callback);
 
-  //&&&
-  public String getDisplayString();
-
   /**
    * @return a user-presentable id for this value
    */
@@ -61,6 +58,8 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
    * @return whether this value represents a primitive type
    */
   public boolean isPrimitive();
+
+  public boolean isScope();
 
   /**
    * Clears out any cached information about this value's fields.

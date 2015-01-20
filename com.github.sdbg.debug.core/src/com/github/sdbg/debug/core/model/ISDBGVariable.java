@@ -14,20 +14,15 @@
 
 package com.github.sdbg.debug.core.model;
 
-import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
 
 /**
  * A sub-class of IVariable that adds additional meta-information about the variable.
  */
 public interface ISDBGVariable extends IVariable {
-  //&&&
-  public String getDisplayName() throws DebugException;
-
   // TODO: Get rid of this everywhere
   public boolean isLibraryObject();
 
-  // TODO: Get rid of this everywhere
   public boolean isLocal();
 
   public boolean isScope();

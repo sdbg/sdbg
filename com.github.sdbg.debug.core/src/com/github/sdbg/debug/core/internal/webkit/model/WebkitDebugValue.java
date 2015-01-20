@@ -173,40 +173,6 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     return null;
   }
 
-  /**
-   * @return a user-consumable string for the value object
-   * @throws DebugException
-   */
-  @Override
-  public String getDisplayString() {
-    if (variable != null && (variable.isLibraryObject() || variable.isScope())) {
-      return "";
-    }
-
-    if (value.isNull()) {
-      return "null";
-    }
-
-    if (value.isString()) {
-      return DebuggerUtils.printString(value.getValue());
-    }
-
-    if (isPrimitive()) {
-      return value.getValue();
-    }
-
-    if (isListValue()) {
-      if (value.getClassName() != null) {
-        return value.getClassName() + "[" + getListLength() + "]";
-      } else {
-        return "array[" + getListLength() + "]";
-      }
-    }
-
-    // &&& return value.getDescription();
-    return getReferenceTypeName();
-  }
-
   @Override
   public String getId() {
     if (value == null || value.isNull()) {
@@ -259,7 +225,12 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public String getValueString() throws DebugException {
     try {
-      return getDisplayString();
+      String str = getDisplayString();
+      if (str.length() > 0 && getId() != null) {
+        str += " [id=" + getId() + "]";
+      }
+
+      return str;
     } catch (Throwable t) {
       throw createDebugException(t);
     }
@@ -310,6 +281,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public boolean isPrimitive() {
     return value.isPrimitive();
+  }
+
+  @Override
+  public boolean isScope() {
+    return variable != null && variable.isScope();
   }
 
   @Override
@@ -366,6 +342,39 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     }
   }
 
+  /**
+   * @return a user-consumable string for the value object
+   * @throws DebugException
+   */
+  private String getDisplayString() {
+    if (variable != null && (variable.isLibraryObject() || variable.isScope())) {
+      return "";
+    }
+
+    if (value.isNull()) {
+      return "null";
+    }
+
+    if (value.isString()) {
+      return DebuggerUtils.printString(value.getValue());
+    }
+
+    if (isPrimitive()) {
+      return value.getValue();
+    }
+
+    if (isListValue()) {
+      if (value.getClassName() != null) {
+        return value.getClassName() + "[" + getListLength() + "]";
+      } else {
+        return "array[" + getListLength() + "]";
+      }
+    }
+
+    // &&& return value.getDescription();
+    return getReferenceTypeName();
+  }
+
   private String parseObjectId(String objectId) {
     if (objectId == null) {
       return null;
@@ -378,5 +387,4 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       return null;
     }
   }
-
 }

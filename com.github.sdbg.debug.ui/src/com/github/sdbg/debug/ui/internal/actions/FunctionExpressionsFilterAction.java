@@ -13,37 +13,22 @@
  */
 package com.github.sdbg.debug.ui.internal.actions;
 
-import com.github.sdbg.debug.core.model.ISDBGValue;
-
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.model.IValue;
-import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.jface.viewers.Viewer;
 
 /**
  * Viewer filter action for function variables
  */
-public class FunctionVariablesFilterAction extends ViewFilterAction {
-  public FunctionVariablesFilterAction() {
+public class FunctionExpressionsFilterAction extends FunctionVariablesFilterAction {
+  public FunctionExpressionsFilterAction() {
   }
 
   @Override
   public boolean select(Viewer viewer, Object parentElement, Object element) {
-    try {
-      return select(element instanceof IVariable ? ((IVariable) element).getValue() : null);
-    } catch (DebugException e) {
-      throw new RuntimeException(e);
+    if (element instanceof IExpression) {
+      return select(((IExpression) element).getValue());
+    } else {
+      return super.select(viewer, parentElement, element);
     }
-  }
-
-  protected boolean select(IValue value) {
-    if (!getValue()) {
-      if (value instanceof ISDBGValue) {
-        ISDBGValue sval = (ISDBGValue) value;
-        return !sval.isFunction();
-      }
-    }
-
-    return true;
   }
 }

@@ -365,6 +365,10 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       return value.getValue();
     }
 
+    if (isFunction()) {
+      return "Function";
+    }
+
     if (isListValue()) {
       if (value.getClassName() != null) {
         return value.getClassName() + "[" + getListLength() + "]";

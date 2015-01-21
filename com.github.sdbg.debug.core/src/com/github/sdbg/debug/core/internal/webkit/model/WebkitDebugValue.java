@@ -226,9 +226,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   public String getValueString() throws DebugException {
     try {
       String str = getDisplayString();
-      if (str.length() > 0 && getId() != null) {
-        str += " [id=" + getId() + "]";
-      }
+
+// Not so useful as these IDs are not really surviving to the next breakpoint      
+//      if (str.length() > 0 && getId() != null) {
+//        str += " [id=" + getId() + "]";
+//      }
 
       return str;
     } catch (Throwable t) {

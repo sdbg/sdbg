@@ -32,10 +32,10 @@ import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 
 /**
- * This ILogicalStructureTypeDelegate handles displaying of GWT SDM types. 
- * Additionally, it also handles all variables in the local scope (local function variables).
- * TODO: In future, implement logical structures for maps and collections as in @skybrian's superdebug GWT module
- * (see issue #6)
+ * This ILogicalStructureTypeDelegate handles displaying of GWT SDM types. Additionally, it also
+ * handles all variables in the local scope (local function variables). TODO: In future, implement
+ * logical structures for maps and collections as in @skybrian's superdebug GWT module (see issue
+ * #6)
  */
 public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     ILogicalStructureTypeDelegate2, ISDBGLogicalStructureTypeExtensions {
@@ -60,7 +60,7 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     @Override
     public String getValueString() throws DebugException {
       if (javaObject) {
-        return getReferenceTypeName() + (getId() != null ? " [???id=" + getId() + "]" : "");
+        return getReferenceTypeName(); // Not so useful as these IDs are not really surviving to the next breakpoint:  + (getId() != null ? " [id=" + getId() + "]" : "");
       } else {
         return super.getValueString();
       }
@@ -69,8 +69,6 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
 
   private class GWTSDMVariable extends DecoratingSDBGVariable {
     private String newName;
-
-    private IValue decoratedValue;
 
     public GWTSDMVariable(String newName, ISDBGVariable proxyVariable) {
       super(proxyVariable);
@@ -90,20 +88,6 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
       } else {
         return rawReferenceTypeName;
       }
-    }
-
-    @Override
-    public IValue getValue() throws DebugException {
-      if (decoratedValue == null) {
-        IValue rawValue = super.getValue();
-//        if (providesLogicalStructure(rawValue)) {
-//          decoratedValue = getLogicalStructure(rawValue);
-//        } else {
-        decoratedValue = rawValue;
-//        }
-      }
-
-      return decoratedValue;
     }
   }
 
@@ -162,8 +146,9 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
   public boolean isValueStringComputedByLogicalStructure(IValue value) throws DebugException {
     if (value instanceof ISDBGValue && !(value instanceof GWTSDMValue)) {
       ISDBGValue sval = (ISDBGValue) value;
-      return isJavaObject(sval);
+      return !sval.isScope() && isJavaObject(sval);
     }
+
     return false;
   }
 

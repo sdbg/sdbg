@@ -1020,6 +1020,34 @@
                tooltip="Shows the global objects">
          </action>
       </viewContribution>
+      <viewContribution
+            id="expressionViewActions"
+            targetID="org.eclipse.debug.ui.ExpressionView">
+         <menu
+               id="com.github.sdbg.debug.ui.internal.expressionview.menu"
+               label="SDBG">
+            <groupMarker name="sdbg"/>
+         </menu>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.FunctionExpressionsFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.FunctionExpressionsFilterAction"
+               icon="icons/obj16/function_obj.gif"
+               label="Show Function Variables"
+               menubarPath="com.github.sdbg.debug.ui.internal.expressionview.menu/sdbg"
+               style="toggle"
+               state="true"
+               tooltip="Shows function variables">
+         </action>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.PrototypeVariablesFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.PrototypeExpressionsFilterAction"
+               label="Show Prototype Variables"
+               menubarPath="com.github.sdbg.debug.ui.internal.expressionview.menu/sdbg"
+               style="toggle"
+               state="true"
+               tooltip="Shows the hidden __proto__ variables">
+         </action>
+      </viewContribution>
    </extension>
    <extension
          point="com.github.sdbg.debug.core.uiBrowserTabChooser">

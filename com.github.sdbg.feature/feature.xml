@@ -2,7 +2,7 @@
 <feature
       id="com.github.sdbg.feature"
       label="%featureName"
-      version="1.0.2.qualifier"
+      version="1.0.3.qualifier"
       provider-name="%providerName"
       plugin="com.github.sdbg.debug.ui">
 
@@ -22,17 +22,17 @@
          id="com.github.sdbg.debug.core"
          download-size="0"
          install-size="0"
-         version="1.0.2.qualifier"/>
+         version="1.0.3.qualifier"/>
 
    <plugin
          id="com.github.sdbg.debug.ui"
          download-size="0"
          install-size="0"
-         version="1.0.2.qualifier"/>
+         version="1.0.3.qualifier"/>
 
    <plugin
          id="com.github.sdbg.integration.jdt"
          download-size="0"
          install-size="0"
-         version="1.0.2.qualifier"/>
+         version="1.0.3.qualifier"/>
 </feature>

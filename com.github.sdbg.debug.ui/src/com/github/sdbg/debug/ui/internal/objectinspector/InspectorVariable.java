@@ -40,11 +40,6 @@ public class InspectorVariable extends DebugElement implements ISDBGVariable, IV
   }
 
   @Override
-  public String getDisplayName() throws DebugException {
-    return getName();
-  }
-
-  @Override
   public String getModelIdentifier() {
     return value.getModelIdentifier();
   }
@@ -80,6 +75,11 @@ public class InspectorVariable extends DebugElement implements ISDBGVariable, IV
 
   @Override
   public boolean isLocal() {
+    return false;
+  }
+
+  @Override
+  public boolean isScope() {
     return false;
   }
 

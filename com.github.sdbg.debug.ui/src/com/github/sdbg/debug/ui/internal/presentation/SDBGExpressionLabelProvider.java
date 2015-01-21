@@ -17,16 +17,16 @@ package com.github.sdbg.debug.ui.internal.presentation;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
-import org.eclipse.debug.internal.ui.model.elements.VariableLabelProvider;
+import org.eclipse.debug.internal.ui.model.elements.ExpressionLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.jface.viewers.TreePath;
 
 /**
- * Necessary or else the value type appears with its raw name in the Variables view when it is set
+ * Necessary or else the value type appears with its raw name in the Expressions view when it is set
  * to show columns.
  */
 @SuppressWarnings("restriction")
-public class SDBGVariableLabelProvider extends VariableLabelProvider {
+public class SDBGExpressionLabelProvider extends ExpressionLabelProvider {
   private static SDBGDebugModelPresentation PRESENTATION = new SDBGDebugModelPresentation();
 
   @Override
@@ -42,7 +42,7 @@ public class SDBGVariableLabelProvider extends VariableLabelProvider {
   @Override
   protected String getValueText(IVariable variable, IValue value, IPresentationContext context)
       throws CoreException {
-    // NOTE: Due to the loose coupling between ExpressionLabelProvider and ExpressionContentProvider, 
+    // NOTE: Due to the loose coupling between VariableLabelProvider and VariableContentProvider, 
     // the value passed here is the raw one - not the logical one - even when there is a Logical Structure Type in-place!
     //
     // To avoid displaying the un-encoded JavaScript type for java classes, we use the logical structure types' cache from the content providers

@@ -25,7 +25,7 @@
          name="GWT Super Development Mode Project Builder"
          point="org.eclipse.core.resources.builders">
       <builder hasNature="true">
-         <run class="com.github.sdbg.integration.jdt.gwt.GWTSDMBuilder"/>
+         <run class="com.github.sdbg.integration.jdt.gwt.build.GWTSDMBuilder"/>
       </builder>
    </extension>
    <extension
@@ -33,7 +33,7 @@
          name="GWT Super Development Mode Project Nature"
          point="org.eclipse.core.resources.natures">
       <runtime>
-         <run class="com.github.sdbg.integration.jdt.gwt.GWTSDMNature"/>
+         <run class="com.github.sdbg.integration.jdt.gwt.build.GWTSDMNature"/>
       </runtime>
       <builder id="com.github.sdbg.integration.jdt.gwtsdmbuilder"/>
    </extension>
@@ -45,7 +45,7 @@
       </category>
       <command
             name="Add/Remove GWT Super Development Mode Project Nature"
-            defaultHandler="com.github.sdbg.integration.jdt.gwt.GWTSDMNatureHandler"
+            defaultHandler="com.github.sdbg.integration.jdt.gwt.build.GWTSDMNatureHandler"
             categoryId="com.github.sdbg.integration.jdt.gwtsdmnature.category"
             id="com.github.sdbg.integration.jdt.addremovegwtsdmnature">
       </command>
@@ -114,14 +114,14 @@
    <extension
          point="com.github.sdbg.debug.core.domResourceTracker">
       <tracker
-            class="com.github.sdbg.integration.jdt.gwt.GWTSDMDOMResourceTracker">
+            class="com.github.sdbg.integration.jdt.gwt.build.GWTSDMDOMResourceTracker">
       </tracker>
    </extension>
    <extension
          point="org.eclipse.ui.propertyPages">
       <page
             adaptable="true"
-            class="com.github.sdbg.integration.jdt.gwt.ui.GWTSDMPropertyPage"
+            class="com.github.sdbg.integration.jdt.gwt.build.ui.GWTSDMPropertyPage"
             id="com.github.sdbg.integration.jdt.gwtsdmproperties"
             name="GWT SDM Compiler"
             objectClass="org.eclipse.core.resources.IProject"
@@ -132,5 +132,13 @@
             <instanceof value="org.eclipse.core.resources.IProject"/>
          </enabledWhen>-->
       </page>         
+   </extension>
+   <extension point="org.eclipse.debug.core.logicalStructureTypes">
+      <logicalStructureType
+         id="com.github.sdbg.integration.jdt.gwt.GWTSDMStructureType"
+         class="com.github.sdbg.integration.jdt.gwt.GWTSDMStructureType"
+         description="GWT SuperDevMode types"
+         modelIdentifier="com.github.sdbg.debug.core">
+      </logicalStructureType>
    </extension>
 </plugin>

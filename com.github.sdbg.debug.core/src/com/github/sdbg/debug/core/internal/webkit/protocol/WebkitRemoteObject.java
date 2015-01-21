@@ -79,23 +79,7 @@ public class WebkitRemoteObject {
   }
 
   public String getClassName() {
-    if (className != null) {
-      return className;
-    }
-
-    if (isString()) {
-      return "String";
-    }
-
-    if (isBoolean()) {
-      return "bool";
-    }
-
-    if (isNumber()) {
-      return "num";
-    }
-
-    return null;
+    return className;
   }
 
   public String getDescription() {

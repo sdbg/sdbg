@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.github.sdbg.debug.core.internal.expr;
+package com.github.sdbg.debug.core.model;
 
 import org.eclipse.debug.core.model.IWatchExpressionListener;
 

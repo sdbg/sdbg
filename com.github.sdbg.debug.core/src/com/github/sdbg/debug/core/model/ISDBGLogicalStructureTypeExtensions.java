@@ -11,28 +11,22 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.github.sdbg.debug.core.model;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 
-/**
- * A sub-class of IVariable that adds additional meta-information about the variable.
- */
-public interface ISDBGVariable extends IVariable {
-  // TODO: Get rid of this everywhere
-  public boolean isLibraryObject();
-
-  public boolean isLocal();
-
-  public boolean isScope();
-
-  public boolean isStatic();
-
-  public boolean isThisObject();
+public interface ISDBGLogicalStructureTypeExtensions {
+  /**
+   * Allows renaming of all variables, including those which are in the function's local scope and
+   * are thus not owned by an IValue
+   */
+  String getVariableName(IVariable variable) throws CoreException;
 
   /**
-   * @return whether this variable represents a thrown exception
+   * Allows the value's display string to be computed based on the value returned by the logical
+   * structure, rather than based on the raw one
    */
-  public boolean isThrownException();
+  boolean isValueStringComputedByLogicalStructure(IValue value) throws CoreException;
 }

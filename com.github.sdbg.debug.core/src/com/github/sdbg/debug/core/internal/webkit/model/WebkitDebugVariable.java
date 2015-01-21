@@ -17,9 +17,6 @@ import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
 
@@ -35,7 +32,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   private boolean isSpecialObject;
   private boolean isLocal;
   private boolean isStatic;
-  private boolean isLibraryObject;
 
   /**
    * Create a new Webkit Debug Variable
@@ -69,28 +65,15 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 //    return null;
 //  }
 //
-  /**
-   * @return a user-consumable string for the variable name
-   */
-  @Override
-  public String getDisplayName() throws DebugException {
-    if (isListMember()) {
-      return "[" + getName() + "]";
-    }
-
-    if (isLibraryRef()) {
-      return convertLibraryRefName(descriptor.getName());
-    }
-
-    // The names of private fields are mangled by the VM.
-    // _foo@652376 ==> _foo
-    return getName();
-  }
 
   @Override
   public String getName() throws DebugException {
     try {
-      return DebuggerUtils.demangleVmName(descriptor.getName());
+      if (isSpecialObject) {
+        return descriptor.getName();
+      } else {
+        return DebuggerUtils.demangleVariableName(descriptor.getName());
+      }
     } catch (Throwable t) {
       throw createDebugException(t);
     }
@@ -98,6 +81,7 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 
   @Override
   public String getReferenceTypeName() throws DebugException {
+    // TODO: How come?
     try {
       return getValue().getReferenceTypeName();
     } catch (Throwable t) {
@@ -121,13 +105,12 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   @Override
   public boolean hasValueChanged() throws DebugException {
     // TODO(keertip): check to see if value has changed
-
     return false;
   }
 
   @Override
   public boolean isLibraryObject() {
-    return isLibraryObject;
+    return false;
   }
 
   public boolean isListValue() {
@@ -149,6 +132,11 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     } catch (DebugException e) {
       return false;
     }
+  }
+
+  @Override
+  public boolean isScope() {
+    return isSpecialObject && !isThisObject();
   }
 
   @Override
@@ -203,10 +191,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     return descriptor.isClassDescriptor();
   }
 
-  protected void setIsLibraryObject(boolean value) {
-    this.isLibraryObject = value;
-  }
-
   protected void setIsLocal(boolean value) {
     isLocal = value;
   }
@@ -218,36 +202,12 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   protected void setParent(WebkitDebugVariable parent) {
     this.parent = parent;
   }
-
-  private String convertLibraryRefName(String name) {
-    if (name.startsWith("file:") && name.indexOf('/') != -1) {
-      return "file:" + name.substring(name.lastIndexOf('/') + 1);
-    }
-
-    if (name.startsWith("http:")) {
-      try {
-        URL url = new URL(name);
-        return url.getFile();
-      } catch (MalformedURLException e) {
-      }
-    }
-
-    return name;
-  }
-
-  private boolean isLibraryRef() {
-    if (descriptor.getValue() == null) {
-      return false;
-    }
-
-    return descriptor.getValue().isLibraryRef();
-  }
-
-  private boolean isListMember() {
-    if (parent != null && parent.isListValue()) {
-      return true;
-    } else {
-      return false;
-    }
-  }
+//
+//  private boolean isListMember() { // TODO XXX FIXME: How...
+//    if (parent != null && parent.isListValue()) {
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  }
 }

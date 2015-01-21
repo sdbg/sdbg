@@ -14,8 +14,6 @@
 
 package com.github.sdbg.debug.core.model;
 
-import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
-
 import org.eclipse.debug.core.model.IValue;
 
 /**
@@ -30,9 +28,6 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
   //&&&
   public void computeDetail(final IValueCallback callback);
 
-  //&&&
-  public String getDisplayString();
-
   /**
    * @return a user-presentable id for this value
    */
@@ -44,8 +39,14 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
   public int getListLength();
 
   /**
+   * @return whether this value represents a function
+   */
+  public boolean isFunction();
+
+  /**
    * @return whether this value represents a list
    */
+  // TODO: Get rid of this or rename it to array
   public boolean isListValue();
 
   /**
@@ -58,9 +59,10 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
    */
   public boolean isPrimitive();
 
+  public boolean isScope();
+
   /**
    * Clears out any cached information about this value's fields.
    */
   public void reset();
-
 }

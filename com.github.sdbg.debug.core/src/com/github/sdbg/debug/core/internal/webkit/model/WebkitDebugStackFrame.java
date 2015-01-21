@@ -14,7 +14,6 @@
 package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
 import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
 import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
@@ -25,13 +24,12 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScope;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IExceptionStackFrame;
+import com.github.sdbg.debug.core.model.IExpressionEvaluator;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue.IValueCallback;
 import com.github.sdbg.debug.core.model.IVariableResolver;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -232,7 +230,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     try {
       latch.await(1000, TimeUnit.MILLISECONDS);
     } catch (InterruptedException e) {
-      return "Exception: " + exceptionValue.getDisplayString();
+      return "Exception: " + exceptionValue.getValueString();
     }
 
     return "Exception: " + result[0];
@@ -489,26 +487,17 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
   private void fillInWebkitVariables(WebkitRemoteObject exception) {
     isExceptionStackFrame = (exception != null);
 
-    List<WebkitRemoteObject> remoteObjects = new ArrayList<WebkitRemoteObject>();
-
     WebkitRemoteObject thisObject = null;
-
     if (!webkitFrame.isStaticMethod()) {
       thisObject = webkitFrame.getThisObject();
-    }
-
-    for (WebkitScope scope : webkitFrame.getScopeChain()) {
-      if (!scope.isGlobalLike() && !scope.isInstance()) {
-        remoteObjects.add(scope.getObject());
-      }
     }
 
     variableCollector = VariableCollector.createCollector(
         getTarget(),
         thisObject,
-        remoteObjects,
-        null,
-        exception);
+        exception,
+        true,
+        webkitFrame.getScopeChain());
   }
 
   private String getCallerName() {
@@ -520,7 +509,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
     }
 
     if (name == null) {
-      name = DebuggerUtils.demangleVmName(webkitFrame.getFunctionName());
+      name = DebuggerUtils.demangleFunctionName(webkitFrame.getFunctionName());
     }
 
     return name;

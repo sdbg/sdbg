@@ -16,6 +16,7 @@ package com.github.sdbg.debug.ui.internal.presentation;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 import com.github.sdbg.debug.core.model.IExceptionStackFrame;
+import com.github.sdbg.debug.core.model.ISDBGLogicalStructureTypeExtensions;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
@@ -29,6 +30,7 @@ import com.github.sdbg.utilities.Streams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -42,12 +44,14 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IMarker;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionPoint;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
+import org.eclipse.debug.core.ILogicalStructureType;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.eclipse.debug.core.model.IStackFrame;
@@ -55,6 +59,8 @@ import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.core.sourcelookup.containers.LocalFileStorage;
 import org.eclipse.debug.core.sourcelookup.containers.ZipEntryStorage;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.debug.internal.ui.views.variables.VariablesView;
 import org.eclipse.debug.ui.IDebugModelPresentation;
 import org.eclipse.debug.ui.IInstructionPointerPresentation;
 import org.eclipse.debug.ui.ISourcePresentation;
@@ -75,12 +81,14 @@ import org.eclipse.ui.part.FileEditorInput;
  * A debug model presentation is responsible for providing labels, images, and editors associated
  * with debug elements in a specific debug model.
  */
+@SuppressWarnings("restriction")
 public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     IInstructionPointerPresentation {
 
 //  private static final String JAVA_EDITOR_ID = "org.eclipse.jdt.internal.ui.javaeditor.JavaEditor";
 
   private static final String BREAK_ON_EXCEPTION_ANNOTAION = "org.eclipse.debug.ui.currentIPEx";
+  private static final LogicalValueProvider LOGICAL_VALUE_PROVIDER = new LogicalValueProvider();
 
   private List<ILabelProviderListener> listeners = new ArrayList<ILabelProviderListener>();
 
@@ -208,6 +216,10 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
    */
   @Override
   public Image getImage(Object element) {
+    return getImage(element, null);
+  }
+
+  public Image getImage(Object element, IPresentationContext context) {
     try {
       if (element instanceof ISDBGVariable) {
         ISDBGVariable variable = (ISDBGVariable) element;
@@ -314,41 +326,26 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
   @Override
   public String getText(Object element) {
+    return getText(element, null);
+  }
+
+  public String getText(Object element, IPresentationContext context) {
     if (element instanceof IBreakpoint) {
-      return getBreakpointText((IBreakpoint) element);
+      return getBreakpointText((IBreakpoint) element, context);
     } else if (element instanceof IVariable) {
-      return getVariableText((IVariable) element);
+      return getVariableDetailText((IVariable) element, context);
     } else if (element instanceof IValue) {
-      return getValueText((IValue) element);
+      return getValueDetailText((IValue) element, context);
     }
 
     return null;
   }
 
-  public String getVariableName(IVariable var) {
+  public String getVariableDetailText(IVariable var, IPresentationContext context) {
     try {
-      if (var instanceof ISDBGVariable) {
-        ISDBGVariable svar = (ISDBGVariable) var;
+      StringBuilder buff = new StringBuilder(getVariableName(var, context));
 
-        // TODO XXX FIXME
-        /*if (svar.isListMember()) {
-          return "[" + svar.getName() + "]";
-        } else*/if (svar.isScope()) {
-          return "(" + svar.getName() + ")";
-        }
-      }
-
-      return var.getName();
-    } catch (DebugException e) {
-      return null;
-    }
-  }
-
-  public String getVariableText(IVariable var) {
-    try {
-      StringBuilder buff = new StringBuilder(getVariableName(var));
-
-      String valueString = getValueText(var.getValue());
+      String valueString = getValueDetailText(var.getValue(), context);
       if (valueString.length() != 0) {
         buff.append(" = ");
         buff.append(valueString);
@@ -356,6 +353,28 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
 
       return buff.toString();
     } catch (DebugException e) {
+      return null;
+    }
+  }
+
+  public String getVariableName(IVariable var, IPresentationContext context) {
+    try {
+      if (var instanceof ISDBGVariable) {
+        ISDBGVariable svar = (ISDBGVariable) var;
+        if (svar.isScope()) {
+          return "(" + svar.getName() + ")";
+        }
+      }
+
+      ISDBGLogicalStructureTypeExtensions lstExtensions = getLogicalStructureTypeExtensions(
+          var.getValue(),
+          context);
+      if (lstExtensions != null) {
+        return lstExtensions.getVariableName(var);
+      } else {
+        return var.getName();
+      }
+    } catch (CoreException e) {
       return null;
     }
   }
@@ -383,7 +402,7 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
    * @param bp
    * @return
    */
-  protected String getBreakpointText(IBreakpoint bp) {
+  protected String getBreakpointText(IBreakpoint bp, IPresentationContext context) {
     try {
       String text;
       if (bp instanceof SDBGBreakpoint) {
@@ -422,7 +441,7 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
    * Build the text for an {@link ISDBGValue}. This can be a long running call since we wait for the
    * toString call to get back with the value.
    */
-  protected String getValueText(ISDBGValue value) throws DebugException {
+  protected String getValueDetailText(ISDBGValue value) throws DebugException {
     boolean isPrimitive = value.isPrimitive();
     boolean isArray = value.isListValue();
 
@@ -455,13 +474,13 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     }
   }
 
-  protected String getValueText(IValue value) {
+  protected String getValueDetailText(IValue value, IPresentationContext context) {
     try {
       String valueString = null;
 
       if (value instanceof ISDBGValue) {
         ISDBGValue sdbgValue = (ISDBGValue) value;
-        valueString = getValueText(sdbgValue);
+        valueString = getValueDetailText(sdbgValue);
       } else if (value != null) {
         valueString = value.getValueString();
 
@@ -478,6 +497,17 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     } catch (DebugException e) {
       return null;
     }
+  }
+
+  protected String getValueText(IValue value, IPresentationContext context) throws CoreException {
+    ISDBGLogicalStructureTypeExtensions lstExtensions = getLogicalStructureTypeExtensions(
+        value,
+        context);
+    if (lstExtensions != null && lstExtensions.isValueStringComputedByLogicalStructure(value)) {
+      value = getLogicalValue(value, context);
+    }
+
+    return value.getValueString();
   }
 
   private String getLineExtract(ILineBreakpoint bp) {
@@ -511,6 +541,43 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     return null;
   }
 
+  private ISDBGLogicalStructureTypeExtensions getLogicalStructureTypeExtensions(IValue value,
+      IPresentationContext context) {
+    if (context != null && isShowLogicalStructure(context)) {
+      ILogicalStructureType[] types = DebugPlugin.getLogicalStructureTypes(value);
+      if (types.length > 0) {
+        ILogicalStructureType type = DebugPlugin.getDefaultStructureType(types);
+        if (type instanceof ISDBGLogicalStructureTypeExtensions) {
+          return (ISDBGLogicalStructureTypeExtensions) type;
+        } else if (type instanceof IAdaptable) {
+          return (ISDBGLogicalStructureTypeExtensions) ((IAdaptable) type).getAdapter(ISDBGLogicalStructureTypeExtensions.class);
+        } else if (type.getClass().getName().equals(
+            "org.eclipse.debug.internal.core.LogicalStructureType")) {
+          // This is really nasty now, but LogicalStructureType is unfortunately not IAdaptable...
+          try {
+            Method method = type.getClass().getDeclaredMethod("getDelegate");
+            method.setAccessible(true);
+            Object delegateType = method.invoke(type);
+            if (delegateType instanceof ISDBGLogicalStructureTypeExtensions) {
+              return (ISDBGLogicalStructureTypeExtensions) delegateType;
+            } else if (delegateType instanceof IAdaptable) {
+              return (ISDBGLogicalStructureTypeExtensions) ((IAdaptable) delegateType).getAdapter(ISDBGLogicalStructureTypeExtensions.class);
+            }
+          } catch (Exception e) {
+            SDBGDebugUIPlugin.logError(e);
+            return null;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private IValue getLogicalValue(IValue value, IPresentationContext context) throws CoreException {
+    return LOGICAL_VALUE_PROVIDER.getLogicalValue(value, context);
+  }
+
   private Collection<ISourcePresentation> getSourcePresentations() {
     if (sourcePresentations == null) {
       sourcePresentations = new ArrayList<ISourcePresentation>();
@@ -527,5 +594,15 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     }
 
     return sourcePresentations;
+  }
+
+  /**
+   * Return whether to show compute a logical structure or a raw structure in the specified context
+   * 
+   * @return whether to show compute a logical structure or a raw structure in the specified context
+   */
+  private boolean isShowLogicalStructure(IPresentationContext context) {
+    Boolean show = (Boolean) context.getProperty(VariablesView.PRESENTATION_SHOW_LOGICAL_STRUCTURES);
+    return show != null && show.booleanValue();
   }
 }

@@ -67,7 +67,7 @@ public class DebugHover implements ITextHover, ITextHoverExtension, ITextHoverEx
     StringBuffer buffer = new StringBuffer();
     SDBGDebugModelPresentation modelPresentation = getModelPresentation();
     buffer.append("<p><pre>"); //$NON-NLS-1$
-    String variableText = modelPresentation.getVariableText(variable);
+    String variableText = modelPresentation.getVariableDetailText(variable, null);
     buffer.append(convertNewLines(escapeHtml(shorten(variableText))));
     buffer.append("</pre></p>"); //$NON-NLS-1$
     modelPresentation.dispose();

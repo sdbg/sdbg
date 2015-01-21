@@ -14,58 +14,30 @@
 
 package com.github.sdbg.debug.ui.internal.presentation;
 
-import com.github.sdbg.debug.core.model.ISDBGThread;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.core.runtime.IAdapterManager;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.debug.internal.ui.model.elements.ViewerInputProvider;
+import org.eclipse.debug.core.model.IExpression;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IElementLabelProvider;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerInputProvider;
-import org.eclipse.debug.internal.ui.viewers.model.provisional.IViewerUpdate;
-import org.eclipse.debug.ui.IDebugUIConstants;
 
 /**
  * An adaptor factory to map from SDBG debug elements to presentation label providers.
  */
 @SuppressWarnings("restriction")
 public class SDBGElementAdapterFactory implements IAdapterFactory {
-  static class DartThreadInputProvider extends ViewerInputProvider {
-    @Override
-    protected Object getViewerInput(Object source, IPresentationContext context,
-        IViewerUpdate update) throws CoreException {
-      if (source instanceof ISDBGThread) {
-        ISDBGThread thread = (ISDBGThread) source;
-
-        return thread.getIsolateVarsPseudoFrame();
-      }
-
-      return null;
-    }
-
-    @Override
-    protected boolean supportsContextId(String id) {
-      return IDebugUIConstants.ID_VARIABLE_VIEW.equals(id);
-    }
-  }
-
   private IAdapterFactory defaultAdapter = new org.eclipse.debug.internal.ui.views.launch.DebugElementAdapterFactory();
 
-  private static IElementLabelProvider variableLabelProvider = new SDBGVariableLabelProvider();
-  private static IViewerInputProvider threadInputProvider = new DartThreadInputProvider(); // TODO: Remove
+  private static IElementLabelProvider VARIABLE_LABEL_PROVIDER = new SDBGVariableLabelProvider();
+  private static IElementLabelProvider EXPRESSION_LABEL_PROVIDER = new SDBGExpressionLabelProvider();
 
   public static void init() {
     SDBGElementAdapterFactory factory = new SDBGElementAdapterFactory();
 
     IAdapterManager manager = Platform.getAdapterManager();
     manager.registerAdapters(factory, ISDBGVariable.class);
-    manager.registerAdapters(factory, ISDBGThread.class);
+    manager.registerAdapters(factory, IExpression.class);
   }
 
   public SDBGElementAdapterFactory() {
@@ -76,13 +48,9 @@ public class SDBGElementAdapterFactory implements IAdapterFactory {
   public Object getAdapter(Object adaptableObject, Class adapterType) {
     if (adapterType.equals(IElementLabelProvider.class)) {
       if (adaptableObject instanceof ISDBGVariable) {
-        return variableLabelProvider;
-      }
-    }
-
-    if (adapterType.equals(IViewerInputProvider.class)) {
-      if (adaptableObject instanceof ISDBGThread) {
-        return threadInputProvider;
+        return VARIABLE_LABEL_PROVIDER;
+      } else if (adaptableObject instanceof IExpression) {
+        return EXPRESSION_LABEL_PROVIDER;
       }
     }
 
@@ -93,11 +61,6 @@ public class SDBGElementAdapterFactory implements IAdapterFactory {
   @SuppressWarnings("rawtypes")
   @Override
   public Class[] getAdapterList() {
-    List<Class> adapterClasses = new ArrayList<Class>();
-
-    adapterClasses.add(IElementLabelProvider.class);
-    adapterClasses.add(IViewerInputProvider.class);
-
-    return adapterClasses.toArray(new Class[adapterClasses.size()]);
+    return new Class[] {IElementLabelProvider.class};
   }
 }

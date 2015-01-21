@@ -14,25 +14,31 @@
 
 package com.github.sdbg.integration.jdt.gwt;
 
+import com.github.sdbg.debug.core.model.ISDBGLogicalStructureTypeExtensions;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 import com.github.sdbg.debug.core.util.DecoratingSDBGValue;
 import com.github.sdbg.debug.core.util.DecoratingSDBGVariable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.ILogicalStructureTypeDelegate;
+import org.eclipse.debug.core.model.ILogicalStructureTypeDelegate2;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
 
 /**
- * This ILogicalStructureTypeDelegate handles displaying of GWT SDM types. TODO: In future,
- * implement logical structures for maps and collections as in @skybrian's superdebug GWT module
+ * This ILogicalStructureTypeDelegate handles displaying of GWT SDM types. 
+ * Additionally, it also handles all variables in the local scope (local function variables).
+ * TODO: In future, implement logical structures for maps and collections as in @skybrian's superdebug GWT module
  * (see issue #6)
  */
-public class GWTSDMStructureType implements ILogicalStructureTypeDelegate {
+public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
+    ILogicalStructureTypeDelegate2, ISDBGLogicalStructureTypeExtensions {
   private class GWTSDMValue extends DecoratingSDBGValue {
     private boolean javaObject;
 
@@ -54,7 +60,7 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate {
     @Override
     public String getValueString() throws DebugException {
       if (javaObject) {
-        return getReferenceTypeName() + (getId() != null ? " [id=" + getId() + "]" : "");
+        return getReferenceTypeName() + (getId() != null ? " [???id=" + getId() + "]" : "");
       } else {
         return super.getValueString();
       }
@@ -78,18 +84,23 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate {
 
     @Override
     public String getReferenceTypeName() throws DebugException {
-      return getValue().getReferenceTypeName();
+      String rawReferenceTypeName = super.getReferenceTypeName();
+      if (isJavaObject((ISDBGValue) getValue()) && hasGWTSuffix(rawReferenceTypeName)) {
+        return removeGWTSuffix(rawReferenceTypeName);
+      } else {
+        return rawReferenceTypeName;
+      }
     }
 
     @Override
     public IValue getValue() throws DebugException {
       if (decoratedValue == null) {
         IValue rawValue = super.getValue();
-        if (providesLogicalStructure(rawValue)) {
-          decoratedValue = getLogicalStructure(rawValue);
-        } else {
-          decoratedValue = rawValue;
-        }
+//        if (providesLogicalStructure(rawValue)) {
+//          decoratedValue = getLogicalStructure(rawValue);
+//        } else {
+        decoratedValue = rawValue;
+//        }
       }
 
       return decoratedValue;
@@ -100,18 +111,23 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate {
   }
 
   @Override
+  public String getDescription(IValue value) {
+    return "GWT SuperDevMode";
+  }
+
+  @Override
   public IValue getLogicalStructure(IValue value) throws DebugException {
-    if (value instanceof DecoratingSDBGValue) {
+    if (value instanceof GWTSDMValue) {
       return value;
     }
 
     List<IVariable> translated = new ArrayList<IVariable>();
-    boolean javaObject;
-    if (isJavaObject((ISDBGValue) value)) {
-      javaObject = true;
-      fetchAllJavaFields(value, translated);
-    } else {
-      javaObject = false;
+    boolean javaObject = isJavaObject((ISDBGValue) value);
+    if (javaObject) {
+      // A real Java object
+      // Fetch and display all fields then
+      fetchAllJavaFields(value, translated, new HashSet<String>());
+    } else if (((ISDBGValue) value).isScope()) {
       for (IVariable var : value.getVariables()) {
         boolean hasLogicalStructure = providesLogicalStructure(var.getValue());
         boolean hasGWTSuffix = hasGWTSuffix(var.getName());
@@ -122,38 +138,65 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate {
           translated.add(var);
         }
       }
+    } else {
+      return value;
     }
 
     return new GWTSDMValue(javaObject, (ISDBGValue) value, translated.toArray(new IVariable[0]));
   }
 
   @Override
-  public boolean providesLogicalStructure(IValue value) {
-    if (!(value instanceof ISDBGValue) || value instanceof DecoratingSDBGValue) {
-      return false;
-    } else {
-      try {
-        return ((ISDBGValue) value).isScope() || isJavaObject((ISDBGValue) value);
-      } catch (DebugException e) {
-        throw new RuntimeException(e);
+  public String getVariableName(IVariable variable) throws DebugException {
+    String name = variable.getName();
+    if (variable instanceof ISDBGVariable) {
+      ISDBGVariable svar = (ISDBGVariable) variable;
+      if (svar.isLocal() && hasGWTSuffix(name)) {
+        name = removeGWTSuffix(name);
       }
     }
+
+    return name;
   }
 
-  private void fetchAllJavaFields(IValue value, List<IVariable> variables) throws DebugException {
+  @Override
+  public boolean isValueStringComputedByLogicalStructure(IValue value) throws DebugException {
+    if (value instanceof ISDBGValue && !(value instanceof GWTSDMValue)) {
+      ISDBGValue sval = (ISDBGValue) value;
+      return isJavaObject(sval);
+    }
+    return false;
+  }
+
+  @Override
+  public boolean providesLogicalStructure(IValue value) {
+    return value instanceof ISDBGValue && !(value instanceof GWTSDMValue);
+  }
+
+  // Returns all properties which look like Java fields of the supplied value
+  //
+  // The supplied value is assumed to be a Java object, i.e. isJavaObject(value) should hold true
+  // The prototype chain is also traversed for constant properties which are not available on the main object
+  private void fetchAllJavaFields(IValue value, List<IVariable> variables,
+      Collection<String> visited) throws DebugException {
     for (IVariable var : value.getVariables()) {
       String name = var.getName();
-      if (name.equals("__proto__")) {
-        IValue protoValue = var.getValue();
-        if (value != null) {
-          fetchAllJavaFields(protoValue, variables);
-        }
-      } else if (hasGWTSuffix(name)) {
+      if (hasGWTSuffix(name)) {
         name = removeGWTSuffix(name);
         if (!name.equals("$H") && !name.equals("$init") && !name.equals("___clazz$")
             && !(var.getValue() != null && ((ISDBGValue) var.getValue()).isFunction())) {
-          variables.add(new GWTSDMVariable(name, (ISDBGVariable) var));
+          if (!visited.contains(name)) {
+            visited.add(name);
+            variables.add(new GWTSDMVariable(name, (ISDBGVariable) var));
+          }
         }
+      }
+    }
+
+    IVariable protoVar = getOwnProperty(value, "__proto__");
+    if (protoVar != null) {
+      IValue protoValue = protoVar.getValue();
+      if (value != null && isJavaClass((ISDBGValue) protoValue)) {
+        fetchAllJavaFields(protoValue, variables, visited);
       }
     }
   }

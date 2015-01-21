@@ -254,7 +254,7 @@ public class DebugTooltipControl extends AbstractInformationControl implements
 
       @Override
       public String getText(Object element) {
-        return presentation.getVariableText((IVariable) element);
+        return presentation.getVariableDetailText((IVariable) element, null);
       }
     });
     treeViewer.setContentProvider(new ObjectInspectorContentProvider());

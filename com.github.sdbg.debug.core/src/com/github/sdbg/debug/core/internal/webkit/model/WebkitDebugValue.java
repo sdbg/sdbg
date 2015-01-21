@@ -351,7 +351,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       return "";
     }
 
-    if (value.isNull()) {
+    if (isNull()) {
       return "null";
     }
 

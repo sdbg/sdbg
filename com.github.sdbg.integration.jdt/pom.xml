@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.github.sdbg</groupId>
-    <version>1.0.2.qualifier</version>
+    <version>1.0.3.qualifier</version>
     <artifactId>com.github.sdbg.parent</artifactId>
   </parent>
   <artifactId>com.github.sdbg.integration.jdt</artifactId>

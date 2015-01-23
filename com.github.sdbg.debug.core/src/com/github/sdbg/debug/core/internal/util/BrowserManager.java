@@ -441,7 +441,7 @@ public class BrowserManager {
                 SDBGDebugCorePlugin.PLUGIN_ID,
                 "Unable to connect to Chrome"
                     + (remote
-                        ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is alresady attached to that particular Chrome tab."
+                        ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Chrome tab."
                         : "")));
       }
 

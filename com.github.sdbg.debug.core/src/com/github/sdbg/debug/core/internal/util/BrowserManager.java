@@ -408,51 +408,63 @@ public class BrowserManager {
       throws CoreException {
     monitor.worked(1);
 
-    try {
-      // avg: 383ms
-      timer.startTask("get chromium tabs");
+    // avg: 383ms
+    timer.startTask("get chromium tabs");
 
-      ChromiumTabInfo tab = getChromiumTab(
+    ChromiumTabInfo tab;
+
+    try {
+      tab = getChromiumTab(
           runtimeProcess,
           browserTabChooser,
           host,
           port,
           maxStartupDelay,
           browserOutput);
+    } catch (IOException e) {
+      SDBGDebugCorePlugin.logError(e);
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "Unable to connect to Chrome at address " + host + ":" + port + "; error: "
+              + e.getMessage(),
+          e));
+    }
 
-      monitor.worked(2);
+    monitor.worked(2);
 
-      timer.stopTask();
+    timer.stopTask();
 
-      // avg: 46ms
-      timer.startTask("open WIP connection");
+    // avg: 46ms
+    timer.startTask("open WIP connection");
 
-      if (tab == null) {
-        throw new DebugException(new Status(
-            IStatus.INFO,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "No Chrome tab was chosen. Connection cancelled."));
-      }
+    if (tab == null) {
+      throw new DebugException(new Status(
+          IStatus.INFO,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "No Chrome tab was chosen. Connection cancelled."));
+    }
 
-      if (tab.getWebSocketDebuggerUrl() == null) {
-        throw new DebugException(
-            new Status(
-                IStatus.ERROR,
-                SDBGDebugCorePlugin.PLUGIN_ID,
-                "Unable to connect to Chrome"
-                    + (remote
-                        ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Chrome tab."
-                        : "")));
-      }
+    if (tab.getWebSocketDebuggerUrl() == null) {
+      throw new DebugException(
+          new Status(
+              IStatus.ERROR,
+              SDBGDebugCorePlugin.PLUGIN_ID,
+              "Unable to connect to Chrome"
+                  + (remote
+                      ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Chrome tab."
+                      : "")));
+    }
 
-      // Even when Chrome has reported all the debuggable tabs to us, the debug server
-      // may not yet have started up. Delay a small fixed amount of time.
-      sleep(100);
+    // Even when Chrome has reported all the debuggable tabs to us, the debug server
+    // may not yet have started up. Delay a small fixed amount of time.
+    sleep(100);
 
-      if (resolver == null) {
-        resolver = createResourceResolver(launch, launchConfig.getConfig(), tab);
-      }
+    if (resolver == null) {
+      resolver = createResourceResolver(launch, launchConfig.getConfig(), tab);
+    }
 
+    try {
       WebkitConnection connection = new WebkitConnection(
           tab.getHost(),
           tab.getPort(),
@@ -502,16 +514,12 @@ public class BrowserManager {
 
       return debugTarget;
     } catch (IOException e) {
-      // Clean up the error message on certain connection failures to Chrome.
-      // http://code.google.com/p/dart/issues/detail?id=4435
-      if (e.toString().indexOf("connection failed: unknown status code 500") != -1) {
-        SDBGDebugCorePlugin.logError(e);
-      }
-
+      SDBGDebugCorePlugin.logError(e);
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "Unable to connect to Chrome: " + e.getMessage(),
+          "Unable to connect to Chrome tab at address " + tab.getHost() + ":" + tab.getPort()
+              + " (" + tab.getWebSocketDebuggerFile() + "): " + e.getMessage(),
           e));
     }
   }

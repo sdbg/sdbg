@@ -132,7 +132,7 @@ public class BrowserManager {
           launchConfig.markAsLaunched();
 
           return connectToChromiumDebug(
-              "Remote",
+              "Chrome Remote Connection",
               launch,
               launchConfig,
               null/*url*/,
@@ -226,7 +226,7 @@ public class BrowserManager {
               }
 
               return connectToChromiumDebug(
-                  "Mobile Remote",
+                  "Mobile Chrome Remote Connection",
                   launch,
                   launchConfig,
                   null/*url*/,
@@ -631,7 +631,7 @@ public class BrowserManager {
 
   private ChromiumTabInfo getChromiumTab(Process runtimeProcess,
       IBrowserTabChooser browserTabChooser, String host, int port, long maxStartupDelay,
-      ListeningStream dartiumOutput) throws IOException, CoreException {
+      ListeningStream browserOutput) throws IOException, CoreException {
     // Give Chromium 20 seconds to start up.
     long endTime = System.currentTimeMillis() + Math.max(maxStartupDelay, 0L);
     while (true) {
@@ -641,7 +641,7 @@ public class BrowserManager {
             SDBGDebugCorePlugin.PLUGIN_ID,
             "Could not launch browser - process terminated while trying to connect. "
                 + "Try closing any running Chrome instances."
-                + getProcessStreamMessage(dartiumOutput.toString())));
+                + getProcessStreamMessage(browserOutput.toString())));
       }
 
       try {
@@ -830,7 +830,8 @@ public class BrowserManager {
               registerProcess(
                   launch,
                   launchConfig,
-                  DebugPlugin.newProcess(launch, browserProcess, processDescription.toString()),
+                  DebugPlugin.newProcess(launch, browserProcess, browserExecutable.getName()
+                      + " (Run only, debugging DISABLED)"),
                   processDescription.toString());
             }
           }

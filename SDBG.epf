@@ -1,0 +1,13 @@
+#Sat Jan 31 21:18:57 EET 2015
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.staticondemandthreshold=99
+/instance/org.eclipse.jdt.ui/outlinesortoption=T,SF,SI,F,SM,I,C,M,
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.visibility.order=B,R,D,V,
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.ignorelowercasenames=true
+\!/=
+file_export_version=3.0
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.text.custom_code_templates=<?xml version\="1.0" encoding\="UTF-8" standalone\="no"?><templates/>
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.ondemandthreshold=99
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.enable.visibility.order=true
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.importorder=com;java;javax;org;
+@org.eclipse.jdt.ui=3.10.1.v20140817-1500
+/instance/org.eclipse.jdt.ui/org.eclipse.jdt.ui.formatterprofiles.version=12

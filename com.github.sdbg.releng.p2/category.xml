@@ -3,7 +3,7 @@
    <description name="Source Map Debugger" url="https://github.com/sdbg/sdbg">
       An Eclipse plugin for debugging web applications compiled to JavaScript which have sourcemap support.
    </description>
-   <feature url="features/com.github.sdbg.feature_1.0.2.qualifier.jar" id="com.github.sdbg.feature" version="1.0.3.qualifier">
+   <feature url="features/com.github.sdbg.feature_1.0.2.qualifier.jar" id="com.github.sdbg.feature" version="1.0.4.qualifier">
       <category name="com.github.sdbg"/>
    </feature>
    <category-def name="com.github.sdbg" label="Source Map Debugger">

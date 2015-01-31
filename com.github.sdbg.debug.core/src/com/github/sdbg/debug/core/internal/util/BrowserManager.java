@@ -51,7 +51,9 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IProcess;
 
 /**
- * A manager that launches and manages configured browsers.
+ * A manager that launches and manages configured browsers. TODO: Move to the webkit packages as
+ * this code is Chromium specific. The best we can do is to generalize it a bit so that it works for
+ * Safari & Opera as well, but that's it.
  */
 public class BrowserManager {
   /** The initial page to navigate to. */

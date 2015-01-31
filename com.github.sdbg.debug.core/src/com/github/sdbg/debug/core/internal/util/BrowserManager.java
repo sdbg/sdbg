@@ -832,7 +832,7 @@ public class BrowserManager {
                   launch,
                   launchConfig,
                   DebugPlugin.newProcess(launch, browserProcess, browserExecutable.getName()
-                      + " - Run only, debugging DISABLED (" + new Date() + ")"),
+                      + " - run only, debugging DISABLED (" + new Date() + ")"),
                   processDescription.toString());
             }
           }

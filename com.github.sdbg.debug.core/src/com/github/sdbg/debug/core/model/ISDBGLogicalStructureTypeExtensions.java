@@ -25,6 +25,12 @@ public interface ISDBGLogicalStructureTypeExtensions {
   String getVariableName(IVariable variable) throws CoreException;
 
   /**
+   * Allows the value's detailed display string to be computed based on the value returned by the
+   * logical structure, rather than based on the raw one
+   */
+  boolean isValueDetailStringComputedByLogicalStructure(IValue value) throws CoreException;
+
+  /**
    * Allows the value's display string to be computed based on the value returned by the logical
    * structure, rather than based on the raw one
    */

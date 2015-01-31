@@ -39,6 +39,16 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
   public int getListLength();
 
   /**
+   * @return the raw value if this represents a primitive: i.e. Number, String or Boolean
+   */
+  public Object getRawValue();
+
+  /**
+   * @return whether this value represents a boolean type
+   */
+  public boolean isBoolean();
+
+  /**
    * @return whether this value represents a function
    */
   public boolean isFunction();
@@ -55,11 +65,29 @@ public interface ISDBGValue extends IValue, IExpressionEvaluator {
   public boolean isNull();
 
   /**
+   * @return whether this value represents a number type
+   */
+  public boolean isNumber();
+
+  /**
+   * @return whether this value represents an object type
+   */
+  public boolean isObject();
+
+  /**
    * @return whether this value represents a primitive type
    */
   public boolean isPrimitive();
 
+  /**
+   * @return whether this value represents a scope pseudo-object
+   */
   public boolean isScope();
+
+  /**
+   * @return whether this value represents a string type
+   */
+  public boolean isString();
 
   /**
    * Clears out any cached information about this value's fields.

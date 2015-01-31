@@ -254,7 +254,7 @@ public class BrowserManager {
           monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
 
           // avg: 0.434 sec (old: 0.597)
-          LogTimer timer = new LogTimer("Chrome debug startup");
+          LogTimer timer = new LogTimer("Chrome " + (enableDebugging ? "debug" : "") + " startup");
 
           // avg: 55ms
           timer.startTask("Chrome startup");
@@ -323,23 +323,25 @@ public class BrowserManager {
                       + getProcessStreamMessage(browserOutput.toString())));
             }
 
-            connectToChromiumDebug(
-                browserExecutable.getName(),
-                launch,
-                launchConfig,
-                url,
-                monitor,
-                browserProcess,
-                timer,
-                enableBreakpoints,
-                null,
-                devToolsPortNumberHolder[0],
-                20 * 1000L/*maxStartupDelay*/,
-                browserOutput,
-                processDescription.toString(),
-                resourceResolver,
-                browserTabChooser,
-                false/*remote*/);
+            if (devToolsPortNumberHolder[0] > -1) {
+              connectToChromiumDebug(
+                  browserExecutable.getName(),
+                  launch,
+                  launchConfig,
+                  url,
+                  monitor,
+                  browserProcess,
+                  timer,
+                  enableBreakpoints,
+                  null,
+                  devToolsPortNumberHolder[0],
+                  20 * 1000L/*maxStartupDelay*/,
+                  browserOutput,
+                  processDescription.toString(),
+                  resourceResolver,
+                  browserTabChooser,
+                  false/*remote*/);
+            }
           }
 
           DebugUIHelper.getHelper().activateApplication(browserExecutable, "Chrome");
@@ -426,8 +428,8 @@ public class BrowserManager {
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "Unable to connect to Chrome at address " + host + ":" + port + "; error: "
-              + e.getMessage(),
+          "Unable to connect to Chrome at address " + (host != null ? host : "") + ":" + port
+              + "; error: " + e.getMessage(),
           e));
     }
 
@@ -483,13 +485,8 @@ public class BrowserManager {
 
       monitor.worked(1);
 
-      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+      registerProcess(launch, launchConfig, debugTarget.getProcess(), processDescription);
       launch.addDebugTarget(debugTarget);
-      launch.addProcess(debugTarget.getProcess());
-
-      if (processDescription != null) {
-        debugTarget.getProcess().setAttribute(IProcess.ATTR_CMDLINE, processDescription);
-      }
 
       if (browserOutput != null && launchConfig.getShowLaunchOutput()) {
         browserOutput.setListener(new StreamListener() {
@@ -518,8 +515,9 @@ public class BrowserManager {
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "Unable to connect to Chrome tab at address " + tab.getHost() + ":" + tab.getPort()
-              + " (" + tab.getWebSocketDebuggerFile() + "): " + e.getMessage(),
+          "Unable to connect to Chrome tab at address "
+              + (tab.getHost() != null ? tab.getHost() : "") + ":" + tab.getPort() + " ("
+              + tab.getWebSocketDebuggerFile() + "): " + e.getMessage(),
           e));
     }
   }
@@ -860,6 +858,16 @@ public class BrowserManager {
     return output;
   }
 
+  private void registerProcess(ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
+      IProcess process, String processDescription) {
+    launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+    launch.addProcess(process);
+
+    if (processDescription != null) {
+      process.setAttribute(IProcess.ATTR_CMDLINE, processDescription);
+    }
+  }
+
   private void sleep(int millis) {
     try {
       Thread.sleep(millis);
@@ -898,8 +906,7 @@ public class BrowserManager {
       }
     }
 
-    int devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
-
+    int devToolsPortNumber = -1;
     if (enableDebugging) {
       devToolsPortNumber = NetUtils.findUnusedPort(DEVTOOLS_PORT_NUMBER);
 
@@ -910,9 +917,9 @@ public class BrowserManager {
             "Unable to locate an available port for the browser debugger"));
       }
 
-      devToolsPortNumberHolder[0] = devToolsPortNumber;
     }
 
+    devToolsPortNumberHolder[0] = devToolsPortNumber;
     List<String> arguments = buildArgumentsList(launchConfig, enableDebugging && url != null
         ? INITIAL_PAGE : url, devToolsPortNumber, extraArguments);
     builder.command(arguments);

@@ -734,9 +734,6 @@ public class BrowserManager {
           SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
           launchConfig.markAsLaunched();
 
-          // For now, we always start a debugging connection, even when we're not really debugging.
-          boolean enableBreakpoints = enableDebugging;
-
           monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
 
           // avg: 0.434 sec (old: 0.597)
@@ -775,7 +772,7 @@ public class BrowserManager {
               WebkitDebugTarget.getActiveTarget().navigateToUrl(
                   launch.getLaunchConfiguration(),
                   url,
-                  enableBreakpoints,
+                  true/*enableBreakpoints*/,
                   resourceResolver);
             } catch (IOException e) {
               SDBGDebugCorePlugin.logError(e);
@@ -809,23 +806,31 @@ public class BrowserManager {
                       + getProcessStreamMessage(browserOutput.toString())));
             }
 
-            connectToChromiumDebug(
-                browserExecutable.getName(),
-                launch,
-                launchConfig,
-                url,
-                monitor,
-                browserProcess,
-                timer,
-                enableBreakpoints,
-                null,
-                devToolsPortNumberHolder[0],
-                20 * 1000L/*maxStartupDelay*/,
-                browserOutput,
-                processDescription.toString(),
-                resourceResolver,
-                browserTabChooser,
-                false/*remote*/);
+            if (enableDebugging) {
+              connectToChromiumDebug(
+                  browserExecutable.getName(),
+                  launch,
+                  launchConfig,
+                  url,
+                  monitor,
+                  browserProcess,
+                  timer,
+                  true/*enableBreakpoints*/,
+                  null,
+                  devToolsPortNumberHolder[0],
+                  20 * 1000L/*maxStartupDelay*/,
+                  browserOutput,
+                  processDescription.toString(),
+                  resourceResolver,
+                  browserTabChooser,
+                  false/*remote*/);
+            } else {
+              registerProcess(
+                  launch,
+                  launchConfig,
+                  DebugPlugin.newProcess(launch, browserProcess, processDescription.toString()),
+                  processDescription.toString());
+            }
           }
 
           DebugUIHelper.getHelper().activateApplication(browserExecutable, "Chrome");

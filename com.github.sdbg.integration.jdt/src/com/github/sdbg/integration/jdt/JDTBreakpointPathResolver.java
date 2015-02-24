@@ -19,14 +19,18 @@ public class JDTBreakpointPathResolver implements IBreakpointPathResolver {
     IJavaBreakpoint bp = (IJavaBreakpoint) breakpoint;
 
     String type = bp.getTypeName();
-    int innerClassIndex = type.indexOf('$');
-    if (innerClassIndex > 0) {
-      // For inner classes, return the outermost class name, 
-      // as all inner classes are contained in the file of the outermost class
-      type = type.substring(0, innerClassIndex);
-    }
+    if (type != null) {
+      int innerClassIndex = type.indexOf('$');
+      if (innerClassIndex > 0) {
+        // For inner classes, return the outermost class name, 
+        // as all inner classes are contained in the file of the outermost class
+        type = type.substring(0, innerClassIndex);
+      }
 
-    return type.replace('.', '/') + ".java";
+      return type.replace('.', '/') + ".java";
+    } else {
+      return null;
+    }
   }
 
   @Override

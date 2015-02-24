@@ -210,13 +210,18 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   }
 
   @Override
+  public Object getRawValue() {
+    return value.getRawValue();
+  }
+
+  @Override
   public String getReferenceTypeName() {
     if (value.getClassName() != null) {
       return DebuggerUtils.demangleClassName(value.getClassName());
     } else if (value.getType() != null) {
       return value.getType();
     } else {
-      // Do not return null or else LazyModelPResentation.getText(Object) throws a NPE
+      // Do not return null or else LazyModelPresentation.getText(Object) throws a NPE
       // (seems like a bug in Eclipse though)
       return "";
     }
@@ -266,6 +271,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   }
 
   @Override
+  public boolean isBoolean() {
+    return value.isBoolean();
+  }
+
+  @Override
   public boolean isFunction() {
     return value.isFunction();
   }
@@ -281,6 +291,16 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   }
 
   @Override
+  public boolean isNumber() {
+    return value.isNumber();
+  }
+
+  @Override
+  public boolean isObject() {
+    return value.isObject();
+  }
+
+  @Override
   public boolean isPrimitive() {
     return value.isPrimitive();
   }
@@ -288,6 +308,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public boolean isScope() {
     return variable != null && variable.isScope();
+  }
+
+  @Override
+  public boolean isString() {
+    return value.isString();
   }
 
   @Override

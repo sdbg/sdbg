@@ -51,6 +51,16 @@ public class DecoratingSDBGValue extends DecoratingValue implements ISDBGValue {
   }
 
   @Override
+  public Object getRawValue() {
+    return proxyValue.getRawValue();
+  }
+
+  @Override
+  public boolean isBoolean() {
+    return proxyValue.isBoolean();
+  }
+
+  @Override
   public boolean isFunction() {
     return proxyValue.isFunction();
   }
@@ -66,6 +76,16 @@ public class DecoratingSDBGValue extends DecoratingValue implements ISDBGValue {
   }
 
   @Override
+  public boolean isNumber() {
+    return proxyValue.isNumber();
+  }
+
+  @Override
+  public boolean isObject() {
+    return proxyValue.isObject();
+  }
+
+  @Override
   public boolean isPrimitive() {
     return proxyValue.isPrimitive();
   }
@@ -73,6 +93,11 @@ public class DecoratingSDBGValue extends DecoratingValue implements ISDBGValue {
   @Override
   public boolean isScope() {
     return proxyValue.isScope();
+  }
+
+  @Override
+  public boolean isString() {
+    return proxyValue.isString();
   }
 
   @Override

@@ -27,7 +27,6 @@ import org.json.JSONObject;
  * @see http://code.google.com/chrome/devtools/docs/protocol/tot/runtime.html#type-RemoteObject
  */
 public class WebkitRemoteObject {
-
   String className;
 
   private String description;
@@ -39,6 +38,8 @@ public class WebkitRemoteObject {
   private String type;
 
   private String value;
+
+  private Object rawValue;
 
   private int listLength = -1;
 
@@ -53,6 +54,7 @@ public class WebkitRemoteObject {
 
     if (params.has("value")) {
       Object obj = params.get("value");
+      remoteObject.rawValue = obj;
       remoteObject.value = String.valueOf(obj);
     }
 
@@ -128,6 +130,10 @@ public class WebkitRemoteObject {
 
   public String getObjectId() {
     return objectId;
+  }
+
+  public Object getRawValue() {
+    return rawValue;
   }
 
   /**

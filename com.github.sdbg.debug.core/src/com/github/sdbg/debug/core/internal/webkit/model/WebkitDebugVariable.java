@@ -26,7 +26,7 @@ import org.eclipse.debug.core.model.IValue;
 public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVariable {
   private WebkitPropertyDescriptor descriptor;
 
-  private WebkitDebugVariable parent;
+//  private WebkitDebugVariable parent;
   private WebkitDebugValue value;
 
   private boolean isSpecialObject;
@@ -175,6 +175,15 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     return descriptor.toString();
   }
 
+//
+//  private boolean isListMember() { // TODO XXX FIXME: How...
+//    if (parent != null && parent.isListValue()) {
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  }
+
   @Override
   public boolean verifyValue(IValue value) throws DebugException {
     return verifyValue(value.getValueString());
@@ -200,14 +209,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
   }
 
   protected void setParent(WebkitDebugVariable parent) {
-    this.parent = parent;
+//    this.parent = parent;
   }
-//
-//  private boolean isListMember() { // TODO XXX FIXME: How...
-//    if (parent != null && parent.isListValue()) {
-//      return true;
-//    } else {
-//      return false;
-//    }
-//  }
 }

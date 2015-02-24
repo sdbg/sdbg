@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
@@ -51,7 +52,9 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IProcess;
 
 /**
- * A manager that launches and manages configured browsers.
+ * A manager that launches and manages configured browsers. TODO: Move to the webkit packages as
+ * this code is Chromium specific. The best we can do is to generalize it a bit so that it works for
+ * Safari & Opera as well, but that's it.
  */
 public class BrowserManager {
   /** The initial page to navigate to. */
@@ -93,7 +96,7 @@ public class BrowserManager {
           launchConfig.markAsLaunched();
 
           return connectToChromiumDebug(
-              "Remote",
+              "Chrome Remote Connection",
               launch,
               launchConfig,
               null/*url*/,
@@ -187,7 +190,7 @@ public class BrowserManager {
               }
 
               return connectToChromiumDebug(
-                  "Mobile Remote",
+                  "Mobile Chrome Remote Connection",
                   launch,
                   launchConfig,
                   null/*url*/,
@@ -248,9 +251,6 @@ public class BrowserManager {
           SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
           launchConfig.markAsLaunched();
 
-          // For now, we always start a debugging connection, even when we're not really debugging.
-          boolean enableBreakpoints = enableDebugging;
-
           monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
 
           // avg: 0.434 sec (old: 0.597)
@@ -289,7 +289,7 @@ public class BrowserManager {
               WebkitDebugTarget.getActiveTarget().navigateToUrl(
                   launch.getLaunchConfiguration(),
                   url,
-                  enableBreakpoints,
+                  true/*enableBreakpoints*/,
                   resourceResolver);
             } catch (IOException e) {
               SDBGDebugCorePlugin.logError(e);
@@ -323,23 +323,32 @@ public class BrowserManager {
                       + getProcessStreamMessage(browserOutput.toString())));
             }
 
-            connectToChromiumDebug(
-                browserExecutable.getName(),
-                launch,
-                launchConfig,
-                url,
-                monitor,
-                browserProcess,
-                timer,
-                enableBreakpoints,
-                null,
-                devToolsPortNumberHolder[0],
-                20 * 1000L/*maxStartupDelay*/,
-                browserOutput,
-                processDescription.toString(),
-                resourceResolver,
-                browserTabChooser,
-                false/*remote*/);
+            if (enableDebugging) {
+              connectToChromiumDebug(
+                  browserExecutable.getName(),
+                  launch,
+                  launchConfig,
+                  url,
+                  monitor,
+                  browserProcess,
+                  timer,
+                  true/*enableBreakpoints*/,
+                  null,
+                  devToolsPortNumberHolder[0],
+                  20 * 1000L/*maxStartupDelay*/,
+                  browserOutput,
+                  processDescription.toString(),
+                  resourceResolver,
+                  browserTabChooser,
+                  false/*remote*/);
+            } else {
+              registerProcess(
+                  launch,
+                  launchConfig,
+                  DebugPlugin.newProcess(launch, browserProcess, browserExecutable.getName()
+                      + " - run only, debugging DISABLED (" + new Date() + ")"),
+                  processDescription.toString());
+            }
           }
 
           DebugUIHelper.getHelper().activateApplication(browserExecutable, "Chrome");
@@ -408,51 +417,63 @@ public class BrowserManager {
       throws CoreException {
     monitor.worked(1);
 
-    try {
-      // avg: 383ms
-      timer.startTask("get chromium tabs");
+    // avg: 383ms
+    timer.startTask("get chromium tabs");
 
-      ChromiumTabInfo tab = getChromiumTab(
+    ChromiumTabInfo tab;
+
+    try {
+      tab = getChromiumTab(
           runtimeProcess,
           browserTabChooser,
           host,
           port,
           maxStartupDelay,
           browserOutput);
+    } catch (IOException e) {
+      SDBGDebugCorePlugin.logError(e);
+      throw new CoreException(new Status(
+          IStatus.ERROR,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "Unable to connect to Chrome at address " + (host != null ? host : "") + ":" + port
+              + "; error: " + e.getMessage(),
+          e));
+    }
 
-      monitor.worked(2);
+    monitor.worked(2);
 
-      timer.stopTask();
+    timer.stopTask();
 
-      // avg: 46ms
-      timer.startTask("open WIP connection");
+    // avg: 46ms
+    timer.startTask("open WIP connection");
 
-      if (tab == null) {
-        throw new DebugException(new Status(
-            IStatus.INFO,
-            SDBGDebugCorePlugin.PLUGIN_ID,
-            "No Chrome tab was chosen. Connection cancelled."));
-      }
+    if (tab == null) {
+      throw new DebugException(new Status(
+          IStatus.INFO,
+          SDBGDebugCorePlugin.PLUGIN_ID,
+          "No Chrome tab was chosen. Connection cancelled."));
+    }
 
-      if (tab.getWebSocketDebuggerUrl() == null) {
-        throw new DebugException(
-            new Status(
-                IStatus.ERROR,
-                SDBGDebugCorePlugin.PLUGIN_ID,
-                "Unable to connect to Chrome"
-                    + (remote
-                        ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is alresady attached to that particular Chrome tab."
-                        : "")));
-      }
+    if (tab.getWebSocketDebuggerUrl() == null) {
+      throw new DebugException(
+          new Status(
+              IStatus.ERROR,
+              SDBGDebugCorePlugin.PLUGIN_ID,
+              "Unable to connect to Chrome"
+                  + (remote
+                      ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Chrome tab."
+                      : "")));
+    }
 
-      // Even when Chrome has reported all the debuggable tabs to us, the debug server
-      // may not yet have started up. Delay a small fixed amount of time.
-      sleep(100);
+    // Even when Chrome has reported all the debuggable tabs to us, the debug server
+    // may not yet have started up. Delay a small fixed amount of time.
+    sleep(100);
 
-      if (resolver == null) {
-        resolver = createResourceResolver(launch, launchConfig.getConfig(), tab);
-      }
+    if (resolver == null) {
+      resolver = createResourceResolver(launch, launchConfig.getConfig(), tab);
+    }
 
+    try {
       WebkitConnection connection = new WebkitConnection(
           tab.getHost(),
           tab.getPort(),
@@ -471,13 +492,8 @@ public class BrowserManager {
 
       monitor.worked(1);
 
-      launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+      registerProcess(launch, launchConfig, debugTarget.getProcess(), processDescription);
       launch.addDebugTarget(debugTarget);
-      launch.addProcess(debugTarget.getProcess());
-
-      if (processDescription != null) {
-        debugTarget.getProcess().setAttribute(IProcess.ATTR_CMDLINE, processDescription);
-      }
 
       if (browserOutput != null && launchConfig.getShowLaunchOutput()) {
         browserOutput.setListener(new StreamListener() {
@@ -502,16 +518,13 @@ public class BrowserManager {
 
       return debugTarget;
     } catch (IOException e) {
-      // Clean up the error message on certain connection failures to Chrome.
-      // http://code.google.com/p/dart/issues/detail?id=4435
-      if (e.toString().indexOf("connection failed: unknown status code 500") != -1) {
-        SDBGDebugCorePlugin.logError(e);
-      }
-
+      SDBGDebugCorePlugin.logError(e);
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "Unable to connect to Chrome: " + e.getMessage(),
+          "Unable to connect to Chrome tab at address "
+              + (tab.getHost() != null ? tab.getHost() : "") + ":" + tab.getPort() + " ("
+              + tab.getWebSocketDebuggerFile() + "): " + e.getMessage(),
           e));
     }
   }
@@ -550,6 +563,31 @@ public class BrowserManager {
       try {
         String regKey = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
         String regValue = "InstallLocation";
+        file = findChromeExecutable(
+            "registry setting " + regKey + "[" + regValue + "]",
+            WinReg.readRegistry(regKey, regValue),
+            false/*fileOrDir*/);
+        if (file != null) {
+          return file;
+        }
+
+        // Try also two other locations, as described here:
+        // http://stackoverflow.com/questions/24149207/what-windows-registry-key-holds-the-path-to-the-chrome-browser-exe
+
+        // In case Chrome x86 is installed on a x64 machine:
+        regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
+        regValue = "InstallLocation";
+        file = findChromeExecutable(
+            "registry setting " + regKey + "[" + regValue + "]",
+            WinReg.readRegistry(regKey, regValue),
+            false/*fileOrDir*/);
+        if (file != null) {
+          return file;
+        }
+
+        // General fallback
+        regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe";
+        regValue = "Path";
         file = findChromeExecutable(
             "registry setting " + regKey + "[" + regValue + "]",
             WinReg.readRegistry(regKey, regValue),
@@ -719,7 +757,7 @@ public class BrowserManager {
 
   private ChromiumTabInfo getChromiumTab(Process runtimeProcess,
       IBrowserTabChooser browserTabChooser, String host, int port, long maxStartupDelay,
-      ListeningStream dartiumOutput) throws IOException, CoreException {
+      ListeningStream browserOutput) throws IOException, CoreException {
     // Give Chromium 20 seconds to start up.
     long endTime = System.currentTimeMillis() + Math.max(maxStartupDelay, 0L);
     while (true) {
@@ -729,7 +767,7 @@ public class BrowserManager {
             SDBGDebugCorePlugin.PLUGIN_ID,
             "Could not launch browser - process terminated while trying to connect. "
                 + "Try closing any running Chrome instances."
-                + getProcessStreamMessage(dartiumOutput.toString())));
+                + getProcessStreamMessage(browserOutput.toString())));
       }
 
       try {
@@ -852,6 +890,16 @@ public class BrowserManager {
     return output;
   }
 
+  private void registerProcess(ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
+      IProcess process, String processDescription) {
+    launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
+    launch.addProcess(process);
+
+    if (processDescription != null) {
+      process.setAttribute(IProcess.ATTR_CMDLINE, processDescription);
+    }
+  }
+
   private void sleep(int millis) {
     try {
       Thread.sleep(millis);
@@ -890,8 +938,7 @@ public class BrowserManager {
       }
     }
 
-    int devToolsPortNumber = DEVTOOLS_PORT_NUMBER;
-
+    int devToolsPortNumber = -1;
     if (enableDebugging) {
       devToolsPortNumber = NetUtils.findUnusedPort(DEVTOOLS_PORT_NUMBER);
 
@@ -902,9 +949,9 @@ public class BrowserManager {
             "Unable to locate an available port for the browser debugger"));
       }
 
-      devToolsPortNumberHolder[0] = devToolsPortNumber;
     }
 
+    devToolsPortNumberHolder[0] = devToolsPortNumber;
     List<String> arguments = buildArgumentsList(launchConfig, enableDebugging && url != null
         ? INITIAL_PAGE : url, devToolsPortNumber, extraArguments);
     builder.command(arguments);

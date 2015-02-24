@@ -84,9 +84,6 @@ import org.eclipse.ui.part.FileEditorInput;
 @SuppressWarnings("restriction")
 public class SDBGDebugModelPresentation implements IDebugModelPresentation,
     IInstructionPointerPresentation {
-
-//  private static final String JAVA_EDITOR_ID = "org.eclipse.jdt.internal.ui.javaeditor.JavaEditor";
-
   private static final String BREAK_ON_EXCEPTION_ANNOTAION = "org.eclipse.debug.ui.currentIPEx";
   private static final LogicalValueProvider LOGICAL_VALUE_PROVIDER = new LogicalValueProvider();
 
@@ -438,64 +435,51 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
   }
 
   /**
-   * Build the text for an {@link ISDBGValue}. This can be a long running call since we wait for the
+   * Build the text for an {@link IValue}. This can be a long running call since we wait for the
    * toString call to get back with the value.
    */
-  protected String getValueDetailText(ISDBGValue value) throws DebugException {
-    boolean isPrimitive = value.isPrimitive();
-    boolean isArray = value.isListValue();
-
-    final String valueString[] = new String[1];
-
-    if (!isPrimitive) {
-      final CountDownLatch latch = new CountDownLatch(1);
-
-      computeDetail(value, new IValueDetailListener() {
-        @Override
-        public void detailComputed(IValue value, String result) {
-          valueString[0] = result;
-          latch.countDown();
-        }
-      });
-
-      try {
-        latch.await(3, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        return null;
-      }
-
-      if (isArray) {
-        valueString[0] = "[" + valueString[0] + "]";
-      }
-
-      return valueString[0];
-    } else {
-      return value.getValueString();
-    }
-  }
-
   protected String getValueDetailText(IValue value, IPresentationContext context) {
     try {
-      String valueString = null;
+      if (value == null) {
+        return "<unknown value>";
+      }
 
-      if (value instanceof ISDBGValue) {
-        ISDBGValue sdbgValue = (ISDBGValue) value;
-        valueString = getValueDetailText(sdbgValue);
-      } else if (value != null) {
-        valueString = value.getValueString();
+      ISDBGLogicalStructureTypeExtensions lstExtensions = getLogicalStructureTypeExtensions(
+          value,
+          context);
+      if (lstExtensions != null
+          && lstExtensions.isValueDetailStringComputedByLogicalStructure(value)) {
+        value = getLogicalValue(value, context);
+      }
 
-        if (valueString == null) {
-          valueString = "<unknown value>";
+      if (!(value instanceof ISDBGValue) || !((ISDBGValue) value).isPrimitive()) {
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        final String valueString[] = new String[1];
+        computeDetail(value, new IValueDetailListener() {
+          @Override
+          public void detailComputed(IValue value, String result) {
+            valueString[0] = result;
+            latch.countDown();
+          }
+        });
+
+        try {
+          latch.await(3, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+          return null;
         }
-      }
 
-      if (valueString == null) {
-        valueString = "<unknown value>";
-      }
+        if (value instanceof ISDBGValue && ((ISDBGValue) value).isListValue()) {
+          valueString[0] = "[" + valueString[0] + "]";
+        }
 
-      return valueString;
-    } catch (DebugException e) {
-      return null;
+        return valueString[0];
+      } else {
+        return value.getValueString();
+      }
+    } catch (CoreException e) {
+      return "<unknown value>";
     }
   }
 

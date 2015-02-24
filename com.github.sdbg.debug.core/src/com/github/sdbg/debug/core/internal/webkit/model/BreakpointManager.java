@@ -301,8 +301,8 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
   public void handleGlobalObjectCleared() {
     for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
       if (!isJSBreakpoint(breakpoint)) {
-    	// This excercise is necessary so that the V8 breakpoints are removed 
-    	// and re-added later when the sourcemaps are re-parsed
+        // This excercise is necessary so that the V8 breakpoints are removed 
+        // and re-added later when the sourcemaps are re-parsed
         breakpointRemoved(breakpoint, null/*delta*/);
         breakpointAdded(breakpoint);
       }
@@ -424,7 +424,9 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
         } catch (CoreException e) {
         }
 
-        break;
+        if (path != null) {
+          break;
+        }
       }
     }
 

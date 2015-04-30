@@ -47,17 +47,16 @@ public class SDBGBreakpointAdapterFactory implements IAdapterFactory {
     if (adaptableObject instanceof ITextEditor) {
       ITextEditor editorPart = (ITextEditor) adaptableObject;
 
-      IResource resource = (IResource) editorPart.getEditorInput().getAdapter(IResource.class);
+      IEditorInput input = editorPart.getEditorInput();
+      if (input != null) {
+        IResource resource = (IResource) input.getAdapter(IResource.class);
+        if (resource != null) {
+          String name = resource.getName().toLowerCase();
 
-      if (resource != null) {
-        String name = resource.getName().toLowerCase();
-
-        if (DartCore.isHtmlLikeFileName(name) || DartCore.isJSLikeFileName(name)) {
-          return new SDBGBreakpointAdapter();
-        }
-      } else {
-        IEditorInput input = editorPart.getEditorInput();
-        if (input instanceof FileStoreEditorInput) {
+          if (DartCore.isHtmlLikeFileName(name) || DartCore.isJSLikeFileName(name)) {
+            return new SDBGBreakpointAdapter();
+          }
+        } else if (input instanceof FileStoreEditorInput) {
           String path = ((FileStoreEditorInput) input).getURI().getPath();
           if (DartCore.isHtmlLikeFileName(path) || DartCore.isJSLikeFileName(path)) {
             return new SDBGBreakpointAdapter();

@@ -3,7 +3,7 @@
 <schema targetNamespace="com.github.sdbg.debug.ui" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="com.github.sdbg.debug.ui" id="sdbgLauncher" name="SDBG Launcher"/>
+         <meta.schema plugin="com.github.sdbg.debug.ui" id="launchChrome" name="Launch Chrome"/>
       </appinfo>
       <documentation>
          Launch SDBG
@@ -55,12 +55,13 @@
                   
                </documentation>
                <appinfo>
-                  <meta.attribute kind="java" basedOn="com.github.sdbg.ui.ISDBGLauncher:"/>
+                  <meta.attribute kind="java" basedOn="com.github.sdbg.ui.launchers.IChromeLaunchShortcutExt:"/>
                </appinfo>
             </annotation>
          </attribute>
       </complexType>
    </element>
+
 
    <annotation>
       <appinfo>
@@ -70,4 +71,8 @@
          To declare source lookup extensions:
       </documentation>
    </annotation>
+
+
+
+
 </schema>

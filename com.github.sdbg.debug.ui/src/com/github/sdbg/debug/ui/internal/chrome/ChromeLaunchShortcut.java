@@ -69,6 +69,10 @@ public class ChromeLaunchShortcut extends AbstractLaunchShortcut implements ILau
 
   @Override
   protected void launch(IResource resource, String mode) {
+    launch(resource, mode, null);
+  }
+
+  public void launch(IResource resource, String mode, String url) {
     if (resource == null) {
       return;
     }
@@ -100,6 +104,9 @@ public class ChromeLaunchShortcut extends AbstractLaunchShortcut implements ILau
 
       launchWrapper.setApplicationName(resource.getFullPath().toString());
       launchWrapper.setProjectName(resource.getProject().getName());
+      if (url != null) {
+        launchWrapper.setUrl(url);
+      }
       launchConfig.setMappedResources(new IResource[] {resource});
 
       try {

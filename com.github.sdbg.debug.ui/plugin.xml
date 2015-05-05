@@ -2,6 +2,8 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension-point id="sourcePresentation" name="Source Presentation" schema="schema/sourcePresentation.exsd"/>
+   <extension-point id="launchChrome" name="Launch Chome" schema="schema/launchChrome.exsd"/>
+
     <extension
          point="org.eclipse.core.expressions.propertyTesters">
       <propertyTester
@@ -1077,6 +1079,15 @@
             <bundle name="com.github.sdbg.debug.core"/>
       </component>
    </extension>
+   
+   <!-- Used to launch chrome from another plugin like GWT -->
+   <extension
+         point="com.github.sdbg.debug.ui.launchChrome">
+      <extensions
+            class="com.github.sdbg.ui.launchers.ChromeLaunchShortcutExt">
+      </extensions>
+   </extension>
+
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"

@@ -47,11 +47,11 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
 
   private static boolean dialogOpen = false;
 
+  private List<AgentData> agents = new ArrayList<AgentData>();
+
   static void install() {
     SDBGDebugCorePlugin.getPlugin().setUserAgentManager(new SDBGDebugUserAgentManager());
   }
-
-  private List<AgentData> agents = new ArrayList<AgentData>();
 
   private SDBGDebugUserAgentManager() {
     loadSettings();
@@ -65,18 +65,26 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
     }
 
     // check if it's an existing agent
-    if (isKnownAgent(remoteAddress.getHostAddress(), agentName)) {
+    if (isKnownAgent(remoteAddress, agentName)) {
       return agentAllowed(remoteAddress, agentName);
     }
 
     // ask the user
-    if (dialogOpen) {
+    if (false) {
       return false;
     }
 
     dialogOpen = true;
     boolean allowConnection = askUserAllows(remoteAddress, agentName);
 
+    addAgentData(remoteAddress, agentName, allowConnection);
+
+    //DartCore.allowConnectionDialogOpen = false;
+    return allowConnection;
+
+  }
+
+  private void addAgentData(InetAddress remoteAddress, String agentName, boolean allowConnection) {
     AgentData data = new AgentData();
 
     data.address = remoteAddress.getHostAddress();
@@ -84,10 +92,6 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
     data.allowed = allowConnection;
     agents.add(data);
     saveSettings();
-
-    dialogOpen = false;
-    return allowConnection;
-
   }
 
   private boolean agentAllowed(InetAddress remoteAddress, String agent) {
@@ -138,10 +142,19 @@ public class SDBGDebugUserAgentManager implements IUserAgentManager {
     return SDBGDebugUIPlugin.getDefault().getStateLocation().append("agentdata.txt").toFile();
   }
 
-  private boolean isKnownAgent(String address, String agent) {
+  private boolean isKnownAgent(InetAddress remoteAddress, String agent) {
+    String remoteAddressString = remoteAddress.getHostAddress();
     for (AgentData data : agents) {
-      if (address.equals(data.address) && agent.equals(data.agentName)) {
+      if (remoteAddressString.equals(data.address) && agent.equals(data.agentName)) {
         return true;
+      }
+    }
+    if (agent.equals("com.google.dart.editor.mobile.connection.service")) {
+      for (AgentData data : agents) {
+        if (remoteAddressString.equals(data.address)) {
+          addAgentData(remoteAddress, agent, true);
+          return true;
+        }
       }
     }
     return false;

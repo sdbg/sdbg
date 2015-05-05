@@ -14,6 +14,10 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,6 +27,21 @@ import org.json.JSONObject;
  * @see http://code.google.com/chrome/devtools/docs/protocol/tot/runtime.html#type-RemoteObject
  */
 public class WebkitRemoteObject {
+  String className;
+
+  private String description;
+
+  private String objectId;
+
+  private String subtype;
+
+  private String type;
+
+  private String value;
+
+  private Object rawValue;
+
+  private int listLength = -1;
 
   public static WebkitRemoteObject createFrom(JSONObject params) throws JSONException {
     WebkitRemoteObject remoteObject = new WebkitRemoteObject();
@@ -35,6 +54,7 @@ public class WebkitRemoteObject {
 
     if (params.has("value")) {
       Object obj = params.get("value");
+      remoteObject.rawValue = obj;
       remoteObject.value = String.valueOf(obj);
     }
 
@@ -51,18 +71,6 @@ public class WebkitRemoteObject {
     return obj;
   }
 
-  String className;
-
-  private String description;
-
-  private String objectId;
-
-  private String subtype;
-
-  private String type;
-
-  private String value;
-
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof WebkitRemoteObject) {
@@ -73,23 +81,7 @@ public class WebkitRemoteObject {
   }
 
   public String getClassName() {
-    if (className != null) {
-      return className;
-    }
-
-    if (isString()) {
-      return "String";
-    }
-
-    if (isBoolean()) {
-      return "bool";
-    }
-
-    if (isNumber()) {
-      return "num";
-    }
-
-    return null;
+    return className;
   }
 
   public String getDescription() {
@@ -99,34 +91,49 @@ public class WebkitRemoteObject {
   /**
    * Return the length of the list if this object is a list.
    * 
+   * @param webkitConnection
    * @return
    */
-  public int getListLength() {
-    // TODO(devoncarew): write a test to notify us when this convention changes
-
-    // Since there is no direct way to obtain the length of an array, use the description from
-    // Webkit to derive the array length. value.getDescription() == "Array[x]"
-
-    String str = getDescription();
-
-    int startIndex = str.indexOf('[');
-    int endIndex = str.indexOf(']', startIndex);
-
-    if (startIndex != -1 && endIndex != -1) {
-      String val = str.substring(startIndex + 1, endIndex);
+  public int getListLength(WebkitConnection connection) {
+    if (listLength == -1) {
+      final CountDownLatch latch = new CountDownLatch(1);
 
       try {
-        return Integer.parseInt(val);
-      } catch (NumberFormatException nfe) {
+        connection.getRuntime().callListLength(objectId, new WebkitCallback<Integer>() {
+          @Override
+          public void handleResult(WebkitResult<Integer> result) {
+            if (result.isError()) {
+              listLength = 0;
+            } else if (result.getResult() == null) {
+              listLength = 0;
+            } else {
+              listLength = result.getResult().intValue();
+            }
+
+            latch.countDown();
+          }
+        });
+      } catch (IOException e) {
+        listLength = 0;
+        latch.countDown();
+      }
+
+      try {
+        latch.await(3, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
 
       }
     }
 
-    return 0;
+    return listLength;
   }
 
   public String getObjectId() {
     return objectId;
+  }
+
+  public Object getRawValue() {
+    return rawValue;
   }
 
   /**
@@ -167,7 +174,7 @@ public class WebkitRemoteObject {
   }
 
   public boolean isDartFunction() {
-    return "[Dart Function]".equals(className);
+    return "<Dart Method>".equals(className);
   }
 
   public boolean isFunction() {
@@ -194,7 +201,7 @@ public class WebkitRemoteObject {
   }
 
   public boolean isNull() {
-    if (isObject() && "null".equals(subtype)) {
+    if (isObject() && "null".equals(value)) {
       return true;
     } else {
       return false;
@@ -234,4 +241,7 @@ public class WebkitRemoteObject {
     }
   }
 
+  void setDescription(String value) {
+    description = value;
+  }
 }

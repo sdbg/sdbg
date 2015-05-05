@@ -20,98 +20,38 @@ import org.eclipse.debug.core.model.IVariable;
 import org.eclipse.debug.internal.ui.model.elements.VariableLabelProvider;
 import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
 import org.eclipse.jface.viewers.TreePath;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.FontData;
-import org.eclipse.swt.graphics.RGB;
-
-import com.github.sdbg.debug.core.model.ISDBGValue;
-import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 /**
- * A rich label provider for debug variables and values.
+ * Necessary or else the value type appears with its raw name in the Variables view when it is set
+ * to show columns.
  */
 @SuppressWarnings("restriction")
 public class SDBGVariableLabelProvider extends VariableLabelProvider {
-  private final static boolean TWEAK_DARTIUM_MAP_KEY_NAMES = true;
+  private static SDBGDebugModelPresentation PRESENTATION = new SDBGDebugModelPresentation();
 
   @Override
-  protected FontData getFontData(TreePath elementPath, IPresentationContext presentationContext,
-      String columnId) throws CoreException {
-    FontData fontData = super.getFontData(elementPath, presentationContext, columnId);
-
-    // Show static variables in italics.
-    if (columnId != null && columnId.endsWith("_NAME")) {
-      if (elementPath.getLastSegment() instanceof ISDBGVariable && fontData != null) {
-        ISDBGVariable variable = (ISDBGVariable) elementPath.getLastSegment();
-
-        if (variable.isStatic()) {
-          fontData = new FontData(fontData.getName(), fontData.getHeight(), SWT.ITALIC);
-        }
-      }
+  protected String getLabel(TreePath elementPath, IPresentationContext context, String columnId)
+      throws CoreException {
+    if (columnId == null) {
+      return PRESENTATION.getText(elementPath.getLastSegment(), context);
+    } else {
+      return super.getLabel(elementPath, context, columnId);
     }
-
-    return fontData;
-  }
-
-  @Override
-  protected RGB getForeground(TreePath elementPath, IPresentationContext presentationContext,
-      String columnId) throws CoreException {
-    RGB rgb = super.getForeground(elementPath, presentationContext, columnId);
-
-    // Dartium sends us map keys as if they were object properties - we tweak their display a bit.
-    if (TWEAK_DARTIUM_MAP_KEY_NAMES) {
-      if (columnId != null && columnId.endsWith("_NAME")) {
-        if (elementPath.getLastSegment() instanceof ISDBGVariable) {
-          ISDBGVariable variable = (ISDBGVariable) elementPath.getLastSegment();
-
-          if (variable.getName().startsWith(":")) {
-            rgb = new RGB(0x66, 0x66, 0x66);
-          }
-        }
-      }
-    }
-
-    return rgb;
   }
 
   @Override
   protected String getValueText(IVariable variable, IValue value, IPresentationContext context)
       throws CoreException {
-    if (value instanceof ISDBGValue) {
-      ISDBGValue dartiumValue = (ISDBGValue) value;
-
-      String str = dartiumValue.getDisplayString();
-
-      if (str == null) {
-        str = "";
-      }
-
-      if (str.length() > 0 && dartiumValue.getId() != null) {
-        str += " [id=" + dartiumValue.getId() + "]";
-      }
-
-      return str;
-    } else {
-      return super.getValueText(variable, value, context);
-    }
+    // NOTE: Due to the loose coupling between ExpressionLabelProvider and ExpressionContentProvider, 
+    // the value passed here is the raw one - not the logical one - even when there is a Logical Structure Type in-place!
+    //
+    // To avoid displaying the un-encoded JavaScript type for java classes, we use the logical structure types' cache from the content providers
+    return escapeSpecialChars(PRESENTATION.getValueText(value, context));
   }
 
   @Override
   protected String getVariableName(IVariable variable, IPresentationContext context)
       throws CoreException {
-    if (variable instanceof ISDBGVariable) {
-      ISDBGVariable dartiumVariable = (ISDBGVariable) variable;
-
-      // Dartium sends us map keys as if they were object properties - we tweak their display a bit.
-      if (TWEAK_DARTIUM_MAP_KEY_NAMES) {
-        if (variable.getName().startsWith(":")) {
-          return "[" + dartiumVariable.getDisplayName().substring(1) + "]";
-        }
-      }
-
-      return dartiumVariable.getDisplayName();
-    } else {
-      return super.getVariableName(variable, context);
-    }
+    return PRESENTATION.getVariableName(variable, context);
   }
 }

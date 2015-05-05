@@ -1,5 +1,7 @@
 package com.github.sdbg.debug.core.internal.util;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -44,7 +46,7 @@ public class URLStorage extends PlatformObject implements IStorage {
     try {
       return url.openStream();
     } catch (IOException e) {
-      throw new CoreException(null); // FIXME
+      throw SDBGDebugCorePlugin.wrapError(e);
     }
   }
 

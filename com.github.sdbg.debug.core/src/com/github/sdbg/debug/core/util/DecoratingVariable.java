@@ -12,52 +12,43 @@
  * the License.
  */
 
-package com.github.sdbg.debug.core.internal.logical;
-
-import com.github.sdbg.debug.core.model.ISDBGVariable;
+package com.github.sdbg.debug.core.util;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.DebugElement;
 import org.eclipse.debug.core.model.IValue;
+import org.eclipse.debug.core.model.IVariable;
 
 /**
  * A logical debug variable - used to display implementation formats in more user friendly
  * structures.
  */
-class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
-  private final String name;
-  private final IValue value;
+public class DecoratingVariable extends DebugElement implements IVariable {
+  private IVariable proxyVariable;
 
-  public LogicalDebugVariable(String name, IValue value) {
-    super(value.getDebugTarget());
-
-    this.name = name;
-    this.value = value;
-  }
-
-  @Override
-  public String getDisplayName() throws DebugException {
-    return getName();
+  public DecoratingVariable(IVariable proxyVariable) {
+    super(proxyVariable.getDebugTarget());
+    this.proxyVariable = proxyVariable;
   }
 
   @Override
   public String getModelIdentifier() {
-    return value.getModelIdentifier();
+    return proxyVariable.getModelIdentifier();
   }
 
   @Override
   public String getName() throws DebugException {
-    return name;
+    return proxyVariable.getName();
   }
 
   @Override
   public String getReferenceTypeName() throws DebugException {
-    return value.getReferenceTypeName();
+    return proxyVariable.getReferenceTypeName();
   }
 
   @Override
   public IValue getValue() throws DebugException {
-    return value;
+    return proxyVariable.getValue();
   }
 
   @Override
@@ -66,38 +57,11 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
   }
 
   @Override
-  public boolean isLibraryObject() {
-    return false;
-  }
-
-  @Override
-  public boolean isLocal() {
-    return false;
-  }
-
-  @Override
-  public boolean isStatic() {
-    return false;
-  }
-
-  @Override
-  public boolean isThisObject() {
-    return false;
-  }
-
-  @Override
-  public boolean isThrownException() {
-    return false;
-  }
-
-  @Override
   public void setValue(IValue value) throws DebugException {
-
   }
 
   @Override
   public void setValue(String expression) throws DebugException {
-
   }
 
   @Override
@@ -114,5 +78,4 @@ class LogicalDebugVariable extends DebugElement implements ISDBGVariable {
   public boolean verifyValue(String expression) throws DebugException {
     return false;
   }
-
 }

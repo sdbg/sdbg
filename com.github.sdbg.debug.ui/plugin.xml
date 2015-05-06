@@ -997,6 +997,15 @@
             <bundle name="com.github.sdbg.debug.core"/>
       </component>
    </extension>
+   
+   <!-- GWT Plugin debug launching -->
+   <extension
+         point="com.google.gdt.eclipse.core.debugLauncher">
+      <extensions
+            class="com.github.sdbg.debug.DebugLaunch">
+      </extensions>
+   </extension>
+   
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"

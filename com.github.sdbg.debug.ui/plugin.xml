@@ -587,7 +587,7 @@
             id="com.github.sdbg.debug.webInspectorView"
             name="Web Inspector"
             restorable="true"
-            category="com.github.sdbg.ui.dart"
+            category="com.github.sdbg.ui"
             icon="icons/obj16/insp_sbook.gif">
       </view>
    </extension -->
@@ -855,20 +855,30 @@
       </specification>
    </extension>
 
+<!--
    <extension
           point="org.eclipse.ui.views">
       <view
-            category="com.github.sdbg.ui.dart"
+            category="com.github.sdbg.ui"
             class="com.github.sdbg.debug.ui.internal.objectinspector.ObjectInspectorView"
             icon="icons/obj16/value_show.gif"
-            id="com.github.sdbg.debug.objectInspectorView"
+            id="com.github.sdbg.debug.ui.objectInspectorView"
             name="Inspector"
             allowMultiple="true">
       </view>
+      <view
+            category="com.github.sdbg.ui"
+            class="com.github.sdbg.debug.ui.internal.view.DebuggerView"
+            icon="icons/obj16/debug_exc.gif"
+            id="com.github.sdbg.debug.ui.debuggerView"
+            name="Debugger"
+            allowMultiple="false">
+      </view>
    </extension>
+-->
 
    <!-- debugger variables object contributions -->
-   
+<!--   
    <extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.inspectLibraryContribution"
@@ -968,6 +978,76 @@
             <objectState name="canInspectObject" value="true"></objectState>
          </visibility>
       </objectContribution>      
+   </extension>
+-->
+
+   <extension
+         point="org.eclipse.ui.viewActions">
+      <viewContribution
+            id="variableViewActions"
+            targetID="org.eclipse.debug.ui.VariableView">
+         <menu
+               id="com.github.sdbg.debug.ui.internal.variableview.menu"
+               label="SDBG">
+            <groupMarker name="sdbg"/>
+         </menu>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.FunctionVariablesFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.FunctionVariablesFilterAction"
+               icon="icons/obj16/function_obj.gif"
+               label="Show Function Variables"
+               menubarPath="com.github.sdbg.debug.ui.internal.variableview.menu/sdbg"
+               style="toggle"
+               state="true"
+               tooltip="Shows function variables">
+         </action>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.PrototypeVariablesFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.PrototypeVariablesFilterAction"
+               label="Show Prototype Variables"
+               menubarPath="com.github.sdbg.debug.ui.internal.variableview.menu/sdbg"
+               style="toggle"
+               state="true"
+               tooltip="Shows the hidden __proto__ variables">
+         </action>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.GlobalVariablesFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.GlobalVariablesFilterAction"
+               icon="icons/obj16/object_static.png"
+               label="Show Global Objects"
+               menubarPath="com.github.sdbg.debug.ui.internal.variableview.menu/sdbg"
+               style="toggle"
+               tooltip="Shows the global objects">
+         </action>
+      </viewContribution>
+      <viewContribution
+            id="expressionViewActions"
+            targetID="org.eclipse.debug.ui.ExpressionView">
+         <menu
+               id="com.github.sdbg.debug.ui.internal.expressionview.menu"
+               label="SDBG">
+            <groupMarker name="sdbg"/>
+         </menu>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.FunctionExpressionsFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.FunctionExpressionsFilterAction"
+               icon="icons/obj16/function_obj.gif"
+               label="Show Function Variables"
+               menubarPath="com.github.sdbg.debug.ui.internal.expressionview.menu/sdbg"
+               style="toggle"
+               state="true"
+               tooltip="Shows function variables">
+         </action>
+         <action
+               class="com.github.sdbg.debug.ui.internal.actions.PrototypeVariablesFilterAction"
+               id="com.github.sdbg.debug.ui.internal.actions.PrototypeExpressionsFilterAction"
+               label="Show Prototype Variables"
+               menubarPath="com.github.sdbg.debug.ui.internal.expressionview.menu/sdbg"
+               style="toggle"
+               state="true"
+               tooltip="Shows the hidden __proto__ variables">
+         </action>
+      </viewContribution>
    </extension>
    <extension
          point="com.github.sdbg.debug.core.uiBrowserTabChooser">

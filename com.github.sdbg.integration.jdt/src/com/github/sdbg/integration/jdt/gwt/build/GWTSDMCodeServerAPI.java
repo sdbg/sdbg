@@ -1,4 +1,4 @@
-package com.github.sdbg.integration.jdt.gwt;
+package com.github.sdbg.integration.jdt.gwt.build;
 
 import com.github.sdbg.utilities.Streams;
 

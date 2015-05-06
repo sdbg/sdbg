@@ -1,8 +1,8 @@
-package com.github.sdbg.integration.jdt.gwt;
+package com.github.sdbg.integration.jdt.gwt.build;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.integration.jdt.SDBGJDTIntegrationPlugin;
-import com.github.sdbg.integration.jdt.gwt.GWTSDMProperties.HotCodeReplacePolicy;
+import com.github.sdbg.integration.jdt.gwt.build.GWTSDMProperties.HotCodeReplacePolicy;
 
 import java.io.IOException;
 import java.net.ConnectException;

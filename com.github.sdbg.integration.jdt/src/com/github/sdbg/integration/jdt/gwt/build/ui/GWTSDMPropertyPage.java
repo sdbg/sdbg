@@ -1,7 +1,7 @@
-package com.github.sdbg.integration.jdt.gwt.ui;
+package com.github.sdbg.integration.jdt.gwt.build.ui;
 
-import com.github.sdbg.integration.jdt.gwt.GWTSDMProperties;
-import com.github.sdbg.integration.jdt.gwt.GWTSDMProperties.HotCodeReplacePolicy;
+import com.github.sdbg.integration.jdt.gwt.build.GWTSDMProperties;
+import com.github.sdbg.integration.jdt.gwt.build.GWTSDMProperties.HotCodeReplacePolicy;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;

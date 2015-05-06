@@ -14,70 +14,73 @@
 
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
+import com.github.sdbg.debug.core.model.ISDBGValue;
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.SelectionUtil;
+import com.github.sdbg.ui.instrumentation.UIInstrumentation;
+import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
+
+import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.model.IValue;
+import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.ui.IObjectActionDelegate;
+import org.eclipse.ui.IWorkbenchPart;
 
 /**
  * Open an object inspector on the given object's class.
  */
-public/*&&&*/abstract class OpenClassInspectorAction implements IObjectActionDelegate {
-//&&& PRobably not really needed  
-//  private ISelection selection;
-//
-//  public OpenClassInspectorAction() {
-//
-//  }
-//
-//  @Override
-//  public void run(IAction action) {
-//    if (selection != null) {
-//      UIInstrumentationBuilder instrumentation = UIInstrumentation.builder(getClass());
-//
-//      Object obj = SelectionUtil.getSingleElement(selection);
-//
-//      try {
-//        instrumentation.record(selection);
-//
-//        if (obj instanceof IVariable) {
-//          IVariable variable = (IVariable) obj;
-//
-//          obj = variable.getValue();
-//        }
-//
-//        if (obj instanceof DartiumDebugValue) {
-//          DartiumDebugValue value = (DartiumDebugValue) obj;
-//
-//          IValue classValue = value.getClassValue();
-//
-//          if (classValue != null) {
-//            ObjectInspectorView.inspect(classValue);
-//          }
-//        } else if (obj instanceof ServerDebugValue) {
-//          ServerDebugValue value = (ServerDebugValue) obj;
-//
-//          IValue classValue = value.getClassValue();
-//
-//          if (classValue != null) {
-//            ObjectInspectorView.inspect(classValue);
-//          }
-//        }
-//
-//        instrumentation.metric("Inspect", "Completed");
-//      } catch (DebugException e) {
-//        DartDebugUIPlugin.logError(e);
-//      } finally {
-//        instrumentation.log();
-//      }
-//    }
-//  }
-//
-//  @Override
-//  public void selectionChanged(IAction action, ISelection selection) {
-//    this.selection = selection;
-//  }
-//
-//  @Override
-//  public void setActivePart(IAction action, IWorkbenchPart targetPart) {
-//
-//  }
-//
+public class OpenClassInspectorAction implements IObjectActionDelegate {
+  private ISelection selection;
+
+  public OpenClassInspectorAction() {
+
+  }
+
+  @Override
+  public void run(IAction action) {
+    if (selection != null) {
+      UIInstrumentationBuilder instrumentation = UIInstrumentation.builder(getClass());
+
+      Object obj = SelectionUtil.getSingleElement(selection);
+
+      try {
+        instrumentation.record(selection);
+
+        if (obj instanceof IVariable) {
+          IVariable variable = (IVariable) obj;
+
+          obj = variable.getValue();
+        }
+
+        if (obj instanceof ISDBGValue) {
+          ISDBGValue value = (ISDBGValue) obj;
+
+          IValue classValue = null; // &&& value.getClassValue();
+
+          if (classValue != null) {
+            ObjectInspectorView.inspect(classValue);
+          }
+        }
+
+        instrumentation.metric("Inspect", "Completed");
+      } catch (DebugException e) {
+        SDBGDebugUIPlugin.logError(e);
+      } finally {
+        instrumentation.log();
+      }
+    }
+  }
+
+  @Override
+  public void selectionChanged(IAction action, ISelection selection) {
+    this.selection = selection;
+  }
+
+  @Override
+  public void setActivePart(IAction action, IWorkbenchPart targetPart) {
+
+  }
+
 }

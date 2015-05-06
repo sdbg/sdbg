@@ -299,8 +299,14 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
 
   @Override
   public void handleGlobalObjectCleared() {
-    // TODO: Breakpoints' cleanup code should be present here?!
-    trace("Global object cleared");
+    for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+      if (!isJSBreakpoint(breakpoint)) {
+        // This excercise is necessary so that the V8 breakpoints are removed 
+        // and re-added later when the sourcemaps are re-parsed
+        breakpointRemoved(breakpoint, null/*delta*/);
+        breakpointAdded(breakpoint);
+      }
+    }
   }
 
   @Override
@@ -418,7 +424,9 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
         } catch (CoreException e) {
         }
 
-        break;
+        if (path != null) {
+          break;
+        }
       }
     }
 

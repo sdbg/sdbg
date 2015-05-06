@@ -19,6 +19,7 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScope;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,8 +34,18 @@ import org.eclipse.debug.core.model.IVariable;
  */
 class VariableCollector {
 
+  private WebkitDebugTarget target;
+
+  private WebkitDebugVariable parentVariable;
+
+  private CountDownLatch latch;
+
+  private List<IVariable> variables = new ArrayList<IVariable>();
+
+  private List<WebkitPropertyDescriptor> webkitProperties = new ArrayList<WebkitPropertyDescriptor>();
+
   public static VariableCollector createCollector(WebkitDebugTarget target,
-      WebkitDebugVariable variable, List<WebkitRemoteObject> remoteObjects) {
+      final WebkitDebugVariable variable, List<WebkitRemoteObject> remoteObjects) {
     final VariableCollector collector = new VariableCollector(
         target,
         remoteObjects.size(),
@@ -45,14 +56,18 @@ class VariableCollector {
         target.getConnection().getRuntime().getProperties(
             obj,
             true,
+            false,
             new WebkitCallback<WebkitPropertyDescriptor[]>() {
               @Override
               public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
                 try {
-                  collector.collectFields(result, !obj.isList(), !obj.isList(), false);
+                  collector.collectFields(
+                      result,
+                      !obj.isList(),
+                      variable != null && variable.isScope() && "global".equals(variable.getName()),
+                      variable != null && variable.isScope() && "local".equals(variable.getName()));
                 } catch (Throwable t) {
                   SDBGDebugCorePlugin.logError(t);
-
                   collector.worked();
                 }
               }
@@ -68,43 +83,48 @@ class VariableCollector {
   }
 
   public static VariableCollector createCollector(WebkitDebugTarget target,
-      WebkitRemoteObject thisObject, List<WebkitRemoteObject> remoteObjects,
-      WebkitRemoteObject libraryObject, WebkitRemoteObject exception) {
-    final VariableCollector collector = new VariableCollector(target, remoteObjects.size());
-
-    if (exception != null) {
-      collector.createExceptionVariable(exception);
-    }
-
-//    if (libraryObject != null) {
-//      collector.createLibraryVariable(libraryObject);
-//    }
+      WebkitRemoteObject thisObject, WebkitRemoteObject exception, boolean flattenLocalScope,
+      WebkitScope... scopes) {
+    final VariableCollector collector = new VariableCollector(target, flattenLocalScope ? 1 : 0);
 
     if (thisObject != null) {
       collector.createThisVariable(thisObject);
     }
 
-    for (final WebkitRemoteObject obj : remoteObjects) {
-      try {
-        target.getConnection().getRuntime().getProperties(
-            obj,
-            true,
-            new WebkitCallback<WebkitPropertyDescriptor[]>() {
-              @Override
-              public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
-                try {
-                  collector.collectFields(result, false, !obj.isList(), true);
-                } catch (Throwable t) {
-                  SDBGDebugCorePlugin.logError(t);
+    if (exception != null) {
+      collector.createExceptionVariable(exception);
+    }
 
-                  collector.worked();
-                }
-              }
-            });
-      } catch (Throwable e) {
-        SDBGDebugCorePlugin.logError(e);
+    if (flattenLocalScope) {
+      for (WebkitScope scope : scopes) {
+        if (scope.isLocal()) {
+          try {
+            target.getConnection().getRuntime().getProperties(
+                scope.getObject(),
+                true,
+                false,
+                new WebkitCallback<WebkitPropertyDescriptor[]>() {
+                  @Override
+                  public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
+                    try {
+                      collector.collectFields(result, true, false, true);
+                    } catch (Throwable t) {
+                      SDBGDebugCorePlugin.logError(t);
+                      collector.worked();
+                    }
+                  }
+                });
+          } catch (Throwable e) {
+            SDBGDebugCorePlugin.logError(e);
+            collector.worked();
+          }
+        }
+      }
+    }
 
-        collector.worked();
+    for (WebkitScope scope : scopes) {
+      if (!flattenLocalScope || !scope.isLocal()) {
+        collector.createScopeVariable(scope.getObject(), scope.getType());
       }
     }
 
@@ -119,16 +139,10 @@ class VariableCollector {
     return new VariableCollector(target, variables);
   }
 
-  private WebkitDebugTarget target;
-  private WebkitDebugVariable parentVariable;
-
-  private CountDownLatch latch;
-  private List<IVariable> variables = new ArrayList<IVariable>();
-  private List<WebkitPropertyDescriptor> webkitProperties = new ArrayList<WebkitPropertyDescriptor>();
-
   public VariableCollector(WebkitDebugTarget target, List<IVariable> variables) {
     this.target = target;
     this.variables.addAll(variables);
+    this.latch = new CountDownLatch(0);
   }
 
   private VariableCollector(WebkitDebugTarget target, int work) {
@@ -138,8 +152,7 @@ class VariableCollector {
   private VariableCollector(WebkitDebugTarget target, int work, WebkitDebugVariable parentVariable) {
     this.target = target;
     this.parentVariable = parentVariable;
-
-    latch = new CountDownLatch(work);
+    this.latch = new CountDownLatch(work);
   }
 
   public IVariable[] getVariables() throws InterruptedException {
@@ -155,9 +168,7 @@ class VariableCollector {
   }
 
   private void collectFields(WebkitResult<WebkitPropertyDescriptor[]> results, boolean shouldSort,
-      boolean collectStatics, boolean isLocal) {
-    boolean gettingStaticFields = false;
-
+      boolean isStatic, boolean isLocal) {
     if (!results.isError()) {
       WebkitPropertyDescriptor[] properties = results.getResult();
 
@@ -168,7 +179,7 @@ class VariableCollector {
       webkitProperties = Arrays.asList(properties);
 
       for (WebkitPropertyDescriptor descriptor : properties) {
-        if (descriptor.isEnumerable()) {
+        if (descriptor.isEnumerable() || "__proto__".equals(descriptor.getName())) {
           if (!shouldFilter(descriptor)) {
             WebkitDebugVariable variable = new WebkitDebugVariable(target, descriptor);
 
@@ -176,22 +187,15 @@ class VariableCollector {
               variable.setParent(parentVariable);
             }
 
+            variable.setIsStatic(isStatic);
+            variable.setIsLocal(isLocal);
             variables.add(variable);
           }
-        } else {
-          // Static fields are now shown using the object inspector (Inspect Type...).
-//          if (parentVariable != null && collectStatics) {
-//            if (WebkitPropertyDescriptor.STATIC_FIELDS.equals(descriptor.getName())) {
-//              gettingStaticFields = collectStaticFields(descriptor.getValue(), latch);
-//            }
-//          }
         }
       }
     }
 
-    if (!gettingStaticFields) {
-      latch.countDown();
-    }
+    latch.countDown();
   }
 
   @SuppressWarnings("unused")
@@ -200,6 +204,7 @@ class VariableCollector {
       target.getConnection().getRuntime().getProperties(
           classInfo,
           true,
+          false,
           new WebkitCallback<WebkitPropertyDescriptor[]>() {
             @Override
             public void handleResult(WebkitResult<WebkitPropertyDescriptor[]> result) {
@@ -252,6 +257,14 @@ class VariableCollector {
 //    variable.setIsLibraryObject(true);
 //    variables.add(variable);
 //  }
+
+  private void createScopeVariable(WebkitRemoteObject object, String name) {
+    WebkitDebugVariable variable = new WebkitDebugVariable(
+        target,
+        WebkitPropertyDescriptor.createObjectDescriptor(object, name),
+        true);
+    variables.add(variable);
+  }
 
   private void createThisVariable(WebkitRemoteObject thisObject) {
     variables.add(new WebkitDebugVariable(target, WebkitPropertyDescriptor.createObjectDescriptor(

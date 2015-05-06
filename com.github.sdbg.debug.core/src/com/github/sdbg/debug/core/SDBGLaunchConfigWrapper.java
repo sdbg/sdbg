@@ -209,6 +209,10 @@ public class SDBGLaunchConfigWrapper {
    * @return the DartProject that contains the application to run
    */
   public IProject getProject() {
+    if (launchConfig == null) {
+      return null;
+    }
+
     if (getShouldLaunchFile()) {
       IResource resource = getApplicationResource();
 

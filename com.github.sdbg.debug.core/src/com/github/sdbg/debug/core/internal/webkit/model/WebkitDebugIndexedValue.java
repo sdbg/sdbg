@@ -14,18 +14,20 @@
 
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
+import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IIndexedValue;
 import org.eclipse.debug.core.model.IVariable;
-
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 
 /**
  * This subclass of WebkitDebugValue is used specifically for array types. The Eclipse debugging
@@ -39,34 +41,6 @@ public class WebkitDebugIndexedValue extends WebkitDebugValue implements IIndexe
     super(target, variable, value);
   }
 
-  private WebkitRemoteObject getIndexAt(WebkitRemoteObject listObject, int offset)
-      throws IOException {
-    final WebkitRemoteObject[] results = new WebkitRemoteObject[1];
-
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    getConnection().getRuntime().callFunctionOn(
-        listObject.getObjectId(),
-        "function(){return this[" + offset + "];}",
-        null,
-        false,
-        new WebkitCallback<WebkitRemoteObject>() {
-          @Override
-          public void handleResult(WebkitResult<WebkitRemoteObject> result) {
-            results[0] = result.getResult();
-            latch.countDown();
-          }
-        });
-
-    try {
-      latch.await(3, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      return null;
-    }
-
-    return results[0];
-  }
-
   @Override
   public int getInitialOffset() {
     return 0;
@@ -74,7 +48,7 @@ public class WebkitDebugIndexedValue extends WebkitDebugValue implements IIndexe
 
   @Override
   public int getSize() throws DebugException {
-    return value.getListLength();
+    return value.getListLength(getTarget().getConnection());
   }
 
   @Override
@@ -106,8 +80,59 @@ public class WebkitDebugIndexedValue extends WebkitDebugValue implements IIndexe
   }
 
   @Override
+  public boolean hasVariables() throws DebugException {
+    return true;
+  }
+
+  @Override
   public boolean isListValue() {
     return true;
+  }
+
+  @Override
+  protected void populate() {
+    try {
+      int length = value.getListLength(getTarget().getConnection());
+
+      IVariable[] variables = getVariables(0, length);
+      List<IVariable> variablesList = new ArrayList<IVariable>();
+
+      for (int i = 0; i < length; i++) {
+        variablesList.add(variables[i]);
+      }
+
+      variableCollector = VariableCollector.fixed(getTarget(), variablesList);
+    } catch (DebugException e) {
+      variableCollector = VariableCollector.empty();
+    }
+  }
+
+  private WebkitRemoteObject getIndexAt(WebkitRemoteObject listObject, int offset)
+      throws IOException {
+    final WebkitRemoteObject[] results = new WebkitRemoteObject[1];
+
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    getConnection().getRuntime().callFunctionOn(
+        listObject.getObjectId(),
+        "function(){return this[" + offset + "];}",
+        null,
+        false,
+        new WebkitCallback<WebkitRemoteObject>() {
+          @Override
+          public void handleResult(WebkitResult<WebkitRemoteObject> result) {
+            results[0] = result.getResult();
+            latch.countDown();
+          }
+        });
+
+    try {
+      latch.await(3, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      return null;
+    }
+
+    return results[0];
   }
 
 }

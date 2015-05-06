@@ -25,6 +25,10 @@ import org.json.JSONObject;
  */
 public class WebkitScope {
 
+  private String type;
+
+  private WebkitRemoteObject object;
+
   static WebkitScope[] createFrom(JSONArray arr) throws JSONException {
     if (arr == null) {
       return null;
@@ -48,10 +52,6 @@ public class WebkitScope {
     return scope;
   }
 
-  private String type;
-
-  private WebkitRemoteObject object;
-
   public WebkitRemoteObject getObject() {
     return object;
   }
@@ -74,12 +74,24 @@ public class WebkitScope {
   }
 
   public boolean isGlobalLike() {
-    return isGlobal() || isLibraries() || isClass();
+    return isGlobal() || isLibraries() || isClass() || isIsolate();
+  }
+
+  public boolean isInstance() {
+    return "instance".equals(type);
+  }
+
+  public boolean isIsolate() {
+    return "isolate".equals(type);
   }
 
   public boolean isLibraries() {
     // TODO: this scope should be named 'libraries'
     return "library".equals(type);
+  }
+
+  public boolean isLocal() {
+    return "local".equals(type);
   }
 
   @Override

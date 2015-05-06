@@ -14,14 +14,12 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
-import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A WIP frame object.
@@ -30,22 +28,21 @@ import java.util.List;
  */
 public class WebkitCallFrame {
 
+  private String callFrameId;
+
+  private String functionName;
+
+  private WebkitLocation location;
+
+  private WebkitScope[] scopeChain;
+
+  private WebkitRemoteObject thisObject;
+
   static List<WebkitCallFrame> createFrom(JSONArray arr) throws JSONException {
     List<WebkitCallFrame> frames = new ArrayList<WebkitCallFrame>();
 
     for (int i = 0; i < arr.length(); i++) {
       WebkitCallFrame frame = createFrom(arr.getJSONObject(i));
-
-      // If we are on the first frame and there are at least 3 frames:
-      if (i == 0 && arr.length() > 2) {
-        if (DebuggerUtils.isInternalMethodName(frame.getFunctionName())) {
-          // Strip out the first frame if it's _noSuchMethod. There will be another
-          // "Object.noSuchMethod" on the stack. This sucks, but it's where we're choosing to put
-          // the fix.
-          continue;
-        }
-      }
-
       frames.add(frame);
     }
 
@@ -66,16 +63,6 @@ public class WebkitCallFrame {
 
     return frame;
   }
-
-  private String callFrameId;
-
-  private String functionName;
-
-  private WebkitLocation location;
-
-  private WebkitScope[] scopeChain;
-
-  private WebkitRemoteObject thisObject;
 
   /**
    * Call frame identifier. This identifier is only valid while the virtual machine is paused.

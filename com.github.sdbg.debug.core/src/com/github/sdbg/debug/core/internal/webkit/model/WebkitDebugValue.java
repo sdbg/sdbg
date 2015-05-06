@@ -14,13 +14,13 @@
 package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.expr.IExpressionEvaluator;
 import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
 import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPropertyDescriptor;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
+import com.github.sdbg.debug.core.model.IExpressionEvaluator;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 
 import java.io.IOException;
@@ -41,19 +41,21 @@ import org.json.JSONObject;
 public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDBGValue,
     IExpressionEvaluator {
 
+  private WebkitDebugVariable variable;
+
+  protected WebkitRemoteObject value;
+  protected VariableCollector variableCollector;
+
   static WebkitDebugValue create(WebkitDebugTarget target, WebkitDebugVariable variable,
       WebkitRemoteObject value) {
-    if (value.isList()) {
+    if (value == null) {
+      return new WebkitEmptyValue(target, variable);
+    } else if (value.isList()) {
       return new WebkitDebugIndexedValue(target, variable, value);
     } else {
       return new WebkitDebugValue(target, variable, value);
     }
   }
-
-  private WebkitDebugVariable variable;
-  protected WebkitRemoteObject value;
-
-  private VariableCollector variableCollector;
 
   protected WebkitDebugValue(WebkitDebugTarget target, WebkitDebugVariable variable,
       WebkitRemoteObject value) {
@@ -66,7 +68,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public void computeDetail(final IValueCallback callback) {
     // If the value is a primitive type, just return the display string.
-    if (value.isPrimitive() || (variable != null && variable.isLibraryObject())
+    if (value.isPrimitive() || variable != null && variable.isScope()
         || !SDBGDebugCorePlugin.getPlugin().getInvokeToString()) {
       callback.detailComputed(getDisplayString());
 
@@ -132,7 +134,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
               } else {
                 listener.watchEvaluationFinished(WatchExpressionResult.value(
                     expression,
-                    new WebkitDebugValue(getTarget(), null, result.getResult())));
+                    WebkitDebugValue.create(getTarget(), null, result.getResult())));
               }
             }
           });
@@ -161,7 +163,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     try {
       for (WebkitPropertyDescriptor property : variableCollector.getWebkitProperties()) {
         if (WebkitPropertyDescriptor.STATIC_FIELDS_OBJECT.equals(property.getName())) {
-          return new WebkitDebugValue(getTarget(), null, property.getValue());
+          return WebkitDebugValue.create(getTarget(), null, property.getValue());
         }
       }
     } catch (InterruptedException e) {
@@ -169,39 +171,6 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     }
 
     return null;
-  }
-
-  /**
-   * @return a user-consumable string for the value object
-   * @throws DebugException
-   */
-  @Override
-  public String getDisplayString() {
-    if (variable != null && variable.isLibraryObject()) {
-      return "";
-    }
-
-    if (value.isNull()) {
-      return "null";
-    }
-
-    if (value.isString()) {
-      return DebuggerUtils.printString(value.getValue());
-    }
-
-    if (isPrimitive()) {
-      return value.getValue();
-    }
-
-    if (isListValue()) {
-      if (value.getClassName() != null) {
-        return value.getClassName() + "[" + value.getListLength() + "]";
-      } else {
-        return "List[" + value.getListLength() + "]";
-      }
-    }
-
-    return value.getDescription();
   }
 
   @Override
@@ -225,7 +194,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     try {
       for (WebkitPropertyDescriptor property : variableCollector.getWebkitProperties()) {
         if (WebkitPropertyDescriptor.LIBRARY_OBJECT.equals(property.getName())) {
-          return new WebkitDebugValue(getTarget(), null, property.getValue());
+          return WebkitDebugValue.create(getTarget(), null, property.getValue());
         }
       }
     } catch (InterruptedException e) {
@@ -236,14 +205,39 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   }
 
   @Override
+  public int getListLength() {
+    return value.getListLength(getConnection());
+  }
+
+  @Override
+  public Object getRawValue() {
+    return value.getRawValue();
+  }
+
+  @Override
   public String getReferenceTypeName() {
-    return value.getClassName();
+    if (value.getClassName() != null) {
+      return DebuggerUtils.demangleClassName(value.getClassName());
+    } else if (value.getType() != null) {
+      return value.getType();
+    } else {
+      // Do not return null or else LazyModelPresentation.getText(Object) throws a NPE
+      // (seems like a bug in Eclipse though)
+      return "";
+    }
   }
 
   @Override
   public String getValueString() throws DebugException {
     try {
-      return getDisplayString();
+      String str = getDisplayString();
+
+// Not so useful as these IDs are not really surviving to the next breakpoint      
+//      if (str.length() > 0 && getId() != null) {
+//        str += " [id=" + getId() + "]";
+//      }
+
+      return str;
     } catch (Throwable t) {
       throw createDebugException(t);
     }
@@ -265,11 +259,7 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   @Override
   public boolean hasVariables() throws DebugException {
     try {
-      if (isListValue()) {
-        return value.getListLength() > 0;
-      } else {
-        return value.hasObjectId();
-      }
+      return value.hasObjectId() && !value.isNull() && !value.isPrimitive();
     } catch (Throwable t) {
       throw createDebugException(t);
     }
@@ -281,8 +271,18 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   }
 
   @Override
+  public boolean isBoolean() {
+    return value.isBoolean();
+  }
+
+  @Override
+  public boolean isFunction() {
+    return value.isFunction();
+  }
+
+  @Override
   public boolean isListValue() {
-    return false;
+    return value.isList();
   }
 
   @Override
@@ -291,8 +291,28 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
   }
 
   @Override
+  public boolean isNumber() {
+    return value.isNumber();
+  }
+
+  @Override
+  public boolean isObject() {
+    return value.isObject();
+  }
+
+  @Override
   public boolean isPrimitive() {
     return value.isPrimitive();
+  }
+
+  @Override
+  public boolean isScope() {
+    return variable != null && variable.isScope();
+  }
+
+  @Override
+  public boolean isString() {
+    return value.isString();
   }
 
   @Override
@@ -300,6 +320,17 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     variableCollector = null;
 
     fireEvent(new DebugEvent(this, DebugEvent.CHANGE, DebugEvent.CONTENT));
+  }
+
+  protected void populate() {
+    if (value.hasObjectId()) {
+      variableCollector = VariableCollector.createCollector(
+          getTarget(),
+          variable,
+          Collections.singletonList(value));
+    } else {
+      variableCollector = VariableCollector.empty();
+    }
   }
 
   private void evalOnGlobalContext(final String expression,
@@ -319,11 +350,11 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
               } else if (result.getResult().isSyntaxError()) {
                 listener.watchEvaluationFinished(WatchExpressionResult.value(
                     expression,
-                    new WebkitDebugValue(getTarget(), null, originalResult.getResult())));
+                    WebkitDebugValue.create(getTarget(), null, originalResult.getResult())));
               } else {
                 listener.watchEvaluationFinished(WatchExpressionResult.value(
                     expression,
-                    new WebkitDebugValue(getTarget(), null, result.getResult())));
+                    WebkitDebugValue.create(getTarget(), null, result.getResult())));
               }
             }
           });
@@ -338,6 +369,43 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
     }
   }
 
+  /**
+   * @return a user-consumable string for the value object
+   * @throws DebugException
+   */
+  private String getDisplayString() {
+    if (variable != null && (variable.isLibraryObject() || variable.isScope())) {
+      return "";
+    }
+
+    if (isNull()) {
+      return "null";
+    }
+
+    if (value.isString()) {
+      return DebuggerUtils.printString(value.getValue());
+    }
+
+    if (isPrimitive()) {
+      return value.getValue();
+    }
+
+    if (isFunction()) {
+      return "Function";
+    }
+
+    if (isListValue()) {
+      if (value.getClassName() != null) {
+        return value.getClassName() + "[" + getListLength() + "]";
+      } else {
+        return "array[" + getListLength() + "]";
+      }
+    }
+
+    // &&& return value.getDescription();
+    return getReferenceTypeName();
+  }
+
   private String parseObjectId(String objectId) {
     if (objectId == null) {
       return null;
@@ -350,16 +418,4 @@ public class WebkitDebugValue extends WebkitDebugElement implements IValue, ISDB
       return null;
     }
   }
-
-  private void populate() {
-    if (value.hasObjectId()) {
-      variableCollector = VariableCollector.createCollector(
-          getTarget(),
-          variable,
-          Collections.singletonList(value));
-    } else {
-      variableCollector = VariableCollector.empty();
-    }
-  }
-
 }

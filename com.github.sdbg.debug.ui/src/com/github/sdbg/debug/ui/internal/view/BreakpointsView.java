@@ -14,141 +14,164 @@
 
 package com.github.sdbg.debug.ui.internal.view;
 
+import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
+import com.github.sdbg.debug.ui.internal.util.ReflectionUtils;
+import com.github.sdbg.debug.ui.internal.util.SWTUtil;
+
+import org.eclipse.debug.core.model.DebugElement;
+import org.eclipse.debug.internal.ui.elements.adapters.DefaultBreakpointsViewInput;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.IPresentationContext;
+import org.eclipse.debug.internal.ui.viewers.model.provisional.TreeModelViewer;
+import org.eclipse.debug.internal.ui.views.variables.details.DetailPaneProxy;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ListViewer;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.TreeSelection;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.ui.IActionBars;
+
 /**
  * A debugger breakpoints view.
  */
 @SuppressWarnings("restriction")
 public class BreakpointsView extends
     org.eclipse.debug.internal.ui.views.breakpoints.BreakpointsView {
-//&&& PRobably not really needed  
-//  public static final String VIEW_ID = "com.google.dart.tools.debug.breakpointsView";
-//
-//  private RemoveAllBreakpointsAction removeAllBreakpointsAction;
-//
-//  ListViewer breakpointsViewer;
-//  private TreeModelViewer treeViewer;
-//  private IPreferenceStore preferences;
-//  private IPropertyChangeListener propertyChangeListener = new IPropertyChangeListener() {
-//    @Override
-//    public void propertyChange(PropertyChangeEvent event) {
-//      doPropertyChange(event);
-//    }
-//  };
-//
-//  public BreakpointsView() {
-//
-//  }
-//
-//  @Override
-//  public Viewer createViewer(Composite parent) {
-//    Viewer viewer = super.createViewer(parent);
-//
-//    IActionBars actionBars = getViewSite().getActionBars();
-//
-//    actionBars.getMenuManager().removeAll();
-//
-//    return viewer;
-//  }
-//
-//  @Override
-//  public void dispose() {
-//    if (removeAllBreakpointsAction != null) {
-//      removeAllBreakpointsAction.dispose();
-//    }
-//    if (propertyChangeListener != null) {
-//      getPreferences().removePropertyChangeListener(propertyChangeListener);
-//      propertyChangeListener = null;
-//    }
-//    if (propertyChangeListener != null) {
-//      getPreferences().removePropertyChangeListener(propertyChangeListener);
-//      propertyChangeListener = null;
-//    }
-//
-//    super.dispose();
-//  }
-//
-//  @Override
-//  public void refreshDetailPaneContents() {
-//    super.refreshDetailPaneContents();
-//    SWTUtil.setColors(getDetails(), getPreferences());
-//  }
-//
-//  @Override
-//  protected void configureToolBar(IToolBarManager manager) {
-//    removeAllBreakpointsAction = new RemoveAllBreakpointsAction();
-//
-//    manager.add(removeAllBreakpointsAction);
-//    manager.update(true);
-//  }
-//
-//  @Override
-//  protected void contextActivated(ISelection selection) {
-//    IPresentationContext presentationContext = getTreeModelViewer().getPresentationContext();
-//
-//    if (selection == null || selection.isEmpty()) {
-//      Object input = new DefaultBreakpointsViewInput(presentationContext);
-//      super.contextActivated(new StructuredSelection(input));
-//    } else {
-//      if (selection instanceof TreeSelection) {
-//        if (((TreeSelection) selection).getFirstElement() instanceof DebugElement) {
-//          super.contextActivated(new StructuredSelection(new DefaultBreakpointsViewInput(
-//              presentationContext)));
-//        } else {
-//          super.contextActivated(selection);
-//        }
-//      } else {
-//        super.contextActivated(selection);
-//      }
-//    }
-//    if (isAvailable() && isVisible()) {
-//      updateAction("ContentAssist"); //$NON-NLS-1$
-//    }
-//  }
-//
-//  @Override
-//  protected TreeModelViewer createTreeViewer(Composite parent) {
-//    preferences = DartToolsPlugin.getDefault().getCombinedPreferenceStore();
-//    final TreeModelViewer treeViewer = super.createTreeViewer(parent);
-//    this.treeViewer = treeViewer;
-//    treeViewer.getTree().setBackgroundMode(SWT.INHERIT_FORCE);
-//    treeViewer.getTree().addListener(SWT.EraseItem, new Listener() {
-//      @Override
-//      public void handleEvent(Event event) {
-//        SWTUtil.eraseSelection(event, treeViewer.getTree(), getPreferences());
-//      }
-//    });
-//    SWTUtil.bindJFaceResourcesFontToControl(treeViewer.getTree());
-//    getPreferences().addPropertyChangeListener(propertyChangeListener);
-//    updateColors();
-//    return treeViewer;
-//  }
-//
-//  @Override
-//  protected void setViewerInput(Object context) {
-//    if (context != null && context instanceof DebugElement) {
-//      return;
-//    }
-//    super.setViewerInput(context);
-//  }
-//
-//  protected void updateColors() {
-//    SWTUtil.setColors(treeViewer.getTree(), getPreferences());
-//  }
-//
-//  private void doPropertyChange(PropertyChangeEvent event) {
-//    updateColors();
-//    treeViewer.refresh(false);
-//  }
-//
-//  private Composite getDetails() {
-//    // Warning: fragile code!
-//    DetailPaneProxy detailProxy = ReflectionUtils.getFieldObject(this, "fDetailPane");
-//    Composite text = ReflectionUtils.getFieldObject(detailProxy, "fCurrentControl");
-//    return text;
-//  }
-//
-//  private IPreferenceStore getPreferences() {
-//    return preferences;
-//  }
-//
+  public static final String VIEW_ID = "com.google.dart.tools.debug.breakpointsView";
+
+  private RemoveAllBreakpointsAction removeAllBreakpointsAction;
+
+  ListViewer breakpointsViewer;
+  private TreeModelViewer treeViewer;
+  private IPreferenceStore preferences;
+  private IPropertyChangeListener propertyChangeListener = new IPropertyChangeListener() {
+    @Override
+    public void propertyChange(PropertyChangeEvent event) {
+      doPropertyChange(event);
+    }
+  };
+
+  public BreakpointsView() {
+
+  }
+
+  @Override
+  public Viewer createViewer(Composite parent) {
+    Viewer viewer = super.createViewer(parent);
+
+    IActionBars actionBars = getViewSite().getActionBars();
+
+    actionBars.getMenuManager().removeAll();
+
+    return viewer;
+  }
+
+  @Override
+  public void dispose() {
+    if (removeAllBreakpointsAction != null) {
+      removeAllBreakpointsAction.dispose();
+    }
+    if (propertyChangeListener != null) {
+      getPreferences().removePropertyChangeListener(propertyChangeListener);
+      propertyChangeListener = null;
+    }
+    if (propertyChangeListener != null) {
+      getPreferences().removePropertyChangeListener(propertyChangeListener);
+      propertyChangeListener = null;
+    }
+
+    super.dispose();
+  }
+
+  @Override
+  public void refreshDetailPaneContents() {
+    super.refreshDetailPaneContents();
+    //&&&SWTUtil.setColors(getDetails(), getPreferences());
+  }
+
+  @Override
+  protected void configureToolBar(IToolBarManager manager) {
+    removeAllBreakpointsAction = new RemoveAllBreakpointsAction();
+
+    manager.add(removeAllBreakpointsAction);
+    manager.update(true);
+  }
+
+  @Override
+  protected void contextActivated(ISelection selection) {
+    IPresentationContext presentationContext = getTreeModelViewer().getPresentationContext();
+
+    if (selection == null || selection.isEmpty()) {
+      Object input = new DefaultBreakpointsViewInput(presentationContext);
+      super.contextActivated(new StructuredSelection(input));
+    } else {
+      if (selection instanceof TreeSelection) {
+        if (((TreeSelection) selection).getFirstElement() instanceof DebugElement) {
+          super.contextActivated(new StructuredSelection(new DefaultBreakpointsViewInput(
+              presentationContext)));
+        } else {
+          super.contextActivated(selection);
+        }
+      } else {
+        super.contextActivated(selection);
+      }
+    }
+    if (isAvailable() && isVisible()) {
+      updateAction("ContentAssist"); //$NON-NLS-1$
+    }
+  }
+
+  @Override
+  protected TreeModelViewer createTreeViewer(Composite parent) {
+    preferences = SDBGDebugUIPlugin.getDefault().getCombinedPreferenceStore();
+    final TreeModelViewer treeViewer = super.createTreeViewer(parent);
+    this.treeViewer = treeViewer;
+    treeViewer.getTree().setBackgroundMode(SWT.INHERIT_FORCE);
+    treeViewer.getTree().addListener(SWT.EraseItem, new Listener() {
+      @Override
+      public void handleEvent(Event event) {
+        SWTUtil.eraseSelection(event, treeViewer.getTree(), getPreferences());
+      }
+    });
+    SWTUtil.bindJFaceResourcesFontToControl(treeViewer.getTree());
+    getPreferences().addPropertyChangeListener(propertyChangeListener);
+    updateColors();
+    return treeViewer;
+  }
+
+  @Override
+  protected void setViewerInput(Object context) {
+    if (context != null && context instanceof DebugElement) {
+      return;
+    }
+    super.setViewerInput(context);
+  }
+
+  protected void updateColors() {
+    //&&&SWTUtil.setColors(treeViewer.getTree(), getPreferences());
+  }
+
+  private void doPropertyChange(PropertyChangeEvent event) {
+    updateColors();
+    treeViewer.refresh(false);
+  }
+
+  private Composite getDetails() {
+    // Warning: fragile code!
+    DetailPaneProxy detailProxy = ReflectionUtils.getFieldObject(this, "fDetailPane");
+    Composite text = ReflectionUtils.getFieldObject(detailProxy, "fCurrentControl");
+    return text;
+  }
+
+  private IPreferenceStore getPreferences() {
+    return preferences;
+  }
+
 }

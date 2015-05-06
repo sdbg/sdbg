@@ -9,10 +9,26 @@
   <packaging>pom</packaging>
 
   <properties>
-    <tycho-version>0.19.0</tycho-version>
-    <tycho-extras-version>0.19.0</tycho-extras-version>
+    <tycho-version>0.22.0</tycho-version>
+    <tycho-extras-version>0.22.0</tycho-extras-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    
+    <eclipse.target>luna</eclipse.target>
+    <eclipse-repo.url>http://download.eclipse.org/releases/${eclipse.target}</eclipse-repo.url>
   </properties>
+  
+  <repositories>
+    <repository>
+      <id>gwt-plugin</id>
+      <url>http://storage.googleapis.com/gwt-eclipse-plugin/release</url>
+      <layout>p2</layout>
+    </repository>
+    <repository>
+      <id>eclipse</id>
+      <url>${eclipse-repo.url}</url>
+      <layout>p2</layout>
+    </repository>
+  </repositories>
 
   <modules>
     <module>com.github.sdbg.debug.core</module>

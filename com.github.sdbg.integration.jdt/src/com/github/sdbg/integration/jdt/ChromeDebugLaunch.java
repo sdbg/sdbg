@@ -57,15 +57,6 @@ public class ChromeDebugLaunch implements IDebugLaunch {
     }
   }
 
-  /**
-   * Returns a configuration from the given collection of configurations that should be launched, or
-   * <code>null</code> to cancel. Default implementation opens a selection dialog that allows the
-   * user to choose one of the specified launch configurations. Returns the chosen configuration, or
-   * <code>null</code> if the user cancels.
-   * 
-   * @param configList list of configurations to choose from
-   * @return configuration to launch or <code>null</code> to cancel
-   */
   private ILaunchConfiguration chooseConfig(List<ILaunchConfiguration> configList) {
     IDebugModelPresentation labelProvider = DebugUITools.newDebugModelPresentation();
     ElementListSelectionDialog dialog = new ElementListSelectionDialog(
@@ -84,7 +75,6 @@ public class ChromeDebugLaunch implements IDebugLaunch {
   }
 
   private ILaunchConfiguration createConfig(IProject project, String url) throws CoreException {
-    // Create and launch a new configuration
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
     ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
     ILaunchConfigurationWorkingCopy launchConfig = type.newInstance(
@@ -104,17 +94,9 @@ public class ChromeDebugLaunch implements IDebugLaunch {
     return launchConfig.doSave();
   }
 
-  /**
-   * Find the launch configuration associated with the specified resource
-   * 
-   * @param resource the resource
-   * @return the launch configuration or <code>null</code> if none
-   */
   private ILaunchConfiguration findConfig(IProject project, String url)
       throws OperationCanceledException, CoreException {
-    List<ILaunchConfiguration> candidateConfigs = Arrays.asList(getAssociatedConfigs(
-        project,
-        url));
+    List<ILaunchConfiguration> candidateConfigs = Arrays.asList(getAssociatedConfigs(project, url));
 
     int candidateCount = candidateConfigs.size();
     if (candidateCount == 1) {
@@ -154,13 +136,6 @@ public class ChromeDebugLaunch implements IDebugLaunch {
     return manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
   }
 
-  /**
-   * Return whether the launch configuration is used to launch the given resource.
-   * 
-   * @param project
-   * @param config
-   * @return whether the launch configuration is used to launch the given resource
-   */
   private boolean testSimilar(IProject project, String url, ILaunchConfiguration config) {
     SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
 

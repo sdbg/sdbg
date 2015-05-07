@@ -1077,6 +1077,7 @@
             <bundle name="com.github.sdbg.debug.core"/>
       </component>
    </extension>
+   
    <!-- extension point="org.eclipse.ui.popupMenus">
       <objectContribution
          id="com.github.sdbg.debug.ui.openServerTypeContribution"

@@ -25,6 +25,37 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 public class ChromeDebugLaunch implements IDebugLaunch {
+  @Override
+  public void launch(IProject project, String url, String mode) {
+    if (project == null || url == null || mode == null) {
+      return;
+    }
+
+    try {
+      ILaunchConfiguration config;
+
+      try {
+        // Select an existing configuration if one exists
+        config = findConfig(project, url);
+      } catch (OperationCanceledException ex) {
+        return;
+      }
+
+      if (config == null) {
+        // Otherwise, create a new one
+        config = createConfig(project, url);
+      }
+
+      // Launch the configuration
+      SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
+      launchWrapper.markAsLaunched();
+
+      LaunchUtils.clearConsoles();
+      LaunchUtils.launch(config, mode);
+    } catch (CoreException e) {
+      SDBGJDTIntegrationPlugin.wrapError(e);
+    }
+  }
 
   /**
    * Returns a configuration from the given collection of configurations that should be launched, or
@@ -35,13 +66,13 @@ public class ChromeDebugLaunch implements IDebugLaunch {
    * @param configList list of configurations to choose from
    * @return configuration to launch or <code>null</code> to cancel
    */
-  private ILaunchConfiguration chooseConfiguration(List<ILaunchConfiguration> configList) {
+  private ILaunchConfiguration chooseConfig(List<ILaunchConfiguration> configList) {
     IDebugModelPresentation labelProvider = DebugUITools.newDebugModelPresentation();
     ElementListSelectionDialog dialog = new ElementListSelectionDialog(
         PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
         labelProvider);
     dialog.setElements(configList.toArray());
-    dialog.setTitle("Select Dart Application");
+    dialog.setTitle("Select Configuration");
     dialog.setMessage("&Select existing configuration:");
     dialog.setMultipleSelection(false);
     int result = dialog.open();
@@ -52,22 +83,44 @@ public class ChromeDebugLaunch implements IDebugLaunch {
     return null;
   }
 
+  private ILaunchConfiguration createConfig(IProject project, String url) throws CoreException {
+    // Create and launch a new configuration
+    ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
+    ILaunchConfigurationWorkingCopy launchConfig = type.newInstance(
+        null,
+        manager.generateLaunchConfigurationName(project.getName()));
+
+    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(launchConfig);
+
+    launchWrapper.setApplicationName(project.getFullPath().toString());
+    launchWrapper.setProjectName(project.getProject().getName());
+    if (url != null) {
+      launchWrapper.setUrl(url);
+    }
+
+    launchConfig.setMappedResources(new IResource[] {project});
+
+    return launchConfig.doSave();
+  }
+
   /**
    * Find the launch configuration associated with the specified resource
    * 
    * @param resource the resource
    * @return the launch configuration or <code>null</code> if none
    */
-  private final ILaunchConfiguration findConfig(IResource resource)
-      throws OperationCanceledException {
-    List<ILaunchConfiguration> candidateConfigs = Arrays.asList(getAssociatedLaunchConfigurations(resource));
+  private ILaunchConfiguration findConfig(IProject project, String url)
+      throws OperationCanceledException, CoreException {
+    List<ILaunchConfiguration> candidateConfigs = Arrays.asList(getAssociatedConfigs(
+        project,
+        url));
 
     int candidateCount = candidateConfigs.size();
-
     if (candidateCount == 1) {
       return candidateConfigs.get(0);
     } else if (candidateCount > 1) {
-      ILaunchConfiguration result = chooseConfiguration(candidateConfigs);
+      ILaunchConfiguration result = chooseConfig(candidateConfigs);
       if (result != null) {
         return result;
       } else {
@@ -78,24 +131,19 @@ public class ChromeDebugLaunch implements IDebugLaunch {
     return null;
   }
 
-  private ILaunchConfiguration[] getAssociatedLaunchConfigurations(IResource resource) {
+  private ILaunchConfiguration[] getAssociatedConfigs(IProject project, String url)
+      throws CoreException {
     List<ILaunchConfiguration> results = new ArrayList<ILaunchConfiguration>();
 
-    try {
-      ILaunchConfiguration[] configs = DebugPlugin.getDefault().getLaunchManager().getLaunchConfigurations(
-          getConfigurationType());
+    ILaunchConfiguration[] configs = DebugPlugin.getDefault().getLaunchManager().getLaunchConfigurations(
+        getConfigurationType());
 
-      if (resource != null) {
-        for (int i = 0; i < configs.length; i++) {
-          ILaunchConfiguration config = configs[i];
+    for (int i = 0; i < configs.length; i++) {
+      ILaunchConfiguration config = configs[i];
 
-          if (testSimilar(resource, config)) {
-            results.add(config);
-          }
-        }
+      if (testSimilar(project, url, config)) {
+        results.add(config);
       }
-    } catch (CoreException e) {
-      SDBGJDTIntegrationPlugin.wrapError(e);
     }
 
     return results.toArray(new ILaunchConfiguration[results.size()]);
@@ -103,77 +151,21 @@ public class ChromeDebugLaunch implements IDebugLaunch {
 
   private ILaunchConfigurationType getConfigurationType() {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
-
-    return type;
-  }
-
-  @Override
-  public void launch(IProject resource, String url, String mode) {
-    if (resource == null || url == null || mode == null) {
-      return;
-    }
-
-    // Launch an existing configuration if one exists
-    ILaunchConfiguration config;
-
-    try {
-      config = findConfig(resource);
-    } catch (OperationCanceledException ex) {
-      return;
-    }
-
-    if (config == null) {
-      // Create and launch a new configuration
-      ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-      ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
-      ILaunchConfigurationWorkingCopy launchConfig = null;
-      try {
-        launchConfig = type.newInstance(
-            null,
-            manager.generateLaunchConfigurationName(resource.getName()));
-      } catch (CoreException ce) {
-        SDBGJDTIntegrationPlugin.wrapError(ce);
-        return;
-      }
-
-      SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(launchConfig);
-
-      launchWrapper.setApplicationName(resource.getFullPath().toString());
-      launchWrapper.setProjectName(resource.getProject().getName());
-      if (url != null) {
-        launchWrapper.setUrl(url);
-      }
-
-      launchConfig.setMappedResources(new IResource[] {resource});
-
-      try {
-        config = launchConfig.doSave();
-      } catch (CoreException e) {
-        SDBGJDTIntegrationPlugin.wrapError(e);
-        return;
-      }
-    }
-
-    SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
-    launchWrapper.markAsLaunched();
-
-    LaunchUtils.clearConsoles();
-    LaunchUtils.launch(config, mode);
+    return manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
   }
 
   /**
    * Return whether the launch configuration is used to launch the given resource.
    * 
-   * @param resource
+   * @param project
    * @param config
    * @return whether the launch configuration is used to launch the given resource
    */
-  private boolean testSimilar(IResource resource, ILaunchConfiguration config) {
+  private boolean testSimilar(IProject project, String url, ILaunchConfiguration config) {
     SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
 
-    IResource appResource = launchWrapper.getApplicationResource();
-
-    return appResource == resource || appResource != null && appResource.equals(resource);
+    IProject otherProject = launchWrapper.getProject();
+    String otherUrl = launchWrapper.getUrl();
+    return project != null && project.equals(otherProject) && url != null && url.equals(otherUrl);
   }
 }

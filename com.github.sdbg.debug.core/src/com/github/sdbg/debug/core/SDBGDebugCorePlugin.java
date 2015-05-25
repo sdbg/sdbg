@@ -99,6 +99,8 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
 
   public static final String PREFS_SHOW_RUN_RESUME_DIALOG = "showRunResumeDialog";
 
+  public static final String PREFS_EXCLUDE_FROM_LOGICAL_STRUCTURE = "excludeFromLogicalStructure";
+
   private ServiceTracker<DebugOptions, Object> debugTracker;
 
   private IEclipsePreferences prefs;
@@ -229,6 +231,10 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
     return getPrefs().get(PREFS_BROWSER_NAME, "");
   }
 
+  public String getExcludeFromLogicalStructure() {
+    return getPrefs().get(PREFS_EXCLUDE_FROM_LOGICAL_STRUCTURE, "Window");
+  }
+
   public boolean getInvokeToString() {
     return getPrefs().getBoolean(PREFS_INVOKE_TOSTRING, true);
   }
@@ -286,6 +292,18 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
     prefs.putBoolean(PREFS_DEFAULT_BROWSER, useDefault);
     prefs.put(PREFS_BROWSER_NAME, name);
     prefs.put(PREFS_BROWSER_ARGS, args);
+
+    try {
+      getPrefs().flush();
+    } catch (BackingStoreException exception) {
+      logError(exception);
+    }
+  }
+
+  public void setExcludeFromLogicalStructure(String excludeFromLogicalStructure) {
+    IEclipsePreferences prefs = getPrefs();
+
+    prefs.put(PREFS_EXCLUDE_FROM_LOGICAL_STRUCTURE, excludeFromLogicalStructure);
 
     try {
       getPrefs().flush();

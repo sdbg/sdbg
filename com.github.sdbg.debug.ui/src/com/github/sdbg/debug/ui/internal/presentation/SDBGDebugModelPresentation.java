@@ -343,7 +343,7 @@ public class SDBGDebugModelPresentation implements IDebugModelPresentation,
       StringBuilder buff = new StringBuilder(getVariableName(var, context));
 
       String valueString = getValueDetailText(var.getValue(), context);
-      if (valueString.length() != 0) {
+      if (valueString != null && valueString.length() != 0) {
         buff.append(" = ");
         buff.append(valueString);
       }

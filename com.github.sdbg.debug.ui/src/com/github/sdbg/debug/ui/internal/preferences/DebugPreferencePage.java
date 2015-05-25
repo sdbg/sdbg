@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
@@ -40,6 +41,8 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
 
   private Button useSmartStepOverButton;
   private Button useSmartStepInOutButton;
+
+  private Text excludeFromLogicalStructureText;
 
 //  private Button defaultBrowserButton;
 //  private Text browserNameText;
@@ -63,7 +66,8 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
     SDBGDebugCorePlugin.getPlugin().setInvokeToString(invokeToStringButton.getSelection());
     SDBGDebugCorePlugin.getPlugin().setUseSmartStepOver(useSmartStepOverButton.getSelection());
-    SDBGDebugCorePlugin.getPlugin().setUseSmartStepInOut(useSmartStepInOutButton.getSelection());
+    SDBGDebugCorePlugin.getPlugin().setExcludeFromLogicalStructure(
+        excludeFromLogicalStructureText.getText());
 
 //    SDBGDebugCorePlugin.getPlugin().setBrowserPreferences(
 //        defaultBrowserButton.getSelection(),
@@ -108,6 +112,14 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     useSmartStepInOutButton = new Button(group, SWT.CHECK);
     useSmartStepInOutButton.setText("Skip non-sourcemapped JavaScript frames when stepping-in and out");
     GridDataFactory.swtDefaults().span(2, 1).applyTo(useSmartStepInOutButton);
+
+    Label excludeFromLogicalStructureLabel = new Label(group, SWT.NONE);
+    excludeFromLogicalStructureLabel.setText("Objects to exclude from Logical Structure (regexp):");
+    GridDataFactory.swtDefaults().span(2, 1).applyTo(excludeFromLogicalStructureLabel);
+
+    excludeFromLogicalStructureText = new Text(group, SWT.BORDER);
+    GridDataFactory.swtDefaults().span(2, 1).align(SWT.FILL, SWT.CENTER).applyTo(
+        excludeFromLogicalStructureText);
 
 //    createBrowserConfig(composite, labelWidth);
 
@@ -184,6 +196,7 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
     invokeToStringButton.setSelection(SDBGDebugCorePlugin.getPlugin().getInvokeToString());
     useSmartStepOverButton.setSelection(SDBGDebugCorePlugin.getPlugin().getUseSmartStepOver());
     useSmartStepInOutButton.setSelection(SDBGDebugCorePlugin.getPlugin().getUseSmartStepInOut());
+    excludeFromLogicalStructureText.setText(SDBGDebugCorePlugin.getPlugin().getExcludeFromLogicalStructure());
   }
 //
 //  private void setEnablement(boolean value) {

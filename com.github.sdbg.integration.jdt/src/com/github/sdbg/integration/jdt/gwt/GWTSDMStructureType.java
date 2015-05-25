@@ -14,6 +14,7 @@
 
 package com.github.sdbg.integration.jdt.gwt;
 
+import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.model.ISDBGLogicalStructureTypeExtensions;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.ILogicalStructureTypeDelegate;
@@ -134,7 +136,8 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
       // held in this variable gets converted to its logical representation, if we don't do it, some
       // things which should be hidden may show through
       String rawReferenceTypeName = super.getReferenceTypeName();
-      if (isJavaObject((ISDBGValue) getValue()) && hasGWTSuffix(rawReferenceTypeName)) {
+      if (!isExcludedFromLogicalStructure(getValue()) && isJavaObject((ISDBGValue) getValue())
+          && hasGWTSuffix(rawReferenceTypeName)) {
         return removeGWTSuffix(rawReferenceTypeName);
       } else {
         return rawReferenceTypeName;
@@ -153,7 +156,7 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
   @Override
   public ISDBGValue getLogicalStructure(IValue value) throws DebugException {
     ISDBGValue sValue = (ISDBGValue) value;
-    if (sValue instanceof GWTSDMValue) {
+    if (sValue instanceof GWTSDMValue || isExcludedFromLogicalStructure(sValue)) {
       return sValue;
     }
 
@@ -214,7 +217,8 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
 
   @Override
   public boolean isValueStringComputedByLogicalStructure(IValue value) throws DebugException {
-    if (value instanceof ISDBGValue && !(value instanceof GWTSDMValue)) {
+    if (value instanceof ISDBGValue && !(value instanceof GWTSDMValue)
+        && !isExcludedFromLogicalStructure(value)) {
       ISDBGValue sval = (ISDBGValue) value;
       return !sval.isScope() && (isJavaObject(sval) || getLong(sval) != null);
     }
@@ -224,7 +228,13 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
 
   @Override
   public boolean providesLogicalStructure(IValue value) {
-    return value instanceof ISDBGValue && !(value instanceof GWTSDMValue);
+    try {
+      return value instanceof ISDBGValue && !(value instanceof GWTSDMValue)
+          && !isExcludedFromLogicalStructure(value);
+    } catch (DebugException e) {
+      SDBGDebugCorePlugin.logError(e);
+      return false;
+    }
   }
 
   // Returns all properties which look like Java fields of the supplied value
@@ -309,6 +319,20 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
 
   private boolean hasOwnProperty(IValue value, String property) throws DebugException {
     return getOwnProperty(value, property) != null;
+  }
+
+  private boolean isExcludedFromLogicalStructure(IValue value) throws DebugException {
+    if (!(value instanceof ISDBGValue)) {
+      return false;
+    }
+
+    String excludeFromLogicalStructureStr = SDBGDebugCorePlugin.getPlugin().getExcludeFromLogicalStructure();
+    if (excludeFromLogicalStructureStr != null
+        && excludeFromLogicalStructureStr.trim().length() > 0) {
+      return Pattern.matches(excludeFromLogicalStructureStr, value.getReferenceTypeName());
+    } else {
+      return false;
+    }
   }
 
   private boolean isJavaClass(ISDBGValue value) throws DebugException {

@@ -5,7 +5,7 @@
 
   <groupId>com.github.sdbg</groupId>
   <artifactId>com.github.sdbg.parent</artifactId>
-  <version>1.0.5.qualifier</version>
+  <version>1.0.6.qualifier</version>
   <packaging>pom</packaging>
 
   <properties>
@@ -63,7 +63,7 @@
 		   <artifact>  
 		    <groupId>com.github.sdbg</groupId>  
 		    <artifactId>com.github.sdbg.releng.targetplatform</artifactId>  
-		    <version>1.0.5.qualifier</version>  
+		    <version>1.0.6.qualifier</version>  
 		   </artifact>  
 		  </target>  
         </configuration>  

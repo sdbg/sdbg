@@ -43,6 +43,19 @@ import org.eclipse.debug.core.model.IVariable;
  */
 public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     ILogicalStructureTypeDelegate2, ISDBGLogicalStructureTypeExtensions {
+  private static class ExactMatcher implements Matcher {
+    private String name;
+
+    public ExactMatcher(String name) {
+      this.name = name;
+    }
+
+    @Override
+    public boolean matches(String name) {
+      return this.name.equals(name);
+    }
+  }
+
   private class GWTSDMLong extends GWTSDMValue {
     private Long value;
 
@@ -143,6 +156,10 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
         return rawReferenceTypeName;
       }
     }
+  }
+
+  private static interface Matcher {
+    boolean matches(String name);
   }
 
   public GWTSDMStructureType() {
@@ -247,7 +264,7 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
       String name = var.getName();
       if (hasGWTSuffix(name)) {
         name = removeGWTSuffix(name);
-        if (!name.equals("$H") && !name.equals("$init") && !name.equals("___clazz$")
+        if (!name.equals("$H") && !isGWTInit(name) && !isGWTClass(name)
             && !(var.getValue() != null && ((ISDBGValue) var.getValue()).isFunction())) {
           if (!visited.contains(name)) {
             visited.add(name);
@@ -303,9 +320,9 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     }
   }
 
-  private IVariable getOwnProperty(IValue value, String property) throws DebugException {
+  private IVariable getOwnProperty(IValue value, Matcher matcher) throws DebugException {
     for (IVariable var : value.getVariables()) {
-      if (var.getName().equals(property)) {
+      if (matcher.matches(var.getName())) {
         return var;
       }
     }
@@ -313,12 +330,16 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     return null;
   }
 
+  private IVariable getOwnProperty(IValue value, String property) throws DebugException {
+    return getOwnProperty(value, new ExactMatcher(property));
+  }
+
   private boolean hasGWTSuffix(String name) {
     return name.endsWith("_g$");
   }
 
-  private boolean hasOwnProperty(IValue value, String property) throws DebugException {
-    return getOwnProperty(value, property) != null;
+  private boolean hasOwnProperty(IValue value, Matcher matcher) throws DebugException {
+    return getOwnProperty(value, matcher) != null;
   }
 
   private boolean isExcludedFromLogicalStructure(IValue value) throws DebugException {
@@ -335,8 +356,21 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     }
   }
 
+  private boolean isGWTClass(String name) {
+    return name.equals("___clazz$") || hasGWTSuffix(name) && name.startsWith("___clazz_");
+  }
+
+  private boolean isGWTInit(String name) {
+    return name.equals("$init") || hasGWTSuffix(name) && name.startsWith("$init_");
+  }
+
   private boolean isJavaClass(ISDBGValue value) throws DebugException {
-    return value.isObject() && hasOwnProperty(value, "___clazz$");
+    return value.isObject() && hasOwnProperty(value, new Matcher() {
+      @Override
+      public boolean matches(String name) {
+        return isGWTClass(name);
+      }
+    });
   }
 
   private boolean isJavaObject(ISDBGValue value) throws DebugException {

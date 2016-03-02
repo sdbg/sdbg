@@ -107,7 +107,7 @@ public class LaunchConfigResourceResolver implements IResourceResolver {
 
       IResource resource = sourceDirectory.findMember(filePath);
 
-      if (resource.exists()) {
+      if (resource != null && resource.exists()) {
         return resource;
       }
 

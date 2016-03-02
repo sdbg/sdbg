@@ -377,8 +377,8 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
 
       @Override
       public void debuggerGlobalObjectCleared() {
-    	// It is important to first remove the sourcemaps 
-    	// and only then the breakpoints  
+        // It is important to first remove the sourcemaps 
+        // and only then the breakpoints  
         sourceMapManager.handleGlobalObjectCleared();
         breakpointManager.handleGlobalObjectCleared();
       }
@@ -406,7 +406,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
         if (script.hasScriptSource() || script.getSourceMapURL() != null) {
           IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
           breakpointManager.removeBreakpointsConcerningScript(storage);
-          sourceMapManager.handleScriptParsed(storage, script.getSourceMapURL());
+          sourceMapManager.handleScriptParsed(storage, script.getUrl(), script.getSourceMapURL());
           breakpointManager.addBreakpointsConcerningScript(storage);
         }
       }

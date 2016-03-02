@@ -30,6 +30,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +100,85 @@ public class SourceMapManager {
     }
   }
 
+  private static class TargetPathCheckingVisitor implements Visitor {
+    private String targetPath;
+    private boolean stopOnInexactMatch;
+
+    private IStorage matchingScriptStorage;
+    private IStorage matchingSourceMapStorage;
+    private SourceMap matchingSourceMap;
+    private String matchingSourcePath;
+
+    public TargetPathCheckingVisitor(String targetPath) {
+      this(targetPath, false);
+    }
+
+    public TargetPathCheckingVisitor(String targetPath, boolean stopOnInexactMatch) {
+      this.targetPath = targetPath;
+      this.stopOnInexactMatch = stopOnInexactMatch;
+    }
+
+    public IStorage getMatchingScriptStorage() {
+      return matchingScriptStorage;
+    }
+
+    public SourceMap getMatchingSourceMap() {
+      return matchingSourceMap;
+    }
+
+    public IStorage getMatchingSourceMapStorage() {
+      return matchingSourceMapStorage;
+    }
+
+    public String getMatchingSourcePath() {
+      return matchingSourcePath;
+    }
+
+    @Override
+    public String toString() {
+      return "[Script: " + matchingScriptStorage + ", Source map: " + matchingSourceMapStorage
+          + ", Source path: " + matchingSourcePath + "]";
+    }
+
+    @Override
+    public boolean visit(IStorage scriptStorage, IStorage sourceMapStorage, SourceMap sourceMap,
+        String sourcePath) {
+      String sourceRoot = sourceMap.getSourceRoot();
+      String relativePath = sourceRoot != null && sourceRoot.length() > 0
+          ? sourcePath.substring(sourceRoot.length()) : sourcePath;
+      if (relativePath.endsWith(targetPath)) {
+        if (matchingSourcePath == null || matchingSourcePath.length() > sourcePath.length()) {
+          matchingSourcePath = sourcePath;
+          matchingSourceMap = sourceMap;
+          matchingSourceMapStorage = sourceMapStorage;
+          matchingScriptStorage = scriptStorage;
+
+          if (stopOnInexactMatch || relativePath.length() == targetPath.length()) {
+            trace();
+            return true;
+          }
+        }
+      }
+
+      trace();
+      return false;
+    }
+
+    private void trace() {
+      if (isTracing()) {
+        if (matchingSourcePath != null) {
+          SourceMapManager.trace("Match: " + toString());
+        } else {
+          SourceMapManager.trace("No match");
+        }
+      }
+    }
+  }
+
+  private static interface Visitor {
+    boolean visit(IStorage scriptStorage, IStorage mapStorage, SourceMap map, String path);
+  }
+
   private IResourceResolver resourceResolver;
 
   private Map<IStorage, IStorage> sourceMapsStorages = new HashMap<IStorage, IStorage>();
@@ -143,9 +223,18 @@ public class SourceMapManager {
           if (mapping != null) {
             IStorage resolvedStorage = resolveStorage(mapStorage, mapping.getFile());
             if (resolvedStorage != null) {
-              SourceLocation location = new SourceLocation(resolvedStorage, relativisePath(
-                  mapStorage,
-                  mapping.getFile()), mapping.getLine(), mapping.getColumn(), mapping.getName());
+              String sourceRoot = map.getSourceRoot();
+              String relativePath = mapping.getFile();
+              if (sourceRoot != null && sourceRoot.length() > 0) {
+                relativePath = relativePath.substring(sourceRoot.length());
+              }
+
+              SourceLocation location = new SourceLocation(
+                  resolvedStorage,
+                  relativePath,
+                  mapping.getLine(),
+                  mapping.getColumn(),
+                  mapping.getName());
 
               if (isTracing()) {
                 trace("Found mapping: " + location);
@@ -176,38 +265,25 @@ public class SourceMapManager {
 
     List<SourceLocation> mappings = new ArrayList<SourceMapManager.SourceLocation>();
 
+    TargetPathCheckingVisitor visitor = new TargetPathCheckingVisitor(targetPath);
+
     synchronized (sourceMaps) {
-      for (IStorage scriptStorage : sourceMapsStorages.keySet()) {
-        IStorage mapStorage = sourceMapsStorages.get(scriptStorage);
-        SourceMap map = sourceMaps.get(mapStorage);
+      visit(visitor);
 
-        for (String path : map.getSourceNames()) {
-          // TODO(devoncarew): the files in the maps should all be pre-resolved
-          String relativePath = relativisePath(mapStorage, path);
-          if (isTracing()
-              && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
-            trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
-          }
-
-          if (targetPath.equals(relativePath)) {
-            List<SourceMapInfo> reverseMappings = map.getReverseMappingsFor(path, line);
-            for (SourceMapInfo reverseMapping : reverseMappings) {
-              if (reverseMapping != null) {
-                IStorage mapSource = scriptStorage; //&&&!!! map.getMapSource();
-
-                if (mapSource != null) {
-                  mappings.add(new SourceLocation(
-                      mapSource,
-                      mapSource.getFullPath().toPortableString(),
-                      reverseMapping.getLine(),
-                      reverseMapping.getColumn(),
-                      reverseMapping.getName()));
-                }
-              }
-            }
-
-            if (isTracing() && !mappings.isEmpty()) {
-              trace("Found reverse mappings: " + mappings);
+      if (visitor.getMatchingSourcePath() != null) {
+        List<SourceMapInfo> reverseMappings = visitor.getMatchingSourceMap().getReverseMappingsFor(
+            visitor.getMatchingSourcePath(),
+            line);
+        for (SourceMapInfo reverseMapping : reverseMappings) {
+          if (reverseMapping != null) {
+            IStorage mapSource = visitor.getMatchingScriptStorage(); //&&&!!! visitor.getMAtchingSourceMapStorage();
+            if (mapSource != null) {
+              mappings.add(new SourceLocation(
+                  mapSource,
+                  mapSource.getFullPath().toPortableString(),
+                  reverseMapping.getLine(),
+                  reverseMapping.getColumn(),
+                  reverseMapping.getName()));
             }
           }
         }
@@ -223,51 +299,19 @@ public class SourceMapManager {
         trace("Get source storage: " + targetPath);
       }
 
+      TargetPathCheckingVisitor visitor = new TargetPathCheckingVisitor(targetPath);
+
       synchronized (sourceMaps) {
-        for (IStorage mapStorage : sourceMaps.keySet()) {
-          SourceMap map = sourceMaps.get(mapStorage);
-          for (String path : map.getSourceNames()) {
-            String relativePath = relativisePath(mapStorage, path);
-            if (isTracing()
-                && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
-              trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
-            }
-
-            if (targetPath.equals(relativePath)) {
-              if (isTracing()) {
-                trace("Confirmed - source storage");
-              }
-
-              return resolveStorage(mapStorage, path);
-            }
-          }
+        visit(visitor);
+        if (visitor.getMatchingSourcePath() != null) {
+          return resolveStorage(
+              visitor.getMatchingSourceMapStorage(),
+              visitor.getMatchingSourcePath());
         }
       }
     }
 
     return null;
-  }
-
-  public List<String> getSourcePaths(IStorage storage) {
-    List<String> paths = new ArrayList<String>();
-
-    synchronized (sourceMaps) {
-      IStorage mapStorage = sourceMapsStorages.get(storage);
-      if (mapStorage != null) {
-        SourceMap map = sourceMaps.get(mapStorage);
-        if (map != null) {
-          String[] sourceNames = map.getSourceNames();
-
-          if (sourceNames != null) {
-            for (String sourceName : sourceNames) {
-              paths.add(relativisePath(mapStorage, sourceName));
-            }
-          }
-        }
-      }
-    }
-
-    return paths;
   }
 
   /**
@@ -297,34 +341,25 @@ public class SourceMapManager {
     return false;
   }
 
-  public boolean isMapTarget(String targetPath) { //&&&!!! There can be race conditions because of that method
+  public boolean isMapTarget(IStorage scriptStorage, String targetPath) { //&&&!!! There can be race conditions because of that method
     if (targetPath != null) {
       if (isTracing()) {
         trace("Check for map target: " + targetPath);
       }
 
+      TargetPathCheckingVisitor visitor = new TargetPathCheckingVisitor(targetPath, true/*stopOnInexactMatch*/);
+
       synchronized (sourceMaps) {
-        for (IStorage mapStorage : sourceMaps.keySet()) {
-          SourceMap map = sourceMaps.get(mapStorage);
-          for (String path : map.getSourceNames()) {
-            String relativePath = relativisePath(mapStorage, path);
-            if (isTracing()
-                && (targetPath.endsWith(relativePath) || relativePath.endsWith(targetPath))) {
-              trace("Potential match: " + relativePath + "(" + mapStorage + ", " + path + ")");
-            }
-
-            if (targetPath.equals(relativePath)) {
-              if (isTracing()) {
-                trace("Confirmed - map target");
-              }
-              return true;
-            }
-          }
-        }
+        visit(scriptStorage, visitor);
+        return visitor.getMatchingSourcePath() != null;
       }
+    } else {
+      return false;
     }
+  }
 
-    return false;
+  public boolean isMapTarget(String targetPath) {
+    return isMapTarget(null/*scriptStorage*/, targetPath);
   }
 
   void handleGlobalObjectCleared() {
@@ -334,7 +369,7 @@ public class SourceMapManager {
     }
   }
 
-  void handleScriptParsed(IStorage script, String sourceMapUrl) {
+  void handleScriptParsed(IStorage script, String scriptUrl, String sourceMapUrl) {
     synchronized (sourceMaps) {
       IStorage mapStorage = sourceMapsStorages.remove(script);
       if (mapStorage != null) {
@@ -343,13 +378,23 @@ public class SourceMapManager {
       trace("Checking script for sourcemaps: " + script);
 
       try {
-        processScript(script, sourceMapUrl);
+        processScript(script, scriptUrl, sourceMapUrl);
       } catch (CoreException e) {
         // Processing a source map is always a best effort, because the sourcemap could be missing or broken
         SDBGDebugCorePlugin.logError(e);
         trace("Processing script " + script + " failed: " + e.getMessage());
       }
     }
+  }
+
+  private boolean isDownloadable(URI uri) {
+    if (uri == null || uri.getScheme() == null) {
+      return false;
+    }
+
+    return uri.getScheme().equals("file")
+        || (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
+        && uri.getHost() != null && uri.getHost().length() > 0;
   }
 
   private SourceMap parseSourceMap(IStorage mapStorage) throws IOException, CoreException {
@@ -360,7 +405,8 @@ public class SourceMapManager {
     }
   }
 
-  private void processScript(IStorage script, String sourceMapUrl) throws CoreException {
+  private void processScript(IStorage script, String scriptUrl, String sourceMapUrl)
+      throws CoreException {
     try {
       if (sourceMapUrl == null) {
         BufferedReader reader;
@@ -397,9 +443,13 @@ public class SourceMapManager {
       }
 
       IStorage mapStorage;
-      if (sourceMapUrl != null) {
+      if (sourceMapUrl != null && sourceMapUrl.length() > 0) {
         trace("Found sourcemap with URL: " + sourceMapUrl);
-        mapStorage = resolveStorage(script, sourceMapUrl);
+
+        mapStorage = resolveStorage(script, scriptUrl, sourceMapUrl);
+        if (mapStorage == null) {
+          trace("Sourcemap with URL " + sourceMapUrl + " was not resolved");
+        }
       } else {
         mapStorage = null;
       }
@@ -417,45 +467,11 @@ public class SourceMapManager {
     }
   }
 
-  // TODO: It may turn out that this processing is language specific 
-  // and should be assisted by the language-specific integrations
-  private String relativisePath(IStorage relativeStorage, String path) {
-    URI uri = null;
-
-    try {
-      uri = new URI(path);
-      if (uri != null && uri.getScheme() != null) {
-        // In case the path is a full URI, only keep the path part of it
-        path = uri.getPath();
-      }
-    } catch (URISyntaxException e) {
-      // Do nothing
-    }
-
-    if (path.startsWith("/")) {
-      IPath parentPath = null;
-      if (relativeStorage instanceof IFile) {
-        parentPath = ((IFile) relativeStorage).getFullPath();
-      } else if (relativeStorage instanceof URLStorage) {
-        parentPath = ((URLStorage) relativeStorage).getFullPath();
-      }
-
-      if (parentPath != null) {
-        parentPath = parentPath.removeLastSegments(1);
-        String sParentPath = parentPath.toPortableString();
-        if (path.startsWith(sParentPath)) {
-          path = path.substring(sParentPath.length());
-          if (path.startsWith("/")) {
-            path = path.substring(1);
-          }
-        }
-      }
-    }
-
-    return path;
+  private IStorage resolveStorage(IStorage relativeStorage, String path) {
+    return resolveStorage(relativeStorage, null/*relativeUriStr*/, path);
   }
 
-  private IStorage resolveStorage(IStorage relativeStorage, String path) {
+  private IStorage resolveStorage(IStorage relativeStorage, String relativeUriStr, String path) {
     if (path.startsWith("file:")) {
       try {
         // These incoming uris are not properly uri encoded. If we uri encoded them, we would then
@@ -486,11 +502,26 @@ public class SourceMapManager {
     } else {
       try {
         URI uri = URIUtil.fromString(path);
-        if (uri.getScheme() == null || !uri.getScheme().equals("http")
-            && !uri.getScheme().equals("https") || uri.getHost() == null) {
-          // The source path is not a downloadable URI, try to build a downloadable URI by using the sourcemap URI 
-          if (relativeStorage instanceof URLStorage) {
-            URI relativeUri = ((URLStorage) relativeStorage).getURL().toURI();
+        if (!isDownloadable(uri)) {
+          IResource resource = resourceResolver.resolveUrl(uri.toString());
+          if (resource instanceof IFile) {
+            return (IFile) resource;
+          }
+
+          // The source path is not a downloadable URI, try to build a downloadable URI
+          URI relativeUri = null;
+
+          // First, try with the passed URI 
+          if (relativeUriStr != null && relativeUriStr.length() > 0) {
+            relativeUri = new URI(relativeUriStr);
+          }
+
+          // Next, try with the storage URI
+          if (!isDownloadable(relativeUri) && relativeStorage instanceof URLStorage) {
+            relativeUri = ((URLStorage) relativeStorage).getURL().toURI();
+          }
+
+          if (isDownloadable(relativeUri)) {
             IPath newPath = Path.fromPortableString(relativeUri.getPath()).removeLastSegments(1).append(
                 uri.getPath());
             uri = new URI(
@@ -504,15 +535,7 @@ public class SourceMapManager {
           }
         }
 
-        IResource resource = resourceResolver.resolveUrl(uri.toString());
-
-        if (resource instanceof IFile) {
-          return (IFile) resource;
-        }
-
-        if (uri.getScheme() != null
-            && (uri.getScheme().equals("http") || uri.getScheme().equals("https"))
-            && uri.getHost() != null) {
+        if (isDownloadable(uri)) {
           return new URLStorage(uri.toURL());
         }
       } catch (URISyntaxException e) {
@@ -527,5 +550,26 @@ public class SourceMapManager {
     }
 
     return null;
+  }
+
+  private void visit(IStorage forScriptStorage, Visitor visitor) { //&&&!!! There can be race conditions because of that method
+    synchronized (sourceMaps) {
+      for (IStorage scriptStorage : forScriptStorage != null
+          ? Collections.singleton(forScriptStorage) : sourceMapsStorages.keySet()) {
+        IStorage sourceMapStorage = sourceMapsStorages.get(scriptStorage);
+        if (sourceMapStorage != null) {
+          SourceMap sourceMap = sourceMaps.get(sourceMapStorage);
+          for (String sourcePath : sourceMap.getSourceNames()) {
+            if (visitor.visit(scriptStorage, sourceMapStorage, sourceMap, sourcePath)) {
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private void visit(Visitor visitor) {
+    visit(null/*forScriptStorage*/, visitor);
   }
 }

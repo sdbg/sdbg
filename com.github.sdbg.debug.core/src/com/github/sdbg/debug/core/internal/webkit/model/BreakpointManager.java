@@ -91,6 +91,8 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
     }
   }
 
+  private static Collection<IBreakpointPathResolver> breakpointPathResolvers;
+
   private WebkitDebugTarget debugTarget;
 
   private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
@@ -98,8 +100,6 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
   private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
 
   private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
-
-  private static Collection<IBreakpointPathResolver> breakpointPathResolvers;
 
   static synchronized Collection<IBreakpointPathResolver> getBreakpointPathResolvers() {
     if (breakpointPathResolvers == null) {
@@ -127,11 +127,10 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
   @Override
   public void addBreakpointsConcerningScript(IStorage script) {
     SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-    for (String path : sourceMapManager.getSourcePaths(script)) {
-      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
-        if (!isJSBreakpoint(breakpoint) && path.equals(getBreakpointPath(breakpoint))) {
-          breakpointAdded(breakpoint);
-        }
+    for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+      if (!isJSBreakpoint(breakpoint)
+          && sourceMapManager.isMapTarget(script, getBreakpointPath(breakpoint))) {
+        breakpointAdded(breakpoint);
       }
     }
   }
@@ -312,11 +311,10 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
   @Override
   public void removeBreakpointsConcerningScript(IStorage script) {
     SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-    for (String path : sourceMapManager.getSourcePaths(script)) {
-      for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
-        if (!isJSBreakpoint(breakpoint) && path.equals(getBreakpointPath(breakpoint))) {
-          breakpointRemoved(breakpoint, null/*delta*/);
-        }
+    for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet())) {
+      if (!isJSBreakpoint(breakpoint)
+          && sourceMapManager.isMapTarget(script, getBreakpointPath(breakpoint))) {
+        breakpointRemoved(breakpoint, null/*delta*/);
       }
     }
   }

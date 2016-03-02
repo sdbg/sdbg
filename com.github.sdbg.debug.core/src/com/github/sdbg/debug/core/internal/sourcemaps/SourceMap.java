@@ -14,6 +14,8 @@
 
 package com.github.sdbg.debug.core.internal.sourcemaps;
 
+import com.github.sdbg.utilities.Streams;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,8 +37,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.github.sdbg.utilities.Streams;
-
 // //@ sourceMappingURL=/path/to/file.js.map
 
 /**
@@ -48,6 +48,46 @@ import com.github.sdbg.utilities.Streams;
 public class SourceMap {
 
   public static final String SOURCE_MAP_EXT = ".map";
+
+  private IPath path;
+
+  /**
+   * The format version; must be a positive integer. The current version of the spec is 3.
+   */
+  private int version;
+
+  /**
+   * The name of the generated code that this source map is associated with.
+   */
+  private String file;
+
+  /**
+   * An optional source root, useful for relocating source files on a server or removing repeated
+   * values in the "sources" entry. This value is prepended to the individual entries in the
+   * "source" field.
+   */
+  private String sourceRoot;
+
+  /**
+   * A list of original sources used by the "mappings" entry.
+   */
+  private String[] sources;
+
+  /**
+   * A list of symbol names used by the "mappings" entry.
+   */
+  private String[] names;
+
+  /**
+   * An optional list of source content, useful when the "source" can’t be hosted.
+   */
+  @SuppressWarnings("unused")
+  private String sourcesContent[];
+
+  /**
+   * The full list of source map entries.
+   */
+  private SourceMapInfoEntry[] entries;
 
   public static SourceMap createFrom(File file) throws IOException {
     String contents = Streams.loadAndClose(new InputStreamReader(new FileInputStream(file), "UTF-8"));
@@ -89,46 +129,6 @@ public class SourceMap {
 
     return createFrom(path, new JSONObject(contents));
   }
-
-  private IPath path;
-
-  /**
-   * The format version; must be a positive integer. The current version of the spec is 3.
-   */
-  private int version;
-
-  /**
-   * The name of the generated code that this source map is associated with.
-   */
-  private String file;
-
-  /**
-   * An optional source root, useful for relocating source files on a server or removing repeated
-   * values in the "sources" entry. This value is prepended to the individual entries in the
-   * "source" field.
-   */
-  private String sourceRoot;
-
-  /**
-   * A list of original sources used by the "mappings" entry.
-   */
-  private String[] sources;
-
-  /**
-   * A list of symbol names used by the "mappings" entry.
-   */
-  private String[] names;
-
-  /**
-   * An optional list of source content, useful when the "source" can’t be hosted.
-   */
-  @SuppressWarnings("unused")
-  private String sourcesContent[];
-
-  /**
-   * The full list of source map entries.
-   */
-  private SourceMapInfoEntry[] entries;
 
   public SourceMap() {
 
@@ -270,6 +270,10 @@ public class SourceMap {
 
   public String[] getSourceNames() {
     return sources;
+  }
+
+  public String getSourceRoot() {
+    return sourceRoot;
   }
 
   /**

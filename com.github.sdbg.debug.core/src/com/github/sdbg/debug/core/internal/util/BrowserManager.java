@@ -295,6 +295,12 @@ public class BrowserManager {
               SDBGDebugCorePlugin.logError(e);
             }
           } else {
+            // In theory we want to set the URL only after we have set the correct behavior regarding "break on exceptions" set in the debugger
+            // The latter happens only after the debug connection is established
+            // however for unknown reasons, this delayed setting does not always work
+            // Hence, for now this delayed URL setting is switched off
+            boolean delaySettingUrl = false;
+
             terminateExistingBrowserProcess();
 
             StringBuilder processDescription = new StringBuilder();
@@ -302,7 +308,7 @@ public class BrowserManager {
             int[] devToolsPortNumberHolder = new int[1];
             ListeningStream browserOutput = startNewBrowserProcess(
                 launchConfig,
-                url,
+                delaySettingUrl ? null : url,
                 monitor,
                 enableDebugging,
                 processDescription,
@@ -328,7 +334,7 @@ public class BrowserManager {
                   browserExecutable.getName(),
                   launch,
                   launchConfig,
-                  url,
+                  delaySettingUrl ? url : null,
                   monitor,
                   browserProcess,
                   timer,
@@ -952,8 +958,11 @@ public class BrowserManager {
     }
 
     devToolsPortNumberHolder[0] = devToolsPortNumber;
-    List<String> arguments = buildArgumentsList(launchConfig, enableDebugging && url != null
-        ? INITIAL_PAGE : url, devToolsPortNumber, extraArguments);
+    List<String> arguments = buildArgumentsList(
+        launchConfig,
+        url != null ? url : INITIAL_PAGE,
+        devToolsPortNumber,
+        extraArguments);
     builder.command(arguments);
     builder.redirectErrorStream(true);
 

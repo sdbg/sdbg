@@ -263,9 +263,10 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     for (IVariable var : value.getVariables()) {
       String name = var.getName();
       if (hasGWTSuffix(name)) {
-        name = removeGWTSuffix(name);
         if (!name.equals("$H") && !isGWTInit(name) && !isGWTClass(name)
+            && !isGWTCastableTypeMap(name)
             && !(var.getValue() != null && ((ISDBGValue) var.getValue()).isFunction())) {
+          name = removeGWTSuffix(name);
           if (!visited.contains(name)) {
             visited.add(name);
             variables.add(new GWTSDMVariable(name, (ISDBGVariable) var));
@@ -356,6 +357,10 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
     }
   }
 
+  private boolean isGWTCastableTypeMap(String name) {
+    return hasGWTSuffix(name) && name.startsWith("castableTypeMap_");
+  }
+
   private boolean isGWTClass(String name) {
     return name.equals("___clazz$") || hasGWTSuffix(name) && name.startsWith("___clazz_");
   }
@@ -383,6 +388,15 @@ public class GWTSDMStructureType implements ILogicalStructureTypeDelegate,
   }
 
   private String removeGWTSuffix(String name) {
-    return name.substring(0, name.lastIndexOf('_', name.length() - 4));
+    if (name.length() > 3) {
+      int pos = name.lastIndexOf('_', name.length() - 4);
+      if (pos > 0) {
+        return name.substring(0, pos);
+      } else {
+        return name.substring(0, name.length() - 3);
+      }
+    } else {
+      return name;
+    }
   }
 }

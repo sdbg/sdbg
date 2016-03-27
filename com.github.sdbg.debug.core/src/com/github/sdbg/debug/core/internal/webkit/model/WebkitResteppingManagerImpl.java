@@ -59,7 +59,8 @@ public class WebkitResteppingManagerImpl implements WebkitResteppingManager {
       restep = true;
       return;
     } else if (SDBGDebugCorePlugin.getPlugin().getUseSmartStepOver() && exception == null
-        && reason == PausedReasonType.other && currentLocation != null && stepLocation != null
+        && reason == PausedReasonType.other && currentLocation != null && stepLocation != null 
+        && stepCommand != null
         && currentLocation.getPath().equals(stepLocation.getPath())
         && currentLocation.getLine() == stepLocation.getLine()) {
       // Restepping is needed if we are still on the same line in the same Java source file

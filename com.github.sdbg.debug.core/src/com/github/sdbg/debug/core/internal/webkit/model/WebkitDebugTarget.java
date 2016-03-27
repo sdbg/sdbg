@@ -345,7 +345,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       }
     });
     connection.getPage().enable();
-
+    connection.getDom().enable();
     connection.getCSS().enable();
 
     connection.getDom().addDomListener(new DomListener() {

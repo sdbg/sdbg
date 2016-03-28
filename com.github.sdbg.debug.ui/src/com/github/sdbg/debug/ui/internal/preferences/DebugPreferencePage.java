@@ -66,6 +66,7 @@ public class DebugPreferencePage extends PreferencePage implements IWorkbenchPre
         BreakOnExceptions.valueOf(exceptionsCombo.getText()));
     SDBGDebugCorePlugin.getPlugin().setInvokeToString(invokeToStringButton.getSelection());
     SDBGDebugCorePlugin.getPlugin().setUseSmartStepOver(useSmartStepOverButton.getSelection());
+    SDBGDebugCorePlugin.getPlugin().setUseSmartStepInOut(useSmartStepInOutButton.getSelection());
     SDBGDebugCorePlugin.getPlugin().setExcludeFromLogicalStructure(
         excludeFromLogicalStructureText.getText());
 

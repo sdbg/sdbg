@@ -586,6 +586,14 @@ public class WebkitDom extends WebkitDomain {
     }
   }
 
+  public void disable() throws IOException {
+    sendSimpleCommand("DOM.disable");
+  }
+
+  public void enable() throws IOException {
+    sendSimpleCommand("DOM.enable");
+  }
+
   protected void handleDOMNotification(String method, JSONObject params) {
     if (method.equals(DOM_DOCUMENT_UPDATED)) {
       for (DomListener listener : domListeners) {

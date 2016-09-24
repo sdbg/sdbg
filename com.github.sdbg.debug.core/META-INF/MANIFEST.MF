@@ -3,12 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Localization: plugin
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.github.sdbg.debug.core;singleton:=true
-Bundle-Version: 1.0.9.qualifier
+Bundle-Version: 0.0.0.qualifier
 Bundle-Activator: com.github.sdbg.debug.core.SDBGDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.debug.core
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: com.github.sdbg.core,
  com.github.sdbg.debug.core,

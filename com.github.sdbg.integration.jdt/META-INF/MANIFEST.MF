@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Localization: plugin
 Bundle-Name: %pluginName
 Bundle-SymbolicName: com.github.sdbg.integration.jdt;singleton:=true
-Bundle-Version: 1.0.9.qualifier
+Bundle-Version: 0.0.0.qualifier
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.debug.core,
@@ -19,8 +19,8 @@ Require-Bundle: org.eclipse.core.runtime,
  com.github.sdbg.debug.core,
  com.github.sdbg.debug.ui,
  org.eclipse.ui,
- com.google.gdt.eclipse.core;resolution:=optional
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+ com.gwtplugins.gdt.eclipse.core;resolution:=optional
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.core.commands,
  org.eclipse.jface.viewers

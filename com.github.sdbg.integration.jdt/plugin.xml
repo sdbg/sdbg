@@ -144,7 +144,7 @@
    
     <!-- GWT Plugin debug launching -->
    <extension
-         point="com.google.gdt.eclipse.core.debugLauncher">
+         point="com.gwtplugins.gdt.eclipse.core.debugLauncher">
       <extensions
             class="com.github.sdbg.integration.jdt.ChromeDebugLaunch" 
             label="SDBG Chrome JS Debugger">

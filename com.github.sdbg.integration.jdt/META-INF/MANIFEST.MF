@@ -19,7 +19,7 @@ Require-Bundle: org.eclipse.core.runtime,
  com.github.sdbg.debug.core,
  com.github.sdbg.debug.ui,
  org.eclipse.ui,
- com.google.gdt.eclipse.core;resolution:=optional
+ com.gwtplugins.gdt.eclipse.core;resolution:=optional
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.core.commands,

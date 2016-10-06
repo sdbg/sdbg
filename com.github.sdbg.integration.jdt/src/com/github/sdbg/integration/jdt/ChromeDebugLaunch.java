@@ -25,38 +25,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 
 public class ChromeDebugLaunch implements IDebugLaunch {
-  @Override
-  public void launch(IProject project, String url, String mode) {
-    if (project == null || url == null || mode == null) {
-      return;
-    }
-
-    try {
-      ILaunchConfiguration config;
-
-      try {
-        // Select an existing configuration if one exists
-        config = findConfig(project, url);
-      } catch (OperationCanceledException ex) {
-        return;
-      }
-
-      if (config == null) {
-        // Otherwise, create a new one
-        config = createConfig(project, url);
-      }
-
-      // Launch the configuration
-      SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
-      launchWrapper.markAsLaunched();
-
-      LaunchUtils.clearConsoles();
-      LaunchUtils.launch(config, mode);
-    } catch (CoreException e) {
-      SDBGJDTIntegrationPlugin.wrapError(e);
-    }
-  }
-
   private ILaunchConfiguration chooseConfig(List<ILaunchConfiguration> configList) {
     IDebugModelPresentation labelProvider = DebugUITools.newDebugModelPresentation();
     ElementListSelectionDialog dialog = new ElementListSelectionDialog(
@@ -76,7 +44,8 @@ public class ChromeDebugLaunch implements IDebugLaunch {
 
   private ILaunchConfiguration createConfig(IProject project, String url) throws CoreException {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
-    ILaunchConfigurationType type = manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
+    ILaunchConfigurationType type = manager.getLaunchConfigurationType(
+        SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
     ILaunchConfigurationWorkingCopy launchConfig = type.newInstance(
         null,
         manager.generateLaunchConfigurationName(project.getName()));
@@ -134,6 +103,38 @@ public class ChromeDebugLaunch implements IDebugLaunch {
   private ILaunchConfigurationType getConfigurationType() {
     ILaunchManager manager = DebugPlugin.getDefault().getLaunchManager();
     return manager.getLaunchConfigurationType(SDBGDebugCorePlugin.CHROME_LAUNCH_CONFIG_ID);
+  }
+
+  @Override
+  public void launch(IProject project, String url, String mode) {
+    if (project == null || url == null || mode == null) {
+      return;
+    }
+
+    try {
+      ILaunchConfiguration config;
+
+      try {
+        // Select an existing configuration if one exists
+        config = findConfig(project, url);
+      } catch (OperationCanceledException ex) {
+        return;
+      }
+
+      if (config == null) {
+        // Otherwise, create a new one
+        config = createConfig(project, url);
+      }
+
+      // Launch the configuration
+      SDBGLaunchConfigWrapper launchWrapper = new SDBGLaunchConfigWrapper(config);
+      launchWrapper.markAsLaunched();
+
+      LaunchUtils.clearConsoles();
+      LaunchUtils.launch(config, mode);
+    } catch (CoreException e) {
+      SDBGJDTIntegrationPlugin.wrapError(e);
+    }
   }
 
   private boolean testSimilar(IProject project, String url, ILaunchConfiguration config) {

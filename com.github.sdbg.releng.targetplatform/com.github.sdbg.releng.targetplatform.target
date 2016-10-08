@@ -7,7 +7,7 @@
 <repository location="http://download.eclipse.org/releases/luna"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="com.gwtplugins.eclipse.suite.v3.feature" version="0.0.0"/>
+<unit id="com.gwtplugins.eclipse.suite.v3.feature" />
 <repository location="http://storage.googleapis.com/gwt-eclipse-plugin/v3/release"/>
 </location>
 </locations>

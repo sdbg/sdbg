@@ -149,10 +149,17 @@ public class SourceMap {
     version = obj.optInt("version");
     file = obj.optString("file");
     sourceRoot = obj.optString("sourceRoot");
+    if (sourceRoot != null) {
+      sourceRoot = sourceRoot.replace('\\', '/');
+    }
 
     sources = parseStringArray(obj.getJSONArray("sources"));
     sourcesContent = parseStringArray(obj.optJSONArray("sourcesContent"));
     names = parseStringArray(obj.getJSONArray("names"));
+
+    for (int i = 0; i < sources.length; i++) {
+      sources[i] = sources[i].replace('\\', '/');
+    }
 
     // Prepend sourceRoot to the sources entries.
     if (sourceRoot != null && sourceRoot.length() > 0) {

@@ -2,6 +2,7 @@ package com.github.sdbg.integration.jdt;
 
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaBreakpoint;
@@ -18,6 +19,12 @@ public class JDTBreakpointPathResolver implements IBreakpointPathResolver {
   public String getPath(IBreakpoint breakpoint) throws CoreException {
     IJavaBreakpoint bp = (IJavaBreakpoint) breakpoint;
 
+    String path = getLocalPath(bp);
+
+    if (path != null) {
+      return path;
+    }
+
     String type = bp.getTypeName();
     if (type != null) {
       int innerClassIndex = type.indexOf('$');
@@ -32,6 +39,19 @@ public class JDTBreakpointPathResolver implements IBreakpointPathResolver {
       return null;
     }
   }
+
+  public String getLocalPath(IJavaBreakpoint bp) throws CoreException {
+    if (bp.getMarker() != null 
+        && bp.getMarker().getResource() != null
+        && bp.getMarker().getResource().getType() == IResource.FILE) {      
+      String type = bp.getTypeName();
+      if (type != null) {
+        String pkg = (type.lastIndexOf('.') >= 0 ? (type.substring(0, type.lastIndexOf('.')) + "/") : "").replace('.', '/');
+        return pkg + bp.getMarker().getResource().getName();
+      }
+    }
+    return null;
+  }  
 
   @Override
   public boolean isSupported(IBreakpoint breakpoint) {

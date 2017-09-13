@@ -40,7 +40,7 @@ public class JDTBreakpointPathResolver implements IBreakpointPathResolver {
     }
   }
 
-  public String getLocalPath(IJavaBreakpoint bp) throws CoreException {
+  private String getLocalPath(IJavaBreakpoint bp) throws CoreException {
     if (bp.getMarker() != null 
         && bp.getMarker().getResource() != null
         && bp.getMarker().getResource().getType() == IResource.FILE) {      

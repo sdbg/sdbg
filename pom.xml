@@ -20,7 +20,7 @@
   <repositories>
     <repository>
       <id>gwt-plugin</id>
-      <url>http://storage.googleapis.com/gwt-eclipse-plugin/release</url>
+      <url>https://storage.googleapis.com/gwt-eclipse-plugin/release</url>
       <layout>p2</layout>
     </repository>
     <repository>

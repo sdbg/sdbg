@@ -21,4 +21,8 @@ Export-Package: com.github.sdbg.core,
  org.json
 Bundle-ClassPath: .,
  lib/json.jar,
- lib/weberknecht-0.1.5.jar
+ lib/weberknecht-0.1.5.jar,
+ lib/javax.activation-api-1.2.0.jar,
+ lib/jaxb-api-2.3.1.jar,
+ lib/jaxb-core-2.3.0.1.jar,
+ lib/jaxb-impl-2.3.2.jar 

@@ -5,15 +5,15 @@
 
   <groupId>com.github.sdbg</groupId>
   <artifactId>com.github.sdbg.parent</artifactId>
-  <version>1.0.10.qualifier</version>
+  <version>1.0.10-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <properties>
-    <tycho-version>0.22.0</tycho-version>
-    <tycho-extras-version>0.22.0</tycho-extras-version>
+    <tycho-version>2.7.0</tycho-version>
+    <tycho-extras-version>2.7.0</tycho-extras-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     
-    <eclipse.target>luna</eclipse.target>
+    <eclipse.target>2021-12</eclipse.target>
     <eclipse-repo.url>http://download.eclipse.org/releases/${eclipse.target}</eclipse-repo.url>
   </properties>
   
@@ -63,7 +63,7 @@
 		   <artifact>  
 		    <groupId>com.github.sdbg</groupId>  
 		    <artifactId>com.github.sdbg.releng.targetplatform</artifactId>  
-		    <version>1.0.10.qualifier</version>  
+		    <version>1.0.10-SNAPSHOT</version>  
 		   </artifact>  
 		  </target>  
         </configuration>  

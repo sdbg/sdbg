@@ -8,7 +8,7 @@ Bundle-Activator: com.github.sdbg.debug.core.SDBGDebugCorePlugin
 Bundle-Vendor: %providerName
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.debug.core
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: com.github.sdbg.core,
  com.github.sdbg.debug.core,
@@ -20,9 +20,4 @@ Export-Package: com.github.sdbg.core,
  com.github.sdbg.utilities.instrumentation,
  org.json
 Bundle-ClassPath: .,
- lib/json.jar,
- lib/weberknecht-0.1.5.jar,
- lib/javax.activation-api-1.2.0.jar,
- lib/jaxb-api-2.3.1.jar,
- lib/jaxb-core-2.3.0.1.jar,
- lib/jaxb-impl-2.3.2.jar 
+ lib/json.jar

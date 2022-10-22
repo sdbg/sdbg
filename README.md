@@ -18,6 +18,11 @@ git clone git@github.com:sdbg/sdbg.git
 
 (forgive the large download; we have retained all Dart history for posterity and access via eGit)
 
+You may use the following parameters to reduce the size drastically:
+```
+git clone --filter=blob:none egit@github.com:sdbg/sdbg.git
+```
+
 For development, you are recommended to import the root of the source as a Maven (Eclipse M4E) project.  
 
 Inside the **com.github.sdbg.debug.ui project**, you will see a launch configuration called **SDBG.launch**.

@@ -2,9 +2,9 @@
 <?pde version="3.8"?><target name="com.github.sdbg.releng.targetplatform" sequenceNumber="6">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.pde.feature.group" version="3.10.1.v20150204-1700"/>
-<unit id="org.eclipse.jdt.feature.group" version="3.10.1.v20150204-1700"/>
-<repository location="http://download.eclipse.org/releases/luna"/>
+<unit id="org.eclipse.pde.feature.group" version="3.14.1000.v20211124-1800"/>
+<unit id="org.eclipse.jdt.feature.group" version="3.18.1000.v20211124-1800"/>
+<repository location="http://download.eclipse.org/releases/2021-12"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="planner" includeSource="true" type="InstallableUnit">
 <unit id="com.gwtplugins.eclipse.suite.v3.feature.feature.group" version="0.0.0"/>

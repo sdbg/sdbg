@@ -62,8 +62,10 @@ public class BrowserManager {
 
   private static final int DEVTOOLS_PORT_NUMBER = 9322;
 
-  private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location",
-      CHROME_ENVIRONMENT_VARIABLE = "CHROME_LOCATION";
+  private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location"
+      , CHROME_ENVIRONMENT_VARIABLE = "CHROME_LOCATION"
+      , BROWSER_EXECUTABLE_PROPERTY = "browser.location"
+      , BROWSER_ENVIRONMENT_VARIABLE = "BROWSER_LOCATION";
 
   private String browserDataDirName;
 
@@ -87,7 +89,7 @@ public class BrowserManager {
     try {
       SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
 
-      LogTimer timer = new LogTimer("Chrome debug connect");
+      LogTimer timer = new LogTimer("Browser debug connect");
 
       try {
         timer.startTask("connect");
@@ -95,8 +97,8 @@ public class BrowserManager {
         try {
           launchConfig.markAsLaunched();
 
-          return connectToChromiumDebug(
-              "Chrome Remote Connection",
+          return connectToBrowserDebug(
+              "Browser Remote Connection",
               launch,
               launchConfig,
               null/*url*/,
@@ -130,7 +132,7 @@ public class BrowserManager {
     try {
       SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
 
-      LogTimer timer = new LogTimer("Chrome debug connect");
+      LogTimer timer = new LogTimer("Browser debug connect");
 
       try {
         timer.startTask("connect");
@@ -189,7 +191,7 @@ public class BrowserManager {
                 }
               }
 
-              return connectToChromiumDebug(
+              return connectToBrowserDebug(
                   "Mobile Chrome Remote Connection",
                   launch,
                   launchConfig,
@@ -251,13 +253,13 @@ public class BrowserManager {
           SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
           launchConfig.markAsLaunched();
 
-          monitor.beginTask("Launching Chrome...", enableDebugging ? 7 : 2);
+          monitor.beginTask("Launching Browser...", enableDebugging ? 7 : 2);
 
           // avg: 0.434 sec (old: 0.597)
-          LogTimer timer = new LogTimer("Chrome debug startup");
+          LogTimer timer = new LogTimer("Browser debug startup");
 
           // avg: 55ms
-          timer.startTask("Chrome startup");
+          timer.startTask("Browser startup");
 
           // for now, check if browser is open, and connection is alive
           boolean restart = browserProcess == null || isProcessTerminated(browserProcess)
@@ -330,7 +332,7 @@ public class BrowserManager {
             }
 
             if (enableDebugging) {
-              connectToChromiumDebug(
+              connectToBrowserDebug(
                   browserExecutable.getName(),
                   launch,
                   launchConfig,
@@ -389,7 +391,7 @@ public class BrowserManager {
       arguments.add("--remote-debugging-port=" + devToolsPortNumber);
     }
 
-    // In order to start up multiple Chrome processes, we need to specify a different user dir.
+    // In order to start up multiple Browser processes, we need to specify a different user dir.
     arguments.add("--user-data-dir="
         + getCreateUserDataDirectory(browserDataDirName).getAbsolutePath());
 
@@ -415,7 +417,7 @@ public class BrowserManager {
     return arguments;
   }
 
-  private WebkitDebugTarget connectToChromiumDebug(String browserName, ILaunch launch,
+  private WebkitDebugTarget connectToBrowserDebug(String browserName, ILaunch launch,
       SDBGLaunchConfigWrapper launchConfig, String url, IProgressMonitor monitor,
       Process runtimeProcess, LogTimer timer, boolean enableBreakpoints, String host, int port,
       long maxStartupDelay, ListeningStream browserOutput, String processDescription,
@@ -441,7 +443,7 @@ public class BrowserManager {
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "Unable to connect to Chrome at address " + (host != null ? host : "") + ":" + port
+          "Unable to connect to Browser at address " + (host != null ? host : "") + ":" + port
               + "; error: " + e.getMessage(),
           e));
     }
@@ -457,7 +459,7 @@ public class BrowserManager {
       throw new DebugException(new Status(
           IStatus.INFO,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "No Chrome tab was chosen. Connection cancelled."));
+          "No Browser tab was chosen. Connection cancelled."));
     }
 
     if (tab.getWebSocketDebuggerUrl() == null) {
@@ -465,9 +467,9 @@ public class BrowserManager {
           new Status(
               IStatus.ERROR,
               SDBGDebugCorePlugin.PLUGIN_ID,
-              "Unable to connect to Chrome"
+              "Unable to connect to Browser"
                   + (remote
-                      ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Chrome tab."
+                      ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Browser tab."
                       : "")));
     }
 
@@ -528,7 +530,7 @@ public class BrowserManager {
       throw new CoreException(new Status(
           IStatus.ERROR,
           SDBGDebugCorePlugin.PLUGIN_ID,
-          "Unable to connect to Chrome tab at address "
+          "Unable to connect to Browser tab at address "
               + (tab.getHost() != null ? tab.getHost() : "") + ":" + tab.getPort() + " ("
               + tab.getWebSocketDebuggerFile() + "): " + e.getMessage(),
           e));
@@ -544,9 +546,18 @@ public class BrowserManager {
     }
   }
 
-  private File findChromeExecutable() {
+  private File findBrowserExecutable() {
     // First, try the system property, as user-specified value is preferred
-    File file = findChromeExecutable(
+    File file = findBrowserExecutable(
+        "system property " + BROWSER_EXECUTABLE_PROPERTY,
+        System.getProperty(BROWSER_EXECUTABLE_PROPERTY),
+        true/*fileOrDir*/);
+    if (file != null) {
+      return file;
+    }
+
+    // For compatibility search the OLD Property
+    file = findBrowserExecutable(
         "system property " + CHROME_EXECUTABLE_PROPERTY,
         System.getProperty(CHROME_EXECUTABLE_PROPERTY),
         true/*fileOrDir*/);
@@ -555,7 +566,16 @@ public class BrowserManager {
     }
 
     // Second, try the environment variable
-    file = findChromeExecutable(
+    file = findBrowserExecutable(
+        "environment vairable " + BROWSER_ENVIRONMENT_VARIABLE,
+        System.getenv(BROWSER_ENVIRONMENT_VARIABLE),
+        true/*fileOrDir*/);
+    if (file != null) {
+      return file;
+    }
+
+    // For compatibility search the OLD Property
+    file = findBrowserExecutable(
         "environment vairable " + CHROME_ENVIRONMENT_VARIABLE,
         System.getenv(CHROME_ENVIRONMENT_VARIABLE),
         true/*fileOrDir*/);
@@ -569,7 +589,7 @@ public class BrowserManager {
       try {
         String regKey = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
         String regValue = "InstallLocation";
-        file = findChromeExecutable(
+        file = findBrowserExecutable(
             "registry setting " + regKey + "[" + regValue + "]",
             WinReg.readRegistry(regKey, regValue),
             false/*fileOrDir*/);
@@ -583,7 +603,7 @@ public class BrowserManager {
         // In case Chrome x86 is installed on a x64 machine:
         regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
         regValue = "InstallLocation";
-        file = findChromeExecutable(
+        file = findBrowserExecutable(
             "registry setting " + regKey + "[" + regValue + "]",
             WinReg.readRegistry(regKey, regValue),
             false/*fileOrDir*/);
@@ -594,7 +614,7 @@ public class BrowserManager {
         // General fallback
         regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe";
         regValue = "Path";
-        file = findChromeExecutable(
+        file = findBrowserExecutable(
             "registry setting " + regKey + "[" + regValue + "]",
             WinReg.readRegistry(regKey, regValue),
             false/*fileOrDir*/);
@@ -610,7 +630,7 @@ public class BrowserManager {
       File userHome = new File(System.getProperty("user.home"));
 
       // Windows 7
-      file = findChromeExecutable("heuristics", new File(
+      file = findBrowserExecutable("heuristics", new File(
           userHome,
           "AppData\\Local\\Google\\Chrome\\Application"), false/*fileOrDir*/);
       if (file != null) {
@@ -618,14 +638,26 @@ public class BrowserManager {
       }
 
       // XP
-      file = findChromeExecutable("heuristics", new File(
+      file = findBrowserExecutable("heuristics", new File(
           userHome,
           "Local Settings\\Application Data\\Google\\Chrome\\Application"), false/*fileOrDir*/);
       if (file != null) {
         return file;
       }
+
+      //Default PATH. Often installed here.
+      file = findBrowserExecutable("default path", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", false);
+      if (file != null) {
+        return file;
+      }
+      
+      file = findBrowserExecutable("default path", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", false);
+      if (file != null) {
+        return file;
+      }
+
     } else if (DartCore.isMac()) {
-      file = findChromeExecutable("heuristics", new File("/Applications"), false/*fileOrDir*/);
+      file = findBrowserExecutable("heuristics", new File("/Applications"), false/*fileOrDir*/);
       if (file != null) {
         return file;
       }
@@ -634,7 +666,7 @@ public class BrowserManager {
       String path = System.getenv("PATH");
       if (path != null) {
         for (String dirStr : path.split(File.pathSeparator)) {
-          file = findChromeExecutable("$PATH entry", dirStr, false/*fileOrDir*/);
+          file = findBrowserExecutable("$PATH entry", dirStr, false/*fileOrDir*/);
           if (file != null) {
             return file;
           }
@@ -642,18 +674,18 @@ public class BrowserManager {
       }
     }
 
-    throw new RuntimeException("Uable to locate the Chrome executable at the usual locations.\n"
+    throw new RuntimeException("Uable to locate the Browser executable at the usual locations.\n"
         + "Please append at the end of your eclipse.ini file the following property:\n" + "-D"
-        + CHROME_EXECUTABLE_PROPERTY + "=<path-to-chrome-executable>");
+        + BROWSER_EXECUTABLE_PROPERTY + "=<path-to-browser-executable>");
   }
 
-  private File findChromeExecutable(String option, File location, boolean fileOrDir) {
-    trace("Trying to load Chrome from " + option + "=" + location.getPath());
+  private File findBrowserExecutable(String option, File location, boolean fileOrDir) {
+    trace("Trying to load Browser from " + option + "=" + location.getPath());
     if (!location.exists()) {
       trace("=> Failed, location does not exist");
     } else if (location.isFile()) {
       if (fileOrDir) {
-        trace("=> Found, location is a file, this is assumed to be the Chrome executable");
+        trace("=> Found, location is a file, this is assumed to be the Browser executable");
         return location;
       } else {
         trace("=> Failed, location is a file");
@@ -661,6 +693,14 @@ public class BrowserManager {
       }
     } else if (DartCore.isWindows()) {
       File exe = new File(location, "chrome.exe");
+      trace("=> Trying " + exe.getPath());
+      if (exe.exists() && exe.isFile()) {
+        trace("=> Found");
+        return exe;
+      }
+    } else if (DartCore.isWindows()) {
+      //Try Microsoft Edge, as it is now Chrome based, and works flawless.
+      File exe = new File(location, "msedge.exe");
       trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
         trace("=> Found");
@@ -719,9 +759,9 @@ public class BrowserManager {
     return null;
   }
 
-  private File findChromeExecutable(String option, String location, boolean fileOrDir) {
+  private File findBrowserExecutable(String option, String location, boolean fileOrDir) {
     if (location != null) {
-      return findChromeExecutable(option, new File(location), fileOrDir);
+      return findBrowserExecutable(option, new File(location), fileOrDir);
     } else {
       trace("Skipped loading Chrome from " + option + ": option not specified/null");
       return null;
@@ -742,7 +782,7 @@ public class BrowserManager {
       return chosenTab;
     }
 
-    StringBuilder builder = new StringBuilder("Unable to locate target Chrome tab [" + tabs.size()
+    StringBuilder builder = new StringBuilder("Unable to locate target Browser tab [" + tabs.size()
         + " tabs]\n");
 
     for (IBrowserTabInfo tab : tabs) {
@@ -756,7 +796,7 @@ public class BrowserManager {
 
   private File getBrowserExecutable() {
     if (browserExecutable == null) {
-      browserExecutable = findChromeExecutable();
+      browserExecutable = findBrowserExecutable();
     }
     return browserExecutable;
   }
@@ -772,7 +812,7 @@ public class BrowserManager {
             IStatus.ERROR,
             SDBGDebugCorePlugin.PLUGIN_ID,
             "Could not launch browser - process terminated while trying to connect. "
-                + "Try closing any running Chrome instances."
+                + "Try closing any running Browser instances."
                 + getProcessStreamMessage(browserOutput.toString())));
       }
 
@@ -790,7 +830,7 @@ public class BrowserManager {
       }
 
       if (runtimeProcess != null && System.currentTimeMillis() > endTime) {
-        throw new IOException("Timed out trying to connect to Chrome");
+        throw new IOException("Timed out trying to connect to Browser");
       }
 
       sleep(25);
@@ -834,7 +874,7 @@ public class BrowserManager {
     StringBuilder msg = new StringBuilder();
 
     if (output.length() != 0) {
-      msg.append("Chrome stdout: ").append(output).append("\n");
+      msg.append("Browser stdout: ").append(output).append("\n");
     }
 
     if (msg.length() != 0) {

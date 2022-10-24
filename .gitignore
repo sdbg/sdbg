@@ -1,2 +1,7 @@
 target
+/dist
+/out
+/tmp
+/update-site
+/build/classes
 *.class

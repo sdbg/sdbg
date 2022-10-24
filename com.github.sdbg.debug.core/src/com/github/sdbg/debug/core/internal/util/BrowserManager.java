@@ -646,12 +646,12 @@ public class BrowserManager {
       }
 
       //Default PATH. Often installed here.
-      file = findBrowserExecutable("default path", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", false);
+      file = findBrowserExecutable("default path", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", true);
       if (file != null) {
         return file;
       }
       
-      file = findBrowserExecutable("default path", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", false);
+      file = findBrowserExecutable("default path", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", true);
       if (file != null) {
         return file;
       }

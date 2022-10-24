@@ -16,11 +16,6 @@ package com.github.sdbg.debug.core.internal.webkit.protocol;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 
-import de.roderick.weberknecht.WebSocket;
-import de.roderick.weberknecht.WebSocketEventHandler;
-import de.roderick.weberknecht.WebSocketException;
-import de.roderick.weberknecht.WebSocketMessage;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -31,6 +26,11 @@ import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import de.roderick.weberknecht.WebSocket;
+import de.roderick.weberknecht.WebSocketEventHandler;
+import de.roderick.weberknecht.WebSocketException;
+import de.roderick.weberknecht.WebSocketMessage;
 
 /**
  * A class to connect to and communicate with a Webkit Inspection Protocol server.

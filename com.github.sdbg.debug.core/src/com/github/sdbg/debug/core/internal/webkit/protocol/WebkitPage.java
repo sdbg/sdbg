@@ -19,9 +19,8 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Noti
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,7 +60,7 @@ public class WebkitPage extends WebkitDomain {
     public void frameDetached(String frameId) {
 
     }
-
+ 
     @Override
     public void frameNavigated(String frameId, String url) {
 
@@ -106,7 +105,7 @@ public class WebkitPage extends WebkitDomain {
    * @return
    */
   public static byte[] convertBase64ToBinary(String data) {
-    return DatatypeConverter.parseBase64Binary(data);
+    return Base64.getDecoder().decode(data);
   }
 
   public WebkitPage(WebkitConnection connection) {

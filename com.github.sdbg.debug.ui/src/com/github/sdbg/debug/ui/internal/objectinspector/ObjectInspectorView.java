@@ -15,7 +15,6 @@
 package com.github.sdbg.debug.ui.internal.objectinspector;
 
 import com.github.sdbg.debug.core.model.ISDBGValue;
-import com.github.sdbg.debug.core.util.Base64;
 import com.github.sdbg.debug.core.util.HistoryList;
 import com.github.sdbg.debug.core.util.HistoryListListener;
 import com.github.sdbg.debug.core.util.HistoryListMatcher;
@@ -28,6 +27,7 @@ import com.github.sdbg.ui.instrumentation.UIInstrumentation;
 import com.github.sdbg.ui.instrumentation.UIInstrumentationBuilder;
 import com.github.sdbg.utilities.AdapterUtilities;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -161,9 +161,8 @@ public class ObjectInspectorView extends ViewPart implements IDebugEventSetListe
               displayError(result);
             } else {
               inspectAsync(result.getValue());
-              instrumentation.data("InspectResult", Base64.encodeToString(
-                  String.valueOf(result.getValue()).getBytes(),
-                  Base64.DEFAULT));
+              instrumentation.data("InspectResult", Base64.getEncoder().encodeToString(
+                  String.valueOf(result.getValue()).getBytes()));
             }
             instrumentation.metric("Evaluate", "Completed");
           } finally {
@@ -204,9 +203,8 @@ public class ObjectInspectorView extends ViewPart implements IDebugEventSetListe
             } else {
               displayResult(stringValue);
               resetCurrentValue();
-              instrumentation.data("EvaluateResult", Base64.encodeToString(
-                  String.valueOf(result.getValue()).getBytes(),
-                  Base64.DEFAULT));
+              instrumentation.data("EvaluateResult", Base64.getEncoder().encodeToString(
+                  String.valueOf(result.getValue()).getBytes()));
             }
 
             instrumentation.metric("Evaluate", "Completed");

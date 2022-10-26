@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.util;
 
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumTabInfo;
+import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 
@@ -39,15 +39,15 @@ public class DefaultBrowserTabChooser implements IBrowserTabChooser {
         return tab;
       }
 
-      if (tab instanceof ChromiumTabInfo
-          && ((ChromiumTabInfo) tab).getUrl().contains(CHROMIUM_INITIAL_PAGE_FRAGMENT)) {
+      if (tab instanceof DefaultTabInfo
+          && ((DefaultTabInfo) tab).getUrl().contains(CHROMIUM_INITIAL_PAGE_FRAGMENT)) {
         return tab;
       }
     }
 
     // Return the first visible, non-Chrome extension tab.
     for (IBrowserTabInfo tab : tabs) {
-      if (!(tab instanceof ChromiumTabInfo) || !((ChromiumTabInfo) tab).isChromeExtension()) {
+      if (!(tab instanceof DefaultTabInfo) || !((DefaultTabInfo) tab).isChromeExtension()) {
         return tab;
       }
     }

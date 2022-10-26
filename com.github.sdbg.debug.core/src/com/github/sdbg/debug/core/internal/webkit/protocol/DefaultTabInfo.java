@@ -23,14 +23,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A class used to represent meta-information about an open Chronium tab, including its WIP debugger
+ * A class used to represent meta-information about an open Browser tab, including its WIP debugger
  * URL.
  * 
  * @see ChromiumConnector
  */
-public class ChromiumTabInfo implements IBrowserTabInfo {
+public class DefaultTabInfo implements IBrowserTabInfo {
 
-  static ChromiumTabInfo fromJson(String host, int port, JSONObject object) throws JSONException {
+  public static DefaultTabInfo fromJson(String host, int port, JSONObject object) throws JSONException {
 // {
 //    "devtoolsFrontendUrl": "/devtools/devtools.html?host=&page=3",
 //    "faviconUrl": "http://www.apple.com/favicon.ico",
@@ -40,7 +40,7 @@ public class ChromiumTabInfo implements IBrowserTabInfo {
 //    "webSocketDebuggerUrl": "ws:///devtools/page/3"
 // }
 
-    ChromiumTabInfo tab = new ChromiumTabInfo(host, port);
+    DefaultTabInfo tab = new DefaultTabInfo(host, port);
 
     tab.devtoolsFrontendUrl = JsonUtils.getString(object, "devtoolsFrontendUrl");
     tab.faviconUrl = JsonUtils.getString(object, "faviconUrl");
@@ -52,10 +52,10 @@ public class ChromiumTabInfo implements IBrowserTabInfo {
     return tab;
   }
 
-  static Comparator<ChromiumTabInfo> getComparator() {
-    return new Comparator<ChromiumTabInfo>() {
+  public static Comparator<DefaultTabInfo> getComparator() {
+    return new Comparator<DefaultTabInfo>() {
       @Override
-      public int compare(ChromiumTabInfo o1, ChromiumTabInfo o2) {
+      public int compare(DefaultTabInfo o1, DefaultTabInfo o2) {
         // Sort by the tab order.
         String url1 = o1.getWebSocketDebuggerUrl();
         String url2 = o2.getWebSocketDebuggerUrl();
@@ -89,7 +89,7 @@ public class ChromiumTabInfo implements IBrowserTabInfo {
 
   private String webSocketDebuggerUrl;
 
-  private ChromiumTabInfo(String host, int port) {
+  private DefaultTabInfo(String host, int port) {
     this.host = host;
     this.port = port;
   }

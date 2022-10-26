@@ -14,6 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import com.github.sdbg.debug.core.internal.util.GenericBrowser;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.WebkitConnectionListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.CallFrame;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.ConsoleListener;
@@ -45,7 +46,7 @@ class TestMain {
 
     int port = Integer.parseInt(args[0]);
 
-    List<ChromiumTabInfo> tabs = ChromiumConnector.getAvailableTabs(port);
+    List<DefaultTabInfo> tabs = new GenericBrowser(null, null).getAvailableTabs(null, port);
 
     //ChromiumConnector.getWebSocketURLFor(port, 1);
     URI uri = URI.create(tabs.get(0).getWebSocketDebuggerUrl());

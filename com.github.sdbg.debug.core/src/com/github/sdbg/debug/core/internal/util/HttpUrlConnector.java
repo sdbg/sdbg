@@ -88,7 +88,12 @@ public class HttpUrlConnector {
     //GET /json 1.1
     //
 
-    out.write(("GET " + reqFile + " HTTP/1.1" + CRLF + CRLF).getBytes());
+    out.write(("GET " + reqFile + " HTTP/1.1").getBytes());
+    if(host != null)
+    {
+        out.write( ( CRLF + "Host: " + host + ":" + port).getBytes() );
+    }
+    out.write((CRLF + CRLF).getBytes());
     out.flush();
 
     //HTTP/1.1 200 OK

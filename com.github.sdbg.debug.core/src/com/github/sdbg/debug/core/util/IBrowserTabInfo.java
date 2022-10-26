@@ -1,7 +1,16 @@
 package com.github.sdbg.debug.core.util;
 
-public interface IBrowserTabInfo {
-  String getTitle();
+public interface IBrowserTabInfo
+{
+    String getTitle();
 
-  String getUrl();
+    String getUrl();
+
+    Object getWebSocketDebuggerUrl();
+
+    String getHost();
+
+    int getPort();
+
+    String getWebSocketDebuggerFile();
 }

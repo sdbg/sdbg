@@ -64,51 +64,6 @@ import com.github.sdbg.utilities.Streams;
  */
 public class ChromiumConnector {
 
-  /**
-   * Return the list of open tabs for this browser.
-   * 
-   * @param port
-   * @return
-   * @throws IOException
-   */
-  public static List<ChromiumTabInfo> getAvailableTabs(int port) throws IOException {
-    return getAvailableTabs(null, port);
-  }
-
-  /**
-   * Return the list of open tabs for this browser.
-   * 
-   * @param host
-   * @param port
-   * @return
-   * @throws IOException
-   */
-  public static List<ChromiumTabInfo> getAvailableTabs(String host, int port) throws IOException {
-    HttpUrlConnector connection = new HttpUrlConnector(host, port, "/json");
-
-    String text = readText(connection, connection.getInputStream());
-
-    try {
-      JSONArray arr = new JSONArray(text);
-
-      List<ChromiumTabInfo> tabs = new ArrayList<ChromiumTabInfo>();
-
-      for (int i = 0; i < arr.length(); i++) {
-        JSONObject object = arr.getJSONObject(i);
-
-        ChromiumTabInfo tab = ChromiumTabInfo.fromJson(host, port, object);
-
-        tabs.add(tab);
-      }
-
-      Collections.sort(tabs, ChromiumTabInfo.getComparator());
-
-      return tabs;
-    } catch (JSONException exception) {
-      throw new IOException(exception);
-    }
-  }
-
 //  /**
 //   * Return the correct websocket URL for connecting to the Chromium instance at localhost and the
 //   * given port.
@@ -138,10 +93,6 @@ public class ChromiumConnector {
 //
 //    return "ws://" + host + ":" + port + "/devtools/page/" + tab;
 //  }
-
-  private static String readText(HttpUrlConnector connection, InputStream in) throws IOException {
-    return Streams.loadAndClose(new InputStreamReader(in, "UTF-8"));
-  }
 
   private ChromiumConnector() {
 

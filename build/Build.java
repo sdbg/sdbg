@@ -40,19 +40,21 @@ public class Build extends JavaBuilder
         for (int i = 0; i < subprojects.size(); i++)
         {
             AbstractSdbgBuild builder = subprojects.get(i);
-            System.out.println("Build Subproject: " + builder.getProjectName());
+            String version = builder.getVersion();
+            String projectname = builder.getProjectname();
+            System.out.println("Build Subproject: " + projectname);
             
             unitGroup.addRequired("org.eclipse.equinox.p2.iu"
-                , builder.getProjectName(), getVersion());
+                , projectname, version);
             if(builder.getType().equals("feature"))
             {
-                repo.addFeatureUnit(builder.getProjectName(), getVersion());
-                repo.addArtifact("org.eclipse.update.feature", builder.getProjectName(), getVersion());
+                repo.addFeatureUnit(projectname, version);
+                repo.addArtifact("org.eclipse.update.feature", projectname, version);
             }
             else
             {
-                repo.addPluginUnit(builder.getProjectName(), getVersion());
-                repo.addArtifact("osgi.bundle", builder.getProjectName(), getVersion());
+                repo.addPluginUnit(projectname, version);
+                repo.addArtifact("osgi.bundle", projectname, version);
             }
 
             Utilities.delete(Config.TMP + "/make-jar");

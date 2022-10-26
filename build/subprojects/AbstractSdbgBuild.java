@@ -1,96 +1,23 @@
 package subprojects;
 
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import static de.exware.nobuto.Utilities.verbosePrint;
+
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
 
-import de.exware.nobuto.Utilities;
-import de.exware.nobuto.java.JavaBuilder;
-import de.exware.nobuto.maven.Maven;
+import de.exware.nobuto.eclipse.AbstractPluginBuild;
 
-abstract public class AbstractSdbgBuild extends JavaBuilder
+abstract public class AbstractSdbgBuild extends AbstractPluginBuild
 {
-    protected String projectname;
-    private Maven maven = new Maven();
-
     public AbstractSdbgBuild(String projectname)
     {
-        this.projectname = projectname;
-    }
-    
-    @Override
-    public void dist() throws Exception
-    {
-        checkTools();
-        File distDir = new File(Config.DISTRIBUTION_DIR);
-        distDir.mkdirs();
-        File classesDir = new File(Config.CLASSES_DIR + "/" + getProjectName());
-        classesDir.mkdirs();
-        File tmpmaven = new File(Config.TMP, "maven");
-        tmpmaven.mkdirs();
-
-        setOutputFolder(classesDir.getPath());
-
-        copyLibs();
-        copyResources();
-        
-        compile();
-        
-        copyIcons();
-        copyEclipseFiles(classesDir);
-        
-        File target = new File(Config.TMP, "make-jar");
-        target.mkdirs();
-        Utilities.copy(classesDir, target, true);
-        File manifestFile = new File(getProjectDir() + "/META-INF/MANIFEST.MF");
-        String jarname = Config.DISTRIBUTION_DIR + "/" + getProjectName() + "_" + getVersion() + ".jar";
-        if(manifestFile.exists())
-        {
-            Utilities.copy(manifestFile, Config.TMP, true);
-            manifestFile = new File(Config.TMP, "MANIFEST.MF");
-            Utilities.replaceInFile(manifestFile.getPath(), "UTF-8", "Bundle-Version: .*",
-                "Bundle-Version: " + getVersion());
-            jar(jarname, target.getPath(), manifestFile.getPath());
-        }
-        else
-        {
-            jar(jarname, target.getPath(), null);
-        }
-        Utilities.copy(jarname, Config.UPDATE_SITE + "/" + getType() + "s", true);
-    }
-    
-    protected void copyEclipseFiles(File classesDir) throws IOException
-    {
-        File pluginProps = new File(getProjectDir() + "/plugin.properties");
-        if(pluginProps.exists())
-        {
-            Utilities.copy(pluginProps, classesDir, true);
-        }
-        File pluginXML = new File(getProjectDir() + "/plugin.xml");
-        if(pluginXML.exists())
-        {
-            Utilities.copy(pluginXML, classesDir, true);
-        }
-        File featureXML = new File(getProjectDir() + "/feature.xml");
-        if(featureXML.exists())
-        {
-            Utilities.copy(featureXML, classesDir, true);
-        }
-        File featureProps = new File(getProjectDir() + "/feature.properties");
-        if(featureProps.exists())
-        {
-            Utilities.copy(featureProps, classesDir, true);
-        }
+        super(projectname);
     }
     
     @Override
     public void compile() throws Exception
     {
-        addSources(getProjectDir() + "/src");
+        verbosePrint(1, "Downloading resources");
 
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/weberknecht-0.1.5.jar").getPath());
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/json.jar").getPath());
@@ -176,105 +103,5 @@ abstract public class AbstractSdbgBuild extends JavaBuilder
         addClasspathItem(Config.TMP + "/eclipse/plugins/jdimodel.jar");
         
         super.compile();
-    }
-    
-    private void copyIcons() throws IOException
-    {
-        File iconsDir = new File(getProjectDir() + "/icons");
-        if(iconsDir.exists())
-        {
-            File target = new File(Config.TMP, "make-jar/icons");
-            target.mkdirs();
-            Utilities.copy(iconsDir, target, true);
-        }
-    }
-
-    private void copyLibs() throws IOException
-    {
-        File libsDir = new File(getProjectDir() + "/libs");
-        if(libsDir.exists())
-        {
-            File target = new File(Config.TMP, "make-jar/libs");
-            target.mkdirs();
-            Utilities.copy(libsDir, target, true);
-        }
-        libsDir = new File(getProjectDir() + "/lib");
-        if(libsDir.exists())
-        {
-            File target = new File(Config.TMP, "make-jar/lib");
-            target.mkdirs();
-            Utilities.copy(libsDir, target, true);
-        }
-    }
-
-    private void copyResources() throws IOException
-    {
-        File libsDir = new File(getProjectDir() + "/resources");
-        if(libsDir.exists())
-        {
-            File target = new File(Config.TMP, "make-jar/resources");
-            target.mkdirs();
-            Utilities.copy(libsDir, target, true);
-        }
-    }
-
-    protected void addSiblingJar(String name)
-    {
-        File pluginsDir = new File(Config.DISTRIBUTION_DIR);
-        File lib = findJarInPlugins(pluginsDir, name);
-        addClasspathItem(lib.getAbsolutePath());
-    }
-
-    protected void addPluginJarToClasspath(String name) throws IOException
-    {
-        File pluginsDir = new File(Config.ECLIPSE_DIR, "plugins");
-        File lib = findJarInPlugins(pluginsDir, name);
-        if(lib == null)
-        {
-            throw new IOException("Library " + name + " not found");
-        }
-        addClasspathItem(lib.getAbsolutePath());
-    }
-
-    protected void addMavenJarToClasspath(String groupID, String artifactId, String version) throws IOException
-    {
-        File lib = maven.get(groupID, artifactId, version, Config.TMP + "/maven");
-        if(lib == null)
-        {
-            throw new IOException("Library " + artifactId + " not found");
-        }
-        addClasspathItem(lib.getPath());
-    }
-
-    protected void addEclipseJarToClasspath(String plugin) throws IOException
-    {
-        File file = new File(Config.TMP, "eclipse/plugins/" + plugin);
-        if(file.exists() == false)
-        {
-            file.getParentFile().mkdirs();
-            String purl = Config.ECLIPSE_URL + "/plugins/" + plugin;
-            URL url = new URL(purl);
-            BufferedInputStream in = new BufferedInputStream(url.openStream());
-            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file));
-            Utilities.copy(in, out);
-            in.close();
-            out.close();
-        }
-        addClasspathItem(file.getPath());
-    }
-
-    public String getProjectName()
-    {
-        return projectname;
-    }
-
-    public String getProjectDir()
-    {
-        return getProjectName();
-    }
-    
-    public String getType()
-    {
-        return "plugin";
     }
 }

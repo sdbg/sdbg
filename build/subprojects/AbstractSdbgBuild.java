@@ -3,8 +3,14 @@ package subprojects;
 
 import static de.exware.nobuto.Utilities.verbosePrint;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
 
+import de.exware.nobuto.Utilities;
 import de.exware.nobuto.eclipse.AbstractPluginBuild;
 
 abstract public class AbstractSdbgBuild extends AbstractPluginBuild
@@ -24,6 +30,8 @@ abstract public class AbstractSdbgBuild extends AbstractPluginBuild
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/jaxb-api-2.3.1.jar").getPath());
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/com.gwtplugins.gdt.eclipse.core_3.0.0.101.jar").getPath());
 
+        addGwtPluginToClasspath("com.gwtplugins.gdt.eclipse.core_3.0.0.101.jar");
+        
         addMavenJarToClasspath("javax.servlet", "javax.servlet-api", "4.0.1");
         addMavenJarToClasspath("org.apache.ant", "ant", "1.10.9");
         addMavenJarToClasspath("org.apache.maven", "maven-artifact", "3.0");
@@ -103,5 +111,23 @@ abstract public class AbstractSdbgBuild extends AbstractPluginBuild
         addClasspathItem(Config.TMP + "/eclipse/plugins/jdimodel.jar");
         
         super.compile();
+    }
+    
+    protected void addGwtPluginToClasspath(String plugin) throws IOException
+    {
+        File file = new File("tmp/gwtplugin/" + plugin);
+        if(file.exists() == false)
+        {
+            file.getParentFile().mkdirs();
+            String purl = "http://keeitsi.com/software/eclipse-plugins/gwt-eclipse-plugin/plugins/" + plugin;
+            verbosePrint(1, "Downloading gwtplugin jar: " + purl);
+            URL url = new URL(purl);
+            BufferedInputStream in = new BufferedInputStream(url.openStream());
+            BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+            Utilities.copy(in, out);
+            in.close();
+            out.close();
+        }
+        addClasspathItem(file.getPath());
     }
 }

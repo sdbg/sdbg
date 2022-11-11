@@ -1,7 +1,6 @@
 package com.github.sdbg.debug.core.internal.util;
 
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
@@ -27,7 +26,7 @@ public interface IBrowser
         IProgressMonitor monitor, boolean enableDebugging, StringBuilder processDescription,
         List<String> extraCommandLineArgs, int[] devToolsPortNumberHolder) throws CoreException;
 
-    WebkitDebugTarget connectToBrowserDebug(String name, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
+    void connectToBrowserDebug(String name, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
         String string, IProgressMonitor monitor, LogTimer timer, boolean enableBreakpoints,
         String host, int port, long maxStartupDelay, ListeningStream browserOutput, String processDescription,
         IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException;

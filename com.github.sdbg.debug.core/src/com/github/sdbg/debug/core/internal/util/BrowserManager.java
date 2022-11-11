@@ -60,7 +60,7 @@ public class BrowserManager {
     this.launchSemaphore = new Semaphore(1);
   }
 
-  public WebkitDebugTarget connect(ILaunch launch, ILaunchConfiguration configuration,
+  public void connect(ILaunch launch, ILaunchConfiguration configuration,
       IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, String host,
       int port, IProgressMonitor monitor) throws CoreException {
     try {
@@ -74,7 +74,7 @@ public class BrowserManager {
         try {
           launchConfig.markAsLaunched();
 
-          return browser.connectToBrowserDebug(
+          browser.connectToBrowserDebug(
               "Browser Remote Connection",
               launch,
               launchConfig,
@@ -90,6 +90,7 @@ public class BrowserManager {
               resourceResolver,
               browserTabChooser,
               true/*remote*/);
+          return;
         } finally {
           timer.stopTask();
         }
@@ -594,7 +595,7 @@ public class BrowserManager {
           }
           else
           {
-              browser = new GenericBrowser(executable, browserDataDirName);
+              browser = new ChromeBasedBrowser(executable, browserDataDirName);
           }
       }
       return browser;

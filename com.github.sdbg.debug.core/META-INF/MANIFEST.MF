@@ -20,4 +20,5 @@ Export-Package: com.github.sdbg.core,
  com.github.sdbg.utilities.instrumentation,
  org.json
 Bundle-ClassPath: .,
- lib/json.jar
+ lib/json.jar,
+ lib/remotefox.jar

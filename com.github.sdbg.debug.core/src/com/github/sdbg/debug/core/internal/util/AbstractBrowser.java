@@ -2,13 +2,7 @@ package com.github.sdbg.debug.core.internal.util;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.internal.android.ADBManager;
-import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
-import com.github.sdbg.debug.core.internal.webkit.protocol.ChromiumConnector;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
-import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import com.github.sdbg.debug.core.util.Trace;
@@ -24,34 +18,29 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.ILaunch;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class GenericBrowser implements IBrowser
+public abstract class AbstractBrowser implements IBrowser
 {
     /** The initial page to navigate to. */
     private String initial_page;
     private Process process;
     private File executable;
-    private String browserDataDirName;
 
-    public GenericBrowser(File executable, String browserDataDirName)
+    public AbstractBrowser(File executable)
     {
-        this(executable, browserDataDirName, "chrome://version/");
+        this(executable, "chrome://version/");
     }
 
-    protected GenericBrowser(File executable, String browserDataDirName, String initalPage)
+    protected AbstractBrowser(File executable, String initalPage)
     {
         this.executable = executable;
-        this.browserDataDirName = browserDataDirName;
         initial_page = initalPage;
     }
 
@@ -72,6 +61,7 @@ public class GenericBrowser implements IBrowser
         }
     }
 
+    @Override
     public void terminateExistingBrowserProcess()
     {
         if (!isProcessTerminated())
@@ -104,7 +94,7 @@ public class GenericBrowser implements IBrowser
         }
     }
 
-    private void sleep(int millis)
+    protected void sleep(int millis)
     {
         try
         {
@@ -125,6 +115,7 @@ public class GenericBrowser implements IBrowser
      * @param browserName
      * @throws CoreException
      */
+    @Override
     public ListeningStream startNewBrowserProcess(SDBGLaunchConfigWrapper launchConfig, String url,
         IProgressMonitor monitor, boolean enableDebugging, StringBuilder argDescription, List<String> extraArguments,
         int[] devToolsPortNumberHolder) throws CoreException
@@ -235,111 +226,7 @@ public class GenericBrowser implements IBrowser
         return output;
     }
 
-    @Override
-    public WebkitDebugTarget connectToBrowserDebug(String browserName, ILaunch launch,
-        SDBGLaunchConfigWrapper launchConfig, String url, IProgressMonitor monitor,
-        LogTimer timer, boolean enableBreakpoints, String host, int port, long maxStartupDelay,
-        ListeningStream browserOutput, String processDescription, IResourceResolver resolver,
-        IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException
-    {
-        monitor.worked(1);
-
-        // avg: 383ms
-        timer.startTask("get browser tabs");
-
-        IBrowserTabInfo tab;
-
-        try
-        {
-            tab = getTab(browserTabChooser, host, port, maxStartupDelay, browserOutput);
-        }
-        catch (IOException e)
-        {
-            SDBGDebugCorePlugin.logError(e);
-            throw new CoreException(
-                new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID, "Unable to connect to Browser at address "
-                    + (host != null ? host : "") + ":" + port + "; error: " + e.getMessage(), e));
-        }
-
-        monitor.worked(2);
-
-        timer.stopTask();
-
-        // avg: 46ms
-        timer.startTask("open WIP connection");
-
-        if (tab == null)
-        {
-            throw new DebugException(new Status(IStatus.INFO, SDBGDebugCorePlugin.PLUGIN_ID,
-                "No Browser tab was chosen. Connection cancelled."));
-        }
-
-        if (tab.getWebSocketDebuggerUrl() == null)
-        {
-            throw new DebugException(new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID,
-                "Unable to connect to Browser" + (remote
-                    ? ".\n\nPossible reason: another debugger (e.g. Chrome DevTools) or another Eclipse debugging session is already attached to that particular Browser tab."
-                    : "")));
-        }
-
-        // Even when Chrome has reported all the debuggable tabs to us, the
-        // debug server
-        // may not yet have started up. Delay a small fixed amount of time.
-        sleep(100);
-
-        try
-        {
-            WebkitConnection connection = new WebkitConnection(tab.getHost(), tab.getPort(),
-                tab.getWebSocketDebuggerFile());
-
-            final WebkitDebugTarget debugTarget = new WebkitDebugTarget(browserName, connection, launch, getProcess()
-                , launchConfig.getProject(), resolver, null/* adbManager */, enableBreakpoints, remote);
-
-            monitor.worked(1);
-
-            BrowserManager.registerProcess(launch, launchConfig, debugTarget.getProcess(), processDescription);
-            launch.addDebugTarget(debugTarget);
-
-            if (browserOutput != null && launchConfig.getShowLaunchOutput())
-            {
-                browserOutput.setListener(new StreamListener()
-                {
-                    @Override
-                    public void handleStreamData(String data)
-                    {
-                        debugTarget.writeToStdout(data);
-                    }
-                });
-            }
-
-            if (browserOutput != null)
-            {
-                debugTarget.openConnection(url, true);
-            }
-            else
-            {
-                debugTarget.openConnection();
-            }
-
-            trace("Connected to WIP debug agent on host " + host + " and port " + port);
-
-            timer.stopTask();
-
-            monitor.worked(1);
-
-            return debugTarget;
-        }
-        catch (IOException e)
-        {
-            SDBGDebugCorePlugin.logError(e);
-            throw new CoreException(new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID,
-                "Unable to connect to Browser tab at address " + (tab.getHost() != null ? tab.getHost() : "") + ":"
-                    + tab.getPort() + " (" + tab.getWebSocketDebuggerFile() + "): " + e.getMessage(),
-                e));
-        }
-    }
-
-    private void trace(String message)
+    protected void trace(String message)
     {
         Trace.trace(Trace.BROWSER_LAUNCHING, message);
     }
@@ -350,6 +237,7 @@ public class GenericBrowser implements IBrowser
         return process;
     }
 
+    @Override
     public IBrowserTabInfo getTab(IBrowserTabChooser browserTabChooser, String host, int port, long maxStartupDelay,
         ListeningStream browserOutput) throws IOException, CoreException
     {
@@ -458,79 +346,8 @@ public class GenericBrowser implements IBrowser
         return null;
     }
 
-    private List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig, String url, int devToolsPortNumber,
-        List<String> extraArguments)
-    {
-        List<String> arguments = new ArrayList<String>();
-        arguments.add(executable.getAbsolutePath());
-        if (devToolsPortNumber > -1)
-        {
-            // Enable remote debug over HTTP on the specified port.
-            arguments.add("--remote-debugging-port=" + devToolsPortNumber);
-        }
-        // In order to start up multiple Browser processes, we need to specify a
-        // different user dir.
-        arguments.add("--user-data-dir=" + getCreateUserDataDirectory(browserDataDirName).getAbsolutePath());
-        // Whether or not it's actually the first run.
-//        arguments.add("--no-first-run");
-        // Disables the default browser check.
-        arguments.add("--no-default-browser-check");
-        // Bypass the error dialog when the profile lock couldn't be attained.
-        arguments.add("--no-process-singleton-dialog");
-        arguments.addAll(extraArguments);
-        for (String arg : launchConfig.getArgumentsAsArray())
-        {
-            arguments.add(arg);
-        }
-        if (url != null)
-        {
-            arguments.add(url);
-        }
-
-        return arguments;
-    }
-
-    /**
-     * Create a Chrome user data directory, and return the path to that
-     * directory.
-     * 
-     * @return the user data directory path
-     */
-    private File getCreateUserDataDirectory(String baseName)
-    {
-        File dataDir = new File(new File(new File(System.getProperty("user.home")), ".sdbg"), baseName);
-
-        if (!dataDir.exists())
-        {
-            dataDir.mkdirs();
-        }
-        else
-        {
-            // Remove the "<dataDir>/Default/Current Tabs" file if it exists -
-            // it can cause old tabs to
-            // restore themselves when we launch the browser.
-            File defaultDir = new File(dataDir, "Default");
-
-            if (defaultDir.exists())
-            {
-                File tabInfoFile = new File(defaultDir, "Current Tabs");
-
-                if (tabInfoFile.exists())
-                {
-                    tabInfoFile.delete();
-                }
-
-                File sessionInfoFile = new File(defaultDir, "Current Session");
-
-                if (sessionInfoFile.exists())
-                {
-                    sessionInfoFile.delete();
-                }
-            }
-        }
-
-        return dataDir;
-    }
+    abstract protected List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig, String url, int devToolsPortNumber,
+        List<String> extraArguments);
 
     private void describe(List<String> arguments, StringBuilder builder)
     {

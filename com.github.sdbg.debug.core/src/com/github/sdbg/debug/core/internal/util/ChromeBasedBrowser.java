@@ -4,6 +4,8 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
+import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
+import com.github.sdbg.debug.core.internal.webkit.protocol.JsonUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
@@ -12,6 +14,7 @@ import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
@@ -20,6 +23,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunch;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ChromeBasedBrowser extends AbstractBrowser
 {
@@ -209,4 +215,50 @@ public class ChromeBasedBrowser extends AbstractBrowser
         }
     }
 
+    /**
+     * Return the list of open tabs for this browser.
+     * 
+     * @param host
+     * @param port
+     * @return
+     * @throws IOException
+     */
+    @Override
+    public List<DefaultTabInfo> getAvailableTabs(String host, int port) throws IOException
+    {
+        HttpUrlConnector connection = getURLConnector(host, port);
+        String text = readText(connection, connection.getInputStream());
+        try
+        {
+            JSONArray arr = new JSONArray(text);
+            List<DefaultTabInfo> tabs = new ArrayList<DefaultTabInfo>();
+            for (int i = 0; i < arr.length(); i++)
+            {
+                JSONObject object = arr.getJSONObject(i);
+
+                DefaultTabInfo tab = createTabInfo(host, port, object);
+
+                tabs.add(tab);
+            }
+            Collections.sort(tabs, DefaultTabInfo.getComparator());
+            return tabs;
+        }
+        catch (JSONException exception)
+        {
+            throw new IOException(exception);
+        }
+    }
+    
+    DefaultTabInfo createTabInfo(String host, int port, JSONObject object) throws JSONException
+    {
+        DefaultTabInfo tab = new DefaultTabInfo(host, port
+            , JsonUtils.getString(object, "devtoolsFrontendUrl")
+            , JsonUtils.getString(object, "faviconUrl")
+            , JsonUtils.getString(object, "thumbnailUrl")
+            , JsonUtils.getString(object, "title")
+            , JsonUtils.getString(object, "url")
+            , JsonUtils.getString(object, "webSocketDebuggerUrl"));
+        return tab;
+        
+    }
 }

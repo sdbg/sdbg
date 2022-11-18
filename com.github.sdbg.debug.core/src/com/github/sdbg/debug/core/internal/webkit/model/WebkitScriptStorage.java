@@ -1,7 +1,7 @@
 package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -18,10 +18,10 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 
 public class WebkitScriptStorage extends PlatformObject implements IStorage {
-  private WebkitScript script;
+  private ScriptDescriptor script;
   private String source;
 
-  public WebkitScriptStorage(WebkitScript script, String source) {
+  public WebkitScriptStorage(ScriptDescriptor script, String source) {
     this.script = script;
     this.source = source;
   }

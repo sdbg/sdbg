@@ -18,6 +18,7 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin.BreakOnExceptions;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 import com.github.sdbg.debug.core.internal.android.ADBManager;
 import com.github.sdbg.debug.core.internal.util.DOMResourceTrackersManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
@@ -34,7 +35,6 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitNode;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitPage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
@@ -399,7 +399,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
       }
 
       @Override
-      public void debuggerScriptParsed(final WebkitScript script) {
+      public void debuggerScriptParsed(final ScriptDescriptor script) {
         checkForDebuggerExtension(script);
         //TODO: Too chatty Trace.trace("Script " + script + " loaded");
 
@@ -555,7 +555,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
     return resourceResolver;
   }
 
-  protected IStorage getScriptStorage(WebkitScript script) {
+  protected IStorage getScriptStorage(ScriptDescriptor script) {
     if (script != null) {
       String url = script.getUrl();
 
@@ -580,7 +580,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
   }
 
   protected IStorage getScriptStorageFor(WebkitCallFrame webkitFrame) {
-    WebkitScript script = getConnection().getDebugger().getScript(
+    ScriptDescriptor script = getConnection().getDebugger().getScript(
         webkitFrame.getLocation().getScriptId());
     return getScriptStorage(script);
   }
@@ -671,7 +671,7 @@ public class WebkitDebugTarget extends WebkitDebugElement implements IBreakpoint
    * @param script the Debugger.scriptParsed event
    * @see dartbug.com/10298
    */
-  private void checkForDebuggerExtension(WebkitScript script) {
+  private void checkForDebuggerExtension(ScriptDescriptor script) {
     // {"method":"Debugger.scriptParsed","params":{"startLine":0,"libraryId":0,"endLine":154,
     //   "startColumn":0,"scriptId":"26","url":"chrome-extension://ognampngfcbddbfemdapefohjiobgbdl/data_loader.js",
     //   "isContentScript":true,"endColumn":1}}

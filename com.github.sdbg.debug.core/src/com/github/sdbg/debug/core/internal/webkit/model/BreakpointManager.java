@@ -17,11 +17,11 @@ package com.github.sdbg.debug.core.internal.webkit.model;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitBreakpoint;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.Trace;
 
@@ -228,7 +228,7 @@ public class BreakpointManager implements IBreakpointListener, ISDBGBreakpointMa
       IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints(
           SDBGDebugCorePlugin.DEBUG_MODEL_ID);
 
-      WebkitScript script = debugTarget.getWebkitConnection().getDebugger().getScript(
+      ScriptDescriptor script = debugTarget.getWebkitConnection().getDebugger().getScript(
           location.getScriptId());
 
       if (script == null) {

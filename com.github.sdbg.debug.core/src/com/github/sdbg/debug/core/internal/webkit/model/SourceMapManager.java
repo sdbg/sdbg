@@ -369,7 +369,7 @@ public class SourceMapManager {
     }
   }
 
-  void handleScriptParsed(IStorage script, String scriptUrl, String sourceMapUrl) {
+  public void handleScriptParsed(IStorage script, String scriptUrl, String sourceMapUrl) {
     synchronized (sourceMaps) {
       IStorage mapStorage = sourceMapsStorages.remove(script);
       if (mapStorage != null) {

@@ -19,9 +19,6 @@ import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import java.net.URI;
 import java.util.Comparator;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 /**
  * A class used to represent meta-information about an open Browser tab, including its WIP debugger
  * URL.
@@ -29,28 +26,6 @@ import org.json.JSONObject;
  * @see ChromiumConnector
  */
 public class DefaultTabInfo implements IBrowserTabInfo {
-
-  public static DefaultTabInfo fromJson(String host, int port, JSONObject object) throws JSONException {
-// {
-//    "devtoolsFrontendUrl": "/devtools/devtools.html?host=&page=3",
-//    "faviconUrl": "http://www.apple.com/favicon.ico",
-//    "thumbnailUrl": "/thumb/http://www.apple.com/",
-//    "title": "Apple",
-//    "url": "http://www.apple.com/",
-//    "webSocketDebuggerUrl": "ws:///devtools/page/3"
-// }
-
-    DefaultTabInfo tab = new DefaultTabInfo(host, port);
-
-    tab.devtoolsFrontendUrl = JsonUtils.getString(object, "devtoolsFrontendUrl");
-    tab.faviconUrl = JsonUtils.getString(object, "faviconUrl");
-    tab.thumbnailUrl = JsonUtils.getString(object, "thumbnailUrl");
-    tab.title = JsonUtils.getString(object, "title");
-    tab.url = JsonUtils.getString(object, "url");
-    tab.webSocketDebuggerUrl = JsonUtils.getString(object, "webSocketDebuggerUrl");
-
-    return tab;
-  }
 
   public static Comparator<DefaultTabInfo> getComparator() {
     return new Comparator<DefaultTabInfo>() {
@@ -89,9 +64,16 @@ public class DefaultTabInfo implements IBrowserTabInfo {
 
   private String webSocketDebuggerUrl;
 
-  private DefaultTabInfo(String host, int port) {
+  public DefaultTabInfo(String host, int port, String devtoolsFrontendUrl
+      , String faviconUrl, String thumbnailUrl, String title, String url, String webSocketDebuggerUrl) {
     this.host = host;
     this.port = port;
+    this.devtoolsFrontendUrl = devtoolsFrontendUrl;
+    this.faviconUrl = faviconUrl;
+    this.thumbnailUrl = thumbnailUrl;
+    this.title = title;
+    this.url = url;
+    this.webSocketDebuggerUrl = webSocketDebuggerUrl;
   }
 
   public String getDevtoolsFrontendUrl() {
@@ -102,11 +84,13 @@ public class DefaultTabInfo implements IBrowserTabInfo {
     return faviconUrl;
   }
 
-  public String getHost() {
+  @Override
+public String getHost() {
     return host;
   }
 
-  public int getPort() {
+  @Override
+public int getPort() {
     return port;
   }
 
@@ -124,7 +108,8 @@ public class DefaultTabInfo implements IBrowserTabInfo {
     return url;
   }
 
-  public String getWebSocketDebuggerFile() {
+  @Override
+public String getWebSocketDebuggerFile() {
     if (webSocketDebuggerUrl != null) {
       return URI.create(webSocketDebuggerUrl).getPath();
     } else {
@@ -132,7 +117,8 @@ public class DefaultTabInfo implements IBrowserTabInfo {
     }
   }
 
-  public String getWebSocketDebuggerUrl() {
+  @Override
+public String getWebSocketDebuggerUrl() {
     // Convert a 'ws:///devtools/page/3' websocket URL to a ws://host:port/devtools/page/3 url.
 
     if (webSocketDebuggerUrl != null && webSocketDebuggerUrl.startsWith("ws:///")) {

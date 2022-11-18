@@ -13,8 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -22,9 +20,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public abstract class AbstractBrowser implements IBrowser
 {
@@ -287,37 +282,14 @@ public abstract class AbstractBrowser implements IBrowser
      * @return
      * @throws IOException
      */
-    public List<DefaultTabInfo> getAvailableTabs(String host, int port) throws IOException
-    {
-        HttpUrlConnector connection = getURLConnector(host, port);
-        String text = readText(connection, connection.getInputStream());
-        try
-        {
-            JSONArray arr = new JSONArray(text);
-            List<DefaultTabInfo> tabs = new ArrayList<DefaultTabInfo>();
-            for (int i = 0; i < arr.length(); i++)
-            {
-                JSONObject object = arr.getJSONObject(i);
-
-                DefaultTabInfo tab = DefaultTabInfo.fromJson(host, port, object);
-
-                tabs.add(tab);
-            }
-            Collections.sort(tabs, DefaultTabInfo.getComparator());
-            return tabs;
-        }
-        catch (JSONException exception)
-        {
-            throw new IOException(exception);
-        }
-    }
+    abstract public List<DefaultTabInfo> getAvailableTabs(String host, int port) throws IOException;
 
     protected HttpUrlConnector getURLConnector(String host, int port)
     {
         return new HttpUrlConnector(host, port, "/json");
     }
     
-    private static String readText(HttpUrlConnector connection, InputStream in) throws IOException
+    protected static String readText(HttpUrlConnector connection, InputStream in) throws IOException
     {
         return Streams.loadAndClose(new InputStreamReader(in, "UTF-8"));
     }

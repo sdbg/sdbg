@@ -14,6 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.Callback;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.NotificationHandler;
 import com.github.sdbg.utilities.URIUtilities;
@@ -74,7 +75,7 @@ public class WebkitDebugger extends WebkitDomain {
      * 
      * @param script
      */
-    public void debuggerScriptParsed(WebkitScript script);
+    public void debuggerScriptParsed(ScriptDescriptor script);
   }
 
   public abstract static class DebuggerListenerAdapter implements DebuggerListener {
@@ -100,7 +101,7 @@ public class WebkitDebugger extends WebkitDomain {
     }
 
     @Override
-    public void debuggerScriptParsed(WebkitScript script) {
+    public void debuggerScriptParsed(ScriptDescriptor script) {
 
     }
   }
@@ -181,7 +182,7 @@ public class WebkitDebugger extends WebkitDomain {
 
   private List<DebuggerListener> listeners = new ArrayList<DebuggerListener>();
 
-  private Map<String, WebkitScript> scriptMap = new HashMap<String, WebkitScript>();
+  private Map<String, ScriptDescriptor> scriptMap = new HashMap<String, ScriptDescriptor>();
   private Map<String, WebkitBreakpoint> breakpointMap = new HashMap<String, WebkitBreakpoint>();
 
   private int remoteObjectCount;
@@ -279,7 +280,7 @@ public class WebkitDebugger extends WebkitDomain {
     return breakpointMap.values();
   }
 
-  public Collection<WebkitScript> getAllScripts() {
+  public Collection<ScriptDescriptor> getAllScripts() {
     return scriptMap.values();
   }
 
@@ -310,12 +311,12 @@ public class WebkitDebugger extends WebkitDomain {
     }
   }
 
-  public WebkitScript getScript(String scriptId) {
+  public ScriptDescriptor getScript(String scriptId) {
     return scriptMap.get(scriptId);
   }
 
-  public WebkitScript getScriptByUrl(String url) {
-    for (WebkitScript script : getAllScripts()) {
+  public ScriptDescriptor getScriptByUrl(String url) {
+    for (ScriptDescriptor script : getAllScripts()) {
       if (url.equals(script.getUrl())) {
         return script;
       }
@@ -367,7 +368,7 @@ public class WebkitDebugger extends WebkitDomain {
    * @param script
    * @throws IOException
    */
-  public void populateScriptSource(WebkitScript script) throws IOException {
+  public void populateScriptSource(ScriptDescriptor script) throws IOException {
     if (!script.hasScriptSource()) {
       final IOException[] error = new IOException[1];
       final String[] source = new String[1];
@@ -434,7 +435,7 @@ public class WebkitDebugger extends WebkitDomain {
    * @param callback
    * @throws IOException
    */
-  public void setBreakpoint(WebkitScript script, int line,
+  public void setBreakpoint(ScriptDescriptor script, int line,
       final WebkitCallback<WebkitBreakpoint> callback) throws IOException {
     try {
       JSONObject location = new JSONObject().put("lineNumber", line).put(
@@ -676,7 +677,7 @@ public class WebkitDebugger extends WebkitDomain {
         listener.debuggerGlobalObjectCleared();
       }
     } else if (method.equals(DEBUGGER_SCRIPT_PARSED)) {
-      WebkitScript script = WebkitScript.createFrom(params);
+      ScriptDescriptor script = createDescriptor(params);
 
       // We get a blizzard of empty script parsed events from Webkit due to the way they integrated
       // the Dart VM into the Webkit debugger.
@@ -726,6 +727,21 @@ public class WebkitDebugger extends WebkitDomain {
     }
   }
 
+  public static ScriptDescriptor createDescriptor(JSONObject params) throws JSONException 
+  {
+      ScriptDescriptor script = new ScriptDescriptor(
+          JsonUtils.getString(params, "scriptId")
+          , JsonUtils.getString(params, "url")
+          , JsonUtils.getString(params, "sourceMapURL")
+          , JsonUtils.getBoolean(params, "isContentScript")
+          , JsonUtils.getInt(params, "startLine", -1)
+          , JsonUtils.getInt(params, "startLine", -1)
+          , JsonUtils.getInt(params, "endLine", -1)
+          , JsonUtils.getInt(params, "endColumn", -1)
+          );
+      return script;
+  }
+  
   private void clearGlobalObjects() {
     breakpointMap.clear();
     scriptMap.clear();

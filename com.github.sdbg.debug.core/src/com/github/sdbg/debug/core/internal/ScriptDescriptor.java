@@ -11,56 +11,36 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-
-package com.github.sdbg.debug.core.internal.webkit.protocol;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+package com.github.sdbg.debug.core.internal;
 
 /**
- * A WIP script object.
+ * An Object describing a browser script.
  */
-public class WebkitScript {
-
-  public static WebkitScript createFrom(JSONObject params) throws JSONException {
-    WebkitScript script = new WebkitScript();
-
-    script.scriptId = JsonUtils.getString(params, "scriptId");
-    script.url = JsonUtils.getString(params, "url");
-    script.startLine = JsonUtils.getInt(params, "startLine", -1);
-    script.startColumn = JsonUtils.getInt(params, "startLine", -1);
-    script.endLine = JsonUtils.getInt(params, "endLine", -1);
-    script.endColumn = JsonUtils.getInt(params, "endColumn", -1);
-    script.isContentScript = JsonUtils.getBoolean(params, "isContentScript");
-    script.sourceMapURL = JsonUtils.getString(params, "sourceMapURL");
-
-    script.patchupScriptUrl();
-
-    return script;
-  }
+public class ScriptDescriptor {
 
   private String sourceMapURL;
-
   private boolean isContentScript;
-
   private int endLine;
-
   private int endColumn;
-
   private int startColumn;
-
   private int startLine;
-
   private String url;
-
   private String scriptId;
-
   private String scriptSource;
-
   private Object privateData;
-
-  private WebkitScript() {
-
+  
+  public ScriptDescriptor(String scriptId, String url, String sourceMapURL, boolean isContentScript, int startLine, int startColumn, int endLine, int endColumn)
+  {
+    super();
+    this.scriptId = scriptId;
+    this.url = url;
+    this.sourceMapURL = sourceMapURL;
+    this.isContentScript = isContentScript;
+    this.startLine = startLine;
+    this.startColumn = startColumn;
+    this.endLine = endLine;
+    this.endColumn = endColumn;
+    patchupScriptUrl();
   }
 
   @Override
@@ -69,8 +49,8 @@ public class WebkitScript {
       return true;
     }
 
-    if (obj instanceof WebkitScript) {
-      WebkitScript other = (WebkitScript) obj;
+    if (obj instanceof ScriptDescriptor) {
+      ScriptDescriptor other = (ScriptDescriptor) obj;
 
       return scriptId.equals(other.getScriptId());
     }

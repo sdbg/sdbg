@@ -14,6 +14,7 @@
 
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 import com.github.sdbg.debug.core.internal.util.ChromeBasedBrowser;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.WebkitConnectionListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.CallFrame;
@@ -112,7 +113,7 @@ class TestMain {
       }
 
       @Override
-      public void debuggerScriptParsed(WebkitScript script) {
+      public void debuggerScriptParsed(ScriptDescriptor script) {
         System.out.println("debugger script: " + script);
       }
     });

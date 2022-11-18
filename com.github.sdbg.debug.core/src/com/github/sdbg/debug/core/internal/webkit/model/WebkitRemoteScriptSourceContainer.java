@@ -15,7 +15,7 @@
 package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -128,7 +128,7 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
     WebkitDebugTarget target = WebkitDebugTarget.getActiveTarget();
 
     if (target != null) {
-      WebkitScript script = target.getConnection().getDebugger().getScriptByUrl(name);
+      ScriptDescriptor script = target.getConnection().getDebugger().getScriptByUrl(name);
 
       if (script == null) {
         // In WebkitDebugStackFrame.getActualLocationPath(), we strip off the leading part of the
@@ -165,8 +165,8 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
     return EMPTY;
   }
 
-  private WebkitScript findMatchingScript(Collection<WebkitScript> scripts, String path) {
-    for (WebkitScript script : scripts) {
+  private ScriptDescriptor findMatchingScript(Collection<ScriptDescriptor> scripts, String path) {
+    for (ScriptDescriptor script : scripts) {
       if (script.getUrl().endsWith(path)) {
         return script;
       }
@@ -175,7 +175,7 @@ public class WebkitRemoteScriptSourceContainer extends AbstractSourceContainer {
     return null;
   }
 
-  private LocalFileStorage getCreateStorageFor(WebkitScript script) throws IOException {
+  private LocalFileStorage getCreateStorageFor(ScriptDescriptor script) throws IOException {
     if (script.getPrivateData() == null) {
       String url = script.getUrl();
 

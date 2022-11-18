@@ -14,9 +14,9 @@
 
 package com.github.sdbg.debug.core.internal.webkit.model;
 
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 import com.github.sdbg.debug.core.internal.util.DOMResourceTrackersManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitNode;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitStyleSheetRef;
 import com.github.sdbg.debug.core.model.IDOMResourceReference;
 import com.github.sdbg.debug.core.model.IDOMResources;
@@ -79,7 +79,7 @@ class WebkitDOMResourceTrackersManager extends DOMResourceTrackersManager implem
           rootNode.getDocumentURL()));
     }
 
-    for (WebkitScript script : target.getConnection().getDebugger().getAllScripts()) {
+    for (ScriptDescriptor script : target.getConnection().getDebugger().getAllScripts()) {
       references.add(new WebkitDOMResourceReference(
           WebkitDOMResourceReference.Type.SCRIPT,
           script.getScriptId(),

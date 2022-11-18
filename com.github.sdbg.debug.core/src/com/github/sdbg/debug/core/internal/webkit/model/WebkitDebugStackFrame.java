@@ -14,6 +14,7 @@
 package com.github.sdbg.debug.core.internal.webkit.model;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.ScriptDescriptor;
 import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
 import com.github.sdbg.debug.core.internal.util.DebuggerUtils;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitCallFrame;
@@ -22,7 +23,6 @@ import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitRemoteObject;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitResult;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScope;
-import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitScript;
 import com.github.sdbg.debug.core.model.IExceptionStackFrame;
 import com.github.sdbg.debug.core.model.IExpressionEvaluator;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
@@ -448,7 +448,7 @@ public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackF
 
     if (SourceMapManager.isTracing()) {
       WebkitLocation sourceLocation = webkitFrame.getLocation();
-      WebkitScript script = getConnection().getDebugger().getScript(sourceLocation.getScriptId());
+      ScriptDescriptor script = getConnection().getDebugger().getScript(sourceLocation.getScriptId());
       String scriptPath = script == null ? "null" : script.getUrl();
 
       SourceMapManager.trace("[" + scriptPath + "," + sourceLocation.getLineNumber() + ","

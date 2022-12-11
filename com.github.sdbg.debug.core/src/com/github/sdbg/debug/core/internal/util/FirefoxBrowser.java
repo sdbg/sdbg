@@ -6,6 +6,7 @@ import static com.github.sdbg.debug.core.SDBGDebugCorePlugin.logInfo;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.internal.firefox.BreakpointManager;
+import com.github.sdbg.debug.core.internal.firefox.FirefoxDebugTarget;
 import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
@@ -34,6 +35,8 @@ public class FirefoxBrowser extends AbstractBrowser
     private DebugConnector connector;
     private IResourceResolver resourceResolver;
     private BreakpointManager breakpointManager;
+    private TabActor tab;
+    private FirefoxDebugTarget target;
     
     public FirefoxBrowser(File executable)
     {
@@ -41,7 +44,7 @@ public class FirefoxBrowser extends AbstractBrowser
     }
     
     @Override
-    public void connectToBrowserDebug(String name, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
+    public void connectToBrowserDebug(String browserName, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
         String string, IProgressMonitor monitor, LogTimer timer, boolean enableBreakpoints, String host, int port,
         long maxStartupDelay, ListeningStream browserOutput, String processDescription,
         IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException
@@ -89,6 +92,7 @@ public class FirefoxBrowser extends AbstractBrowser
         TabActor tab = null;
         try
         {
+            sleep(500);
             tab = getTab();
             WatcherActor watcher = tab.getWatcher();
             watcher.watchResources(WatchableResources.SOURCE
@@ -96,7 +100,6 @@ public class FirefoxBrowser extends AbstractBrowser
                 , WatchableResources.THREAD_STATE
                 , WatchableResources.REFLOW
                 , WatchableResources.CONSOLE_MESSAGE);
-            sleep(500);
         }
         catch (Exception e1)
         {
@@ -111,19 +114,29 @@ public class FirefoxBrowser extends AbstractBrowser
             logError("Could not attach BreakpointManager", e);
             throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("Could not attach BreakpointManager"));
         }
+        target = new FirefoxDebugTarget(this, launch);
+        BrowserManager.registerProcess(launch, launchConfig, target.getProcess(), processDescription);
+        launch.addDebugTarget(target);
     }
 
-    public TabActor getTab() throws IOException, CoreException
+    public FirefoxDebugTarget getTarget()
     {
-        TabActor tab = null;
-        try
+        return target;
+    }
+
+    public synchronized TabActor getTab() throws IOException, CoreException
+    {
+        if(tab == null)
         {
-            List<TabActor> tabs = connector.getRootActor().listTabs();
-            tab = tabs.get(0);
-        }
-        catch (JSONException e)
-        {
-            throw new IOException("Could not get Tabs", e);
+            try
+            {
+                List<TabActor> tabs = connector.getRootActor().listTabs();
+                tab = tabs.get(tabs.size()-1);
+            }
+            catch (JSONException e)
+            {
+                throw new IOException("Could not get Tabs", e);
+            }
         }
         return tab;
     }

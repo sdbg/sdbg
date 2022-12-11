@@ -88,6 +88,11 @@ public class WebkitScriptStorage extends PlatformObject implements IStorage {
     return true;
   }
 
+  public String getURL()
+  {
+      return script.getUrl();
+  }
+  
   @Override
   public String toString() {
     return script.toString();

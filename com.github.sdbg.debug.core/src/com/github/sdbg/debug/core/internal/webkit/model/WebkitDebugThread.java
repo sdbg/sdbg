@@ -54,7 +54,7 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
   public boolean canResume() {
     return !isDisconnected() && isSuspended();
   }
-
+  
   @Override
   public boolean canStepInto() {
     return isSuspended();

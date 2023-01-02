@@ -1,8 +1,11 @@
 package com.github.sdbg.debug.core.internal.firefox;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
+import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.debug.core.DebugException;
@@ -11,9 +14,12 @@ import org.eclipse.debug.core.model.IStackFrame;
 import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.IVariable;
 
+import de.exware.remotefox.SourceActor;
+import de.exware.remotefox.SourceLocation;
 import de.exware.remotefox.StackFrameActor;
 
 public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStackFrame
+ , ISDBGStackFrame
 {
     private FirefoxDebugThread thread;
     private StackFrameActor frame;
@@ -112,44 +118,31 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     @Override
     public int getCharEnd() throws DebugException
     {
-        return 0;
+        return -1;
     }
 
     @Override
     public int getCharStart() throws DebugException
     {
-        return 0;
+        return -1;
     }
 
     @Override
     public int getLineNumber() throws DebugException
     {
-        return 0;
+        int jsLine = frame.getLocation().getLine();
+        int line = jsLine;
+        line = getMappedLocation().getLine();
+        return line+1;
     }
 
     @Override
     public String getName() throws DebugException
     {
-        return frame.getDisplayName() == null ? frame.getActorId() : frame.getDisplayName();
-    }
-
-    private String getFileName()
-    {
-//        String path = getSourceLocationPath();
-//        if (path != null)
-//        {
-//            int index = path.lastIndexOf('/');
-//
-//            if (index != -1)
-//            {
-//                return path.substring(index + 1);
-//            }
-//            else
-//            {
-//                return path;
-//            }
-//        }
-        return null;
+        String name = (frame.getDisplayName() == null ? frame.getActorId() : frame.getDisplayName());
+        String path = getSourceLocationPath();
+        String file = path.substring(path.lastIndexOf("/")+1);
+        return name + " (" + file + ":" + getLineNumber() + ")";
     }
 
     @Override
@@ -196,5 +189,55 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     public boolean hasVariables() throws DebugException
     {
         return true;
+    }
+
+    @Override
+    public String getSourceLocationPath()
+    {
+        return getMappedLocation().getPath();
+    }
+
+    private SourceMapManager.SourceLocation getMappedLocation()
+    {
+        SourceMapManager.SourceLocation loc = null; 
+        FirefoxDebugTarget target = (FirefoxDebugTarget)getDebugTarget();
+        SourceMapManager sm = target.getBrowser().getSourceMapManager();
+        try
+        {
+            List<SourceActor> sources = target.getTab().getSourceActors();
+            SourceLocation location = frame.getLocation();
+            String sourceActorId = location.getSourceActor();
+            for(int i=0;i<sources.size();i++)
+            {
+                SourceActor source = sources.get(i);
+                if(source.getActorId().equals(sourceActorId))
+                {
+                    loc = sm.getMappingFor(source.getURL(), location.getLine()-1, location.getColumn());
+                    if(loc != null)
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return loc;
+    }
+    
+    @Override
+    public boolean isPrivate()
+    {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    public boolean isUsingSourceMaps()
+    {
+        // TODO Auto-generated method stub
+        return false;
     }
 }

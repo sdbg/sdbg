@@ -13,7 +13,7 @@
  */
 package com.github.sdbg.debug.ui.internal.launch;
 
-import com.github.sdbg.core.DartCore;
+import com.github.sdbg.utilities.Utilities;
 
 import org.eclipse.core.expressions.PropertyTester;
 import org.eclipse.core.resources.IFile;
@@ -41,7 +41,7 @@ public class RunInBrowserPropertyTester extends PropertyTester {
         Object o = ((IStructuredSelection) receiver).getFirstElement();
         if (o instanceof IFile) {
           IFile file = (IFile) o;
-          if (DartCore.isHtmlLikeFileName(file.getName())/*&&&
+          if (Utilities.isHtmlLikeFileName(file.getName())/*&&&
                                                          && DartCore.isInBuildDirectory(file.getParent())*/) {
             return true;
           }

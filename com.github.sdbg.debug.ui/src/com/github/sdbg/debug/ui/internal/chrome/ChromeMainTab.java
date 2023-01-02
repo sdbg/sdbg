@@ -75,7 +75,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
     // Chrome settings group
     Group group = new Group(composite, SWT.NONE);
-    group.setText("Chrome settings");
+    group.setText("Browser settings");
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
@@ -109,7 +109,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   @Override
   public Image getImage() {
-    return SDBGDebugUIPlugin.getImage("chrome.png"); //$NON-NLS-1$
+    return SDBGDebugUIPlugin.getImage("www.png"); //$NON-NLS-1$
   }
 
   @Override

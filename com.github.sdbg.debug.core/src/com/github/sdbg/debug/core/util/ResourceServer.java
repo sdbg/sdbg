@@ -14,11 +14,11 @@
 
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.utilities.NetUtils;
 import com.github.sdbg.utilities.Streams;
+import com.github.sdbg.utilities.Utilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -208,7 +208,7 @@ public class ResourceServer implements IResourceResolver {
             if (resource instanceof IFile) {
               IFile file = (IFile) resource;
 
-              if (DartCore.isHtmlLikeFileName(file.getName())) {
+              if (Utilities.isHtmlLikeFileName(file.getName())) {
                 files.add(file);
               } else if ("crx".equals(file.getFileExtension())) {
                 files.add(file);

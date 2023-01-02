@@ -13,7 +13,6 @@
  */
 package com.github.sdbg.debug.core.internal.util;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
@@ -23,6 +22,7 @@ import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import com.github.sdbg.debug.core.util.IDeviceChooser;
 import com.github.sdbg.debug.core.util.Trace;
+import com.github.sdbg.utilities.OSUtilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -334,7 +334,7 @@ public class BrowserManager {
             }
           }
 
-          DebugUIHelper.getHelper().activateApplication(browser.getExecutableFile(), "Chrome");
+          DebugUIHelper.getHelper().activateApplication(browser.getExecutableFile(), browser.getName());
 
           timer.stopTask();
           timer.stopTimer();
@@ -394,7 +394,7 @@ public class BrowserManager {
 
     // On Windows, try to locate Chrome using the Uninstall windows Registry setting
     // If unsuccessful, try a heuristics in the user home directory
-    if (DartCore.isWindows()) {
+    if (OSUtilities.isWindows()) {
       try {
         String regKey = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
         String regValue = "InstallLocation";
@@ -465,7 +465,7 @@ public class BrowserManager {
         return file;
       }
 
-    } else if (DartCore.isMac()) {
+    } else if (OSUtilities.isMac()) {
       file = findBrowserExecutable("heuristics", new File("/Applications"), false/*fileOrDir*/);
       if (file != null) {
         return file;
@@ -500,14 +500,14 @@ public class BrowserManager {
         trace("=> Failed, location is a file");
         return null;
       }
-    } else if (DartCore.isWindows()) {
+    } else if (OSUtilities.isWindows()) {
       File exe = new File(location, "chrome.exe");
       trace("=> Trying " + exe.getPath());
       if (exe.exists() && exe.isFile()) {
         trace("=> Found");
         return exe;
       }
-    } else if (DartCore.isWindows()) {
+    } else if (OSUtilities.isWindows()) {
       //Try Microsoft Edge, as it is now Chrome based, and works flawless.
       File exe = new File(location, "msedge.exe");
       trace("=> Trying " + exe.getPath());
@@ -515,7 +515,7 @@ public class BrowserManager {
         trace("=> Found");
         return exe;
       }
-    } else if (DartCore.isMac()) {
+    } else if (OSUtilities.isMac()) {
       // In case the directory just points to the parent of Google Chrome.app
       File exe = new File(location, "Google Chrome.app/Contents/MacOS/Google Chrome");
       trace("=> Trying " + exe.getPath());
@@ -586,17 +586,14 @@ public class BrowserManager {
 
   private IBrowser getBrowser()
   {
-      if (browser == null)
+      File executable = findBrowserExecutable();
+      if (executable.getPath().contains("firefox"))
       {
-          File executable = findBrowserExecutable();
-          if (executable.getPath().contains("firefox"))
-          {
-              browser = new FirefoxBrowser(executable);
-          }
-          else
-          {
-              browser = new ChromeBasedBrowser(executable, browserDataDirName);
-          }
+          browser = new FirefoxBrowser(executable);
+      }
+      else
+      {
+          browser = new ChromeBasedBrowser(executable, browserDataDirName);
       }
       return browser;
   }

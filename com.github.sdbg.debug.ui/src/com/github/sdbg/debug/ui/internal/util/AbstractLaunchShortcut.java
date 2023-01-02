@@ -13,9 +13,9 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
+import com.github.sdbg.utilities.Utilities;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -275,7 +275,7 @@ public abstract class AbstractLaunchShortcut implements ILaunchShortcut2 {
 
   private IResource getPrimaryLaunchTarget(IResource resource) {
     // Html files are always launchable. 
-    if (DartCore.isHtmlLikeFileName(resource.getName())) {
+    if (Utilities.isHtmlLikeFileName(resource.getName())) {
       return resource;
     }
 

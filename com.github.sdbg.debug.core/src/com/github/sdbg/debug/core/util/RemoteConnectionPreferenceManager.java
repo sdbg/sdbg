@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.core.util;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.Utilities;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.osgi.service.prefs.BackingStoreException;
@@ -43,7 +43,7 @@ public class RemoteConnectionPreferenceManager {
 
   public boolean canConnectRemote() {
 
-    String value = DartCore.getUserDefinedProperty(REMOTE_CONNECTION_OPTION);
+    String value = Utilities.getUserDefinedProperty(REMOTE_CONNECTION_OPTION);
     if (value != null) {
       return value.equalsIgnoreCase("true");
     }

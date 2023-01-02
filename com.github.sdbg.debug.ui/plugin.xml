@@ -41,38 +41,13 @@
        </propertyTester>
    </extension>
 
-   <extension
-         point="org.eclipse.core.expressions.propertyTesters">
-      <propertyTester
-         id="com.github.sdbg.debug.dartPropertyTester"
-         namespace="com.github.sdbg.debug"
-         properties="isDartProject"
-         type="org.eclipse.core.runtime.IAdaptable"
-         class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
-      </propertyTester>
-      <propertyTester
-         id="com.github.sdbg.debug.dartPropertyTester"
-         namespace="com.github.sdbg.debug"
-         properties="isInDartProject"
-         type="org.eclipse.core.runtime.IAdaptable"
-         class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
-      </propertyTester>
-      <propertyTester
-         id="com.github.sdbg.debug.dartPropertyTester"
-         namespace="com.github.sdbg.debug"
-         properties="containsChromeApp"
-         type="org.eclipse.core.runtime.IAdaptable"
-         class="com.github.sdbg.debug.ui.internal.util.DartPropertyTester">
-      </propertyTester>
-   </extension>
-   
    <!-- Chrome launch configuration -->
 
    <extension
          point="org.eclipse.debug.ui.launchConfigurationTypeImages">
       <launchConfigurationTypeImage
             configTypeID="com.github.sdbg.debug.core.chromeLaunchConfig"
-            icon="icons/chrome.png"
+            icon="icons/www.png"
             id="com.github.sdbg.debug.core.chromeLaunchConfigImage">
       </launchConfigurationTypeImage>
    </extension>
@@ -91,9 +66,9 @@
          point="org.eclipse.debug.ui.launchShortcuts">
       <shortcut
             class="com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut"
-            icon="icons/chrome.png"
+            icon="icons/www.png"
             id="com.github.sdbg.debug.ui.chromeLaunchShortcut"
-            label="%sdbg.chromelaunch.shortcut.label"
+            label="%sdbg.browserlaunch.shortcut.label"
             description="Run the selected application in Dartium"
             modes="run,debug">
          <configurationType
@@ -108,13 +83,10 @@
                      <adapt type="org.eclipse.core.resources.IResource">
                         <or>
                            <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
                               <or>
                                  <test property="org.eclipse.core.resources.extension" value="html"/>
-                                 <test property="org.eclipse.core.resources.extension" value="dart"/>
                               </or>
                            </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
                         </or>
                      </adapt>
                   </iterate>
@@ -165,10 +137,8 @@
                      <adapt type="org.eclipse.core.resources.IResource">
                         <or>
                            <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
                               <test property="org.eclipse.core.resources.name" value="manifest.json"/>
                            </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
                         </or>
                      </adapt>
                   </iterate>
@@ -219,10 +189,8 @@
                      <adapt type="org.eclipse.core.resources.IResource">
                         <or>
                            <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
                               <test property="org.eclipse.core.resources.name" value="manifest.json"/>
                            </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
                         </or>
                      </adapt>
                   </iterate>
@@ -273,10 +241,8 @@
                      <adapt type="org.eclipse.core.resources.IResource">
                         <or>
                            <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
                               <test property="org.eclipse.core.resources.name" value="manifest.json"/>
                            </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
                         </or>
                      </adapt>
                   </iterate>
@@ -336,13 +302,10 @@
                      <adapt type="org.eclipse.core.resources.IResource">
                         <or>
                            <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
                               <or>
                                  <test property="org.eclipse.core.resources.extension" value="html"/>
-                                 <test property="org.eclipse.core.resources.extension" value="dart"/>
                               </or>
                            </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
                         </or>
                      </adapt>
                   </iterate>
@@ -393,10 +356,8 @@
                      <adapt type="org.eclipse.core.resources.IResource">
                         <or>
                            <and>
-                              <test property="com.github.sdbg.debug.isInDartProject"/>
                               <test property="org.eclipse.core.resources.name" value="manifest.json"/>
                            </and>
-                           <test property="com.github.sdbg.debug.isDartProject"/>
                         </or>
                      </adapt>
                   </iterate>

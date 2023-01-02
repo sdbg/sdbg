@@ -35,10 +35,13 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
         {
             TabActor tab = target.getTab();
             List<StackFrameActor> stackframes = tab.getStackFrames();
-            frames = new IStackFrame[stackframes.size()];
-            for(int i=0;i<stackframes.size();i++)
+            if(stackframes != null)
             {
-                frames[i] = new FirefoxDebugStackFrame(target, this, stackframes.get(i));
+                frames = new IStackFrame[stackframes.size()];
+                for(int i=0;i<stackframes.size();i++)
+                {
+                    frames[i] = new FirefoxDebugStackFrame(target, this, stackframes.get(i));
+                }
             }
         }
         catch (Exception e)

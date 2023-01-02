@@ -7,16 +7,12 @@ import com.github.sdbg.debug.core.internal.util.FirefoxBrowser;
 import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.swing.SwingUtilities;
 
 import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.model.DebugElement;
 import org.eclipse.debug.core.model.IBreakpoint;
@@ -26,8 +22,6 @@ import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.core.model.IThread;
 
 import de.exware.remotefox.PauseActor.PauseType;
-import de.exware.remotefox.SourceActor;
-import de.exware.remotefox.SourceLocation;
 import de.exware.remotefox.TabActor;
 import de.exware.remotefox.event.PauseEvent;
 import de.exware.remotefox.event.PauseListener;
@@ -37,14 +31,15 @@ public class FirefoxDebugTarget extends DebugElement
 {
     private ILaunch launch;
     private FirefoxBrowser browser;
-    private IProcess process = new FirefoxDebugProcess(this);
+    private IProcess process;
     private FirefoxDebugThread thread; 
     
-    public FirefoxDebugTarget(FirefoxBrowser browser, ILaunch launch)
+    public FirefoxDebugTarget(FirefoxBrowser browser, ILaunch launch, Process process)
     {
         super(null);
         this.launch = launch;
         this.browser = browser;
+        this.process = new FirefoxDebugProcess(this, process);
         thread = new FirefoxDebugThread(this);
         TabActor tab;
         try
@@ -69,35 +64,8 @@ public class FirefoxDebugTarget extends DebugElement
                     }
                     else if(event.getPauseType() == PauseType.DEBUGGERSTATEMENT)
                     {
-                        SwingUtilities.invokeLater(new Runnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                try
-                                {
-                                    SourceLocation location = event.getLocation();
-                                    List<SourceActor> sources = tab.getSourceActors();
-                                    for(int i=0;i<sources.size();i++)
-                                    {
-                                        SourceActor actor = sources.get(i);
-                                        if(location.getSourceActor().equals(actor.getActorId()))
-                                        {
-                                            Map<String, String> options = new HashMap<>();
-                                            options.put("condition", "false");
-                                            tab.setBreakpoint(actor.getURL(), location.getLine(), location.getColumn(), options);
-//                                            tab.setBreakpoint(actor.getURL(), 35902, 2);
-                                            break;
-                                        }
-                                    }
-                                    tab.resume();
-                                }
-                                catch (Exception e)
-                                {
-                                    logError("Error in resume on debuggerStatement", e);
-                                }
-                            }
-                        });
+                        int reason = DebugEvent.UNSPECIFIED;
+                        fireSuspendEvent(reason);
                     }
                 }
             });
@@ -105,6 +73,27 @@ public class FirefoxDebugTarget extends DebugElement
         catch (Exception e)
         {
             logError("", e);
+        }
+        fireCreationEvent();
+    }
+
+    @Override
+    public void fireTerminateEvent()
+    {
+        DebugPlugin.getDefault().getBreakpointManager().removeBreakpointListener(browser.getBreakpointManager());
+        thread = null;
+        // Check for null on system shutdown.
+        if (DebugPlugin.getDefault() != null)
+        {
+            super.fireTerminateEvent();
+            try
+            {
+                launch.terminate();
+            }
+            catch (DebugException e)
+            {
+            }            
+            DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
         }
     }
 
@@ -121,6 +110,11 @@ public class FirefoxDebugTarget extends DebugElement
     @Override
     public IProcess getProcess()
     {
+        if(browser.isProcessTerminated())
+        {
+            process = null;
+            return null;
+        }
         return process;
     }
 

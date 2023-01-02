@@ -14,7 +14,6 @@
 
 package com.github.sdbg.debug.core.configs;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
@@ -22,6 +21,7 @@ import com.github.sdbg.debug.core.internal.util.BrowserManager;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
+import com.github.sdbg.utilities.OSUtilities;
 import com.github.sdbg.utilities.instrumentation.InstrumentationBuilder;
 
 import java.io.File;
@@ -208,7 +208,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     List<String> extraCommandLineArgs = new ArrayList<String>();
 
     // This is currently only supported on the mac.
-    if (DartCore.isMac()) {
+    if (OSUtilities.isMac()) {
       extraCommandLineArgs.add("--no-startup-window");
     }
 

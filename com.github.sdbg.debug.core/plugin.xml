@@ -13,7 +13,7 @@
             delegate="com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate"
             id="com.github.sdbg.debug.core.chromeLaunchConfig"
             modes="run,debug"
-            name="%launchconfig.chrome.name"
+            name="%launchconfig.browser.name"
             sourceLocatorId="com.github.sdbg.debug.core.sourceLookupDirector"
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>

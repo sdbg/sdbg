@@ -41,4 +41,10 @@ public interface IBrowser
     String getExecutableName();
     
     File getExecutableFile();
+
+    /**
+     * Liefert den Namen des Browsers
+     * @return
+     */
+    public String getName();
 }

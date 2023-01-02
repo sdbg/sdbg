@@ -13,7 +13,6 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.ui.internal.DartUtil;
@@ -21,6 +20,7 @@ import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 import com.github.sdbg.debug.ui.internal.browser.BrowserLaunchShortcut;
 import com.github.sdbg.debug.ui.internal.browser.Messages;
 import com.github.sdbg.debug.ui.internal.chrome.ChromeLaunchShortcut;
+import com.github.sdbg.utilities.OSUtilities;
 import com.github.sdbg.utilities.ProcessRunner;
 
 import java.io.IOException;
@@ -465,7 +465,7 @@ public class LaunchUtils {
 
     List<String> cmd = new ArrayList<String>();
 
-    if (DartCore.isMac()) {
+    if (OSUtilities.isMac()) {
       // use open command on mac
       cmd.add("/usr/bin/open");
       cmd.add("-a");
@@ -474,7 +474,7 @@ public class LaunchUtils {
     cmd.add(url);
 
     if (SDBGDebugCorePlugin.getPlugin().getBrowserArgs().length() != 0) {
-      if (DartCore.isMac()) {
+      if (OSUtilities.isMac()) {
         cmd.add("--args");
         cmd.add(SDBGDebugCorePlugin.getPlugin().getBrowserArgs());
       } else {
@@ -490,7 +490,7 @@ public class LaunchUtils {
       runner.await(new NullProgressMonitor(), 500);
 
       if (runner.getExitCode() != 0) {
-        if (DartCore.isWindows()) {
+        if (OSUtilities.isWindows()) {
           if (browserName.toLowerCase().indexOf("firefox") != -1) {
             if (runner.getExitCode() == 1) {
               // In this case, the application was opened in a new tab successfully.

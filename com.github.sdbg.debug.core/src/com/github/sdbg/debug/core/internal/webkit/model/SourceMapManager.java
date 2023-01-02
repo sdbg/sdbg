@@ -183,6 +183,7 @@ public class SourceMapManager {
 
   private Map<IStorage, IStorage> sourceMapsStorages = new HashMap<IStorage, IStorage>();
   private Map<IStorage, SourceMap> sourceMaps = new HashMap<IStorage, SourceMap>();
+  private Map<String, IStorage> storageMaps = new HashMap<String, IStorage>();
 
   static boolean isTracing() {
     return Trace.isTracing(Trace.SOURCEMAPS);
@@ -250,6 +251,19 @@ public class SourceMapManager {
     return null;
   }
 
+  public SourceLocation getMappingFor(String scriptPath, int line, int column)
+  {
+      for(String path : storageMaps.keySet())
+      {
+          if(path.equals(scriptPath))
+          {
+              IStorage storage = storageMaps.get(path);
+              return getMappingFor(storage, line, column);
+          }
+      }
+      return null;
+  }
+  
   /**
    * Given a target location (in foo.dart), return the corresponding source location (in
    * foo.dart.js).
@@ -459,6 +473,7 @@ public class SourceMapManager {
         if (map != null) {
           sourceMapsStorages.put(script, mapStorage);
           sourceMaps.put(mapStorage, map);
+          storageMaps.put(scriptUrl, script);
           trace("Parsing sourcemap succeeded: " + mapStorage);
         }
       }

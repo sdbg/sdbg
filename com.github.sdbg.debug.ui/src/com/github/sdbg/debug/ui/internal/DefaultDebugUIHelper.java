@@ -14,12 +14,12 @@
 
 package com.github.sdbg.debug.ui.internal;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 import com.github.sdbg.debug.ui.internal.chrome.DevToolsDisconnectManager;
 import com.github.sdbg.debug.ui.internal.util.LaunchUtils;
+import com.github.sdbg.utilities.OSUtilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,11 +44,11 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
 
   @Override
   public void activateApplication(File application, String name) {
-    if (DartCore.isMac()) {
+    if (OSUtilities.isMac()) {
       activateApplicationMacOS(application);
-    } else if (DartCore.isWindows()) {
+    } else if (OSUtilities.isWindows()) {
       bringWindowToFrontWin32(".*" + name + "\\z");
-    } else if (DartCore.isLinux()) {
+    } else if (OSUtilities.isLinux()) {
       // This is not necessary on Linux.
 
     }

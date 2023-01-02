@@ -14,7 +14,7 @@
 
 package com.github.sdbg.debug.ui.internal.breakpoints;
 
-import com.github.sdbg.core.DartCore;
+import com.github.sdbg.utilities.Utilities;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdapterFactory;
@@ -53,12 +53,12 @@ public class SDBGBreakpointAdapterFactory implements IAdapterFactory {
         if (resource != null) {
           String name = resource.getName().toLowerCase();
 
-          if (DartCore.isHtmlLikeFileName(name) || DartCore.isJSLikeFileName(name)) {
+          if (Utilities.isHtmlLikeFileName(name) || Utilities.isJSLikeFileName(name)) {
             return new SDBGBreakpointAdapter();
           }
         } else if (input instanceof FileStoreEditorInput) {
           String path = ((FileStoreEditorInput) input).getURI().getPath();
-          if (DartCore.isHtmlLikeFileName(path) || DartCore.isJSLikeFileName(path)) {
+          if (Utilities.isHtmlLikeFileName(path) || Utilities.isJSLikeFileName(path)) {
             return new SDBGBreakpointAdapter();
           }
         }

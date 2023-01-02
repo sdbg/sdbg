@@ -35,6 +35,8 @@ import org.json.JSONException;
 import de.exware.remotefox.DebugConnector;
 import de.exware.remotefox.SourceActor;
 import de.exware.remotefox.TabActor;
+import de.exware.remotefox.event.ResourceEvent;
+import de.exware.remotefox.event.ResourceListener;
 
 /**
  * Handle adding a removing breakpoints to the WebKit connection for the
@@ -86,8 +88,80 @@ public class BreakpointManager implements IBreakpointListener
         this.browser = browser;
         this.sourceMapManager = sourceMapManager;
         this.tab = tab;
+        tab.addResourceListener(new ResourceListener()
+        {
+            
+            @Override
+            public void sourceAvailable(ResourceEvent event)
+            {
+                List<SourceActor> sources;
+                try
+                {
+                    sources = tab.getSourceActors();
+                    for(int i=0;i<sources.size();i++)
+                    {
+                        SourceActor source = sources.get(i);
+                        String sourceMapURL = source.getSourceMapURL();
+                        if(sourceMapURL != null && sourceMapURL.equals("null") == false)
+                        {
+                            ScriptDescriptor script = new ScriptDescriptor(source.getActorId(), source.getURL(), sourceMapURL, false, 0, 0, 0, 0);
+                            IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
+                            sourceMapManager.handleScriptParsed(storage, script.getUrl(), script.getSourceMapURL());
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    SDBGDebugCorePlugin.logError(e);
+                }
+                Thread t = new Thread()
+                {
+                    @Override
+                    public void run()
+                    {
+                        try
+                        {
+                            sleep(30);
+                        }
+                        catch (InterruptedException e)
+                        {
+                        }
+                        updateBreakpoints();
+                    }
+                };
+                t.start();
+            }
+            
+            @Override
+            public void reflow(ResourceEvent event)
+            {
+            }
+            
+            @Override
+            public void documentWillLoading(ResourceEvent event)
+            {
+            }
+            
+            @Override
+            public void documentDomLoading(ResourceEvent event)
+            {
+            }
+            
+            @Override
+            public void documentDomInteractive(ResourceEvent event)
+            {
+            }
+        });
     }
     
+    synchronized protected void updateBreakpoints()
+    {
+        for(IBreakpoint bp : breakpointToIdMap.keySet())
+        {
+            breakpointAdded(bp);
+        }
+    }
+
 //    @Override
 //    public void addBreakpointsConcerningScript(IStorage script)
 //    {
@@ -478,18 +552,6 @@ public class BreakpointManager implements IBreakpointListener
 
     private SourceMapManager getSourceMapManager() throws JSONException, IOException
     {
-        List<SourceActor> sources = tab.getSourceActors();
-        for(int i=0;i<sources.size();i++)
-        {
-            SourceActor source = sources.get(i);
-            String sourceMapURL = source.getSourceMapURL();
-            if(sourceMapURL != null && sourceMapURL.equals("null") == false)
-            {
-                ScriptDescriptor script = new ScriptDescriptor(source.getActorId(), source.getURL(), sourceMapURL, false, 0, 0, 0, 0);
-                IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
-                sourceMapManager.handleScriptParsed(storage, script.getUrl(), script.getSourceMapURL());
-            }
-        }
         return sourceMapManager;
     }
 

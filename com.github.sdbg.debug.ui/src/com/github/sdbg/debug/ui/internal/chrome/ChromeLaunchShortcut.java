@@ -36,7 +36,7 @@ import org.eclipse.debug.core.ILaunchManager;
 public class ChromeLaunchShortcut extends AbstractLaunchShortcut implements ILaunchShortcutExt {
 
   public ChromeLaunchShortcut() {
-    super("Chrome");
+    super("Browser");
   }
 
   @Override

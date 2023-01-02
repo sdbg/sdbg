@@ -156,14 +156,6 @@ public class SWTUtil {
     GC gc = event.gc;
     Color oldFG = gc.getForeground();
     Color oldBG = gc.getBackground();
-    Color fgColor = null; // &&& DartUI.getViewerSelectionForeground(prefs, control.getDisplay());
-    if (fgColor != null) {
-      gc.setForeground(fgColor);
-    }
-    Color bgColor = null; // &&& DartUI.getViewerSelectionBackground(prefs, control.getDisplay());
-    if (bgColor != null) {
-      gc.setBackground(bgColor);
-    }
     gc.fillRectangle(0, event.y, clientWidth, event.height);
     gc.setForeground(oldFG);
     gc.setBackground(oldBG);

@@ -28,7 +28,7 @@ import org.json.JSONObject;
 import de.exware.remotefox.DebugConnector;
 import de.exware.remotefox.TabActor;
 import de.exware.remotefox.WatcherActor;
-import de.exware.remotefox.WatcherActor.WatchableResources;
+import de.exware.remotefox.WatcherActor.WatchableResource;
 
 public class FirefoxBrowser extends AbstractBrowser
 {
@@ -37,6 +37,7 @@ public class FirefoxBrowser extends AbstractBrowser
     private BreakpointManager breakpointManager;
     private TabActor tab;
     private FirefoxDebugTarget target;
+    private SourceMapManager sourceMapManager;
     
     public FirefoxBrowser(File executable)
     {
@@ -95,16 +96,17 @@ public class FirefoxBrowser extends AbstractBrowser
             sleep(500);
             tab = getTab();
             WatcherActor watcher = tab.getWatcher();
-            watcher.watchResources(WatchableResources.SOURCE
-                , WatchableResources.DOCUMENT_EVENT
-                , WatchableResources.THREAD_STATE
-                , WatchableResources.REFLOW
-                , WatchableResources.CONSOLE_MESSAGE);
+            watcher.watchResources(WatchableResource.SOURCE
+                , WatchableResource.DOCUMENT_EVENT
+                , WatchableResource.THREAD_STATE
+                , WatchableResource.REFLOW
+                , WatchableResource.CONSOLE_MESSAGE);
         }
         catch (Exception e1)
         {
         }
-        breakpointManager = new BreakpointManager(connector, this, tab, new SourceMapManager(resourceResolver));
+        sourceMapManager = new SourceMapManager(resourceResolver);
+        breakpointManager = new BreakpointManager(connector, this, tab, sourceMapManager);
         try
         {
             breakpointManager.connect();
@@ -114,9 +116,19 @@ public class FirefoxBrowser extends AbstractBrowser
             logError("Could not attach BreakpointManager", e);
             throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("Could not attach BreakpointManager"));
         }
-        target = new FirefoxDebugTarget(this, launch);
+        target = new FirefoxDebugTarget(this, launch, getProcess());
         BrowserManager.registerProcess(launch, launchConfig, target.getProcess(), processDescription);
         launch.addDebugTarget(target);
+    }
+
+    public BreakpointManager getBreakpointManager()
+    {
+        return breakpointManager;
+    }
+
+    public SourceMapManager getSourceMapManager()
+    {
+        return sourceMapManager;
     }
 
     public FirefoxDebugTarget getTarget()

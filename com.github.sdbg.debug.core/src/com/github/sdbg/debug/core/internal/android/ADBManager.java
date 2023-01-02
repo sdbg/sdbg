@@ -1,7 +1,7 @@
 package com.github.sdbg.debug.core.internal.android;
 
-import com.github.sdbg.core.DartCore;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.utilities.OSUtilities;
 import com.github.sdbg.utilities.ProcessRunner;
 
 import java.io.BufferedReader;
@@ -64,7 +64,7 @@ public class ADBManager {
       File adbDir = new File(new File(
           new File(new File(System.getProperty("user.home")), ".sdbg"),
           "adb"), platform);
-      String adbExecutableName = "adb" + (DartCore.isWindows() ? ".exe" : "");
+      String adbExecutableName = "adb" + (OSUtilities.isWindows() ? ".exe" : "");
 
       if (platform.equals("win32_x86") || platform.equals("win32_x86_64")) {
         copy(platformDir + adbExecutableName, adbDir);

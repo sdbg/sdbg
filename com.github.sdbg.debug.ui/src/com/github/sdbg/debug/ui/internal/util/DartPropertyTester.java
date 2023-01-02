@@ -43,7 +43,7 @@ public class DartPropertyTester extends PropertyTester {
 
     IAdapterManager adapterManager = Platform.getAdapterManager();
     assert (adapterManager != null);
-    return (T) adapterManager.getAdapter(adaptable, adapterType);
+    return adapterManager.getAdapter(adaptable, adapterType);
   }
 
   /**
@@ -110,14 +110,7 @@ public class DartPropertyTester extends PropertyTester {
 
     // Resolve to the actual resource (if it is linked)
     resource = resolveTargetResource(resource);
-
-    if (property.equals("isDartProject")) {
-      return isDartProject(resource);
-    } else if (property.equals("isInDartProject")) {
-      return isInDartProject(resource);
-    } else {
-      return false;
-    }
+    return false;
   }
 
   protected boolean containsChromeApp(IResource resource) {
@@ -133,14 +126,4 @@ public class DartPropertyTester extends PropertyTester {
       return false;
     }
   }
-
-  protected boolean isDartProject(IResource resource) {
-    return false; //&&& DartProjectNature.hasDartNature(resource.getProject())
-    //&& resource == resource.getProject();
-  }
-
-  protected boolean isInDartProject(IResource resource) {
-    return false; //&&&DartProjectNature.hasDartNature(resource.getProject());
-  }
-
 }

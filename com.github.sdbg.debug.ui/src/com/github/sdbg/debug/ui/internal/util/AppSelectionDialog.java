@@ -13,7 +13,7 @@
  */
 package com.github.sdbg.debug.ui.internal.util;
 
-import com.github.sdbg.core.DartCore;
+import com.github.sdbg.utilities.Utilities;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
@@ -27,7 +27,7 @@ public class AppSelectionDialog extends FilteredResourcesSelectionDialog {
   public static class HtmlResourceFilter implements IResourceFilter {
     @Override
     public boolean matches(IResource resource) {
-      return DartCore.isHtmlLikeFileName(resource.getName());
+      return Utilities.isHtmlLikeFileName(resource.getName());
     }
   }
 
@@ -35,7 +35,7 @@ public class AppSelectionDialog extends FilteredResourcesSelectionDialog {
     @Override
     public boolean matches(IResource resource) {
       // TODO: should check web parent has pubspec?
-      return DartCore.isHtmlLikeFileName(resource.getName())
+      return Utilities.isHtmlLikeFileName(resource.getName())
           && resource.getParent().getName().equals("web");
     }
   }

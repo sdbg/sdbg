@@ -344,4 +344,10 @@ public abstract class AbstractBrowser implements IBrowser
     {
         return executable;
     }
+    
+    @Override
+    public String getName()
+    {
+        return getExecutableFile().getName();
+    }
 }

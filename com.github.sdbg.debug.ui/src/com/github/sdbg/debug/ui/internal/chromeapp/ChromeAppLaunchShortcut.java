@@ -69,7 +69,7 @@ public class ChromeAppLaunchShortcut extends AbstractLaunchShortcut implements I
   }
 
   public ChromeAppLaunchShortcut() {
-    super("Chrome App");
+    super("Browser App");
   }
 
   @Override

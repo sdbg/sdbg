@@ -33,7 +33,7 @@ import org.eclipse.debug.core.model.LineBreakpoint;
 import org.eclipse.osgi.util.NLS;
 
 /**
- * The implementation of a Dart line breakpoint.
+ * The implementation of a SDBG line breakpoint.
  * 
  * @see ILineBreakpoint
  */
@@ -68,7 +68,7 @@ public class SDBGBreakpoint extends LineBreakpoint {
   }
 
   /**
-   * Create a new DartBreakpoint.
+   * Create a new SDBGBreakpoint.
    * 
    * @param resource
    * @param line

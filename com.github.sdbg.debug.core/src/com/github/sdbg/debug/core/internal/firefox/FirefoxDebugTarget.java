@@ -23,6 +23,7 @@ import org.eclipse.debug.core.model.IThread;
 
 import de.exware.remotefox.PauseActor.PauseType;
 import de.exware.remotefox.TabActor;
+import de.exware.remotefox.ThreadActor.ResumeType;
 import de.exware.remotefox.event.PauseEvent;
 import de.exware.remotefox.event.PauseListener;
 
@@ -51,21 +52,25 @@ public class FirefoxDebugTarget extends DebugElement
                 public void resumed(PauseEvent event)
                 {
                     int reason = DebugEvent.RESUME;
+                    thread.dropStackFrames();
+                    thread.fireResumeEvent(reason);
                     fireResumeEvent(reason);
                 }
                 
                 @Override
                 public void paused(PauseEvent event)
                 {
-                    if(event.getPauseType() == PauseType.BREAKPOINT)
+                    if(event.getPauseType() == PauseType.BREAKPOINT
+                        || event.getPauseType() == PauseType.RESUMELIMIT)
                     {
                         int reason = DebugEvent.BREAKPOINT;
-                        fireSuspendEvent(reason);
+                        thread.createStackFrames();
+                        thread.fireSuspendEvent(reason);
                     }
-                    else if(event.getPauseType() == PauseType.DEBUGGERSTATEMENT)
+                    else
                     {
                         int reason = DebugEvent.UNSPECIFIED;
-                        fireSuspendEvent(reason);
+                        thread.fireSuspendEvent(reason);
                     }
                 }
             });
@@ -205,6 +210,18 @@ public class FirefoxDebugTarget extends DebugElement
         try
         {
             browser.getTab().resume();
+        }
+        catch (Exception e)
+        {
+            logError("Resume failed", e);
+        }
+    }
+
+    public void resume(ResumeType type) throws DebugException
+    {
+        try
+        {
+            browser.getTab().resume(type);
         }
         catch (Exception e)
         {

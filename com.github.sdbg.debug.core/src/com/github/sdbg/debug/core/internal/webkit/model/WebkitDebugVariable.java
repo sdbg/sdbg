@@ -67,6 +67,13 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
 //
 
   @Override
+  public <T> T getAdapter(Class<T> adapter)
+  {
+      T t = super.getAdapter(adapter);
+      return t;
+  }
+
+  @Override
   public String getName() throws DebugException {
     try {
       if (isSpecialObject) {

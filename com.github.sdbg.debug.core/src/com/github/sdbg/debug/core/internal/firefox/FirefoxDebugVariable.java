@@ -1,12 +1,12 @@
 package com.github.sdbg.debug.core.internal.firefox;
 
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
+import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
-import org.eclipse.debug.core.model.IVariable;
 
-public class FirefoxDebugVariable extends WebkitDebugElement implements IVariable
+public class FirefoxDebugVariable extends WebkitDebugElement implements ISDBGVariable
 {
     private FirefoxDebugValue value;
     private String name;
@@ -18,6 +18,13 @@ public class FirefoxDebugVariable extends WebkitDebugElement implements IVariabl
         this.value = new FirefoxDebugValue((FirefoxDebugTarget) getDebugTarget(), object);
     }
 
+    @Override
+    public <T> T getAdapter(Class<T> adapter)
+    {
+        T t = super.getAdapter(adapter);
+        return t;
+    }
+    
     @Override
     public void setValue(String arg0) throws DebugException
     {
@@ -66,6 +73,42 @@ public class FirefoxDebugVariable extends WebkitDebugElement implements IVariabl
 
     @Override
     public boolean hasValueChanged() throws DebugException
+    {
+        return false;
+    }
+
+    @Override
+    public boolean isLibraryObject()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean isLocal()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isScope()
+    {
+        return false;
+    }
+
+    @Override
+    public boolean isStatic()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isThisObject()
+    {
+        return true;
+    }
+
+    @Override
+    public boolean isThrownException()
     {
         return false;
     }

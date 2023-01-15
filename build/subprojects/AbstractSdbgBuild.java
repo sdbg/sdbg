@@ -27,6 +27,7 @@ abstract public class AbstractSdbgBuild extends AbstractPluginBuild
 
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/weberknecht-0.1.5.jar").getPath());
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/json.jar").getPath());
+        addClasspathItem(new File("com.github.sdbg.debug.core/lib/remotefox.jar").getPath());
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/jaxb-api-2.3.1.jar").getPath());
         addClasspathItem(new File("com.github.sdbg.debug.core/lib/com.gwtplugins.gdt.eclipse.core_3.0.0.101.jar").getPath());
 

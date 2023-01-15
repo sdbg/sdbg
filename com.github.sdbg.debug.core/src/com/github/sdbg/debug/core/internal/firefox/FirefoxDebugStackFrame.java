@@ -31,77 +31,96 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
         this.frame = frame;
     }
 
+    @SuppressWarnings("rawtypes")
+    @Override
+    public Object getAdapter(Class adapter)
+    {
+        if (adapter == IThread.class)
+        {
+            return getThread();
+        }
+        else
+        {
+            return super.getAdapter(adapter);
+        }
+    }
+    
     @Override
     public boolean canStepInto()
     {
-        return false;
+        return thread.canStepInto();
     }
 
     @Override
     public boolean canStepOver()
     {
-        return false;
+        return thread.canStepOver();
     }
 
     @Override
     public boolean canStepReturn()
     {
-        return false;
+        return thread.canStepReturn();
     }
 
     @Override
     public boolean isStepping()
     {
-        return false;
+        return thread.isStepping();
     }
 
     @Override
     public void stepInto() throws DebugException
     {
+        thread.stepInto();
     }
 
     @Override
     public void stepOver() throws DebugException
     {
+        thread.stepOver();
     }
 
     @Override
     public void stepReturn() throws DebugException
     {
+        thread.stepReturn();
     }
 
     @Override
     public boolean canResume()
     {
-        return false;
+        return getDebugTarget().canResume();
     }
 
     @Override
     public boolean canSuspend()
     {
-        return false;
+        return getDebugTarget().canSuspend();
     }
 
     @Override
     public boolean isSuspended()
     {
-        return false;
+        return getDebugTarget().isSuspended();
     }
 
     @Override
     public void resume() throws DebugException
     {
+        getDebugTarget().resume();
     }
 
     @Override
     public void suspend() throws DebugException
     {
+        getDebugTarget().suspend();
     }
 
     @Override
     public boolean canTerminate()
     {
-        return false;
+        return true;
     }
 
     @Override
@@ -113,6 +132,7 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     @Override
     public void terminate() throws DebugException
     {
+        getDebugTarget().terminate();
     }
 
     @Override
@@ -141,8 +161,12 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     {
         String name = (frame.getDisplayName() == null ? frame.getActorId() : frame.getDisplayName());
         String path = getSourceLocationPath();
-        String file = path.substring(path.lastIndexOf("/")+1);
-        return name + " (" + file + ":" + getLineNumber() + ")";
+        if(path != null)
+        {
+            String file = path.substring(path.lastIndexOf("/")+1);
+            return name + " (" + file + ":" + getLineNumber() + ")";
+        }
+        return name;
     }
 
     @Override
@@ -194,7 +218,13 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     @Override
     public String getSourceLocationPath()
     {
-        return getMappedLocation().getPath();
+        String path = null;
+        SourceMapManager.SourceLocation location = getMappedLocation();
+        if(location != null)
+        {
+            path = location.getPath();
+        }
+        return path;
     }
 
     private SourceMapManager.SourceLocation getMappedLocation()
@@ -239,5 +269,17 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     {
         // TODO Auto-generated method stub
         return false;
+    }
+    
+    @Override
+    public boolean equals(Object obj)
+    {
+        return super.equals(obj);
+    }
+    
+    @Override
+    public int hashCode()
+    {
+        return super.hashCode();
     }
 }

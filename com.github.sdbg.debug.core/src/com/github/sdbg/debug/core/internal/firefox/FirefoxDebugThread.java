@@ -11,9 +11,12 @@ import org.eclipse.debug.core.model.IStackFrame;
 
 import de.exware.remotefox.StackFrameActor;
 import de.exware.remotefox.TabActor;
+import de.exware.remotefox.ThreadActor.ResumeType;
 
 public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThread
 {
+    private IStackFrame[] frames = new IStackFrame[0];
+
     public FirefoxDebugThread(FirefoxDebugTarget debugTarget)
     {
         super(debugTarget);
@@ -29,24 +32,26 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public IStackFrame[] getStackFrames() throws DebugException
     {
-        IStackFrame[] frames = new IStackFrame[0];
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
-        try
+        if(frames == null)
         {
-            TabActor tab = target.getTab();
-            List<StackFrameActor> stackframes = tab.getStackFrames();
-            if(stackframes != null)
+            FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+            try
             {
-                frames = new IStackFrame[stackframes.size()];
-                for(int i=0;i<stackframes.size();i++)
+                TabActor tab = target.getTab();
+                List<StackFrameActor> stackframes = tab.getStackFrames();
+                if(stackframes != null)
                 {
-                    frames[i] = new FirefoxDebugStackFrame(target, this, stackframes.get(i));
+                    frames = new IStackFrame[stackframes.size()];
+                    for(int i=0;i<stackframes.size();i++)
+                    {
+                        frames[i] = new FirefoxDebugStackFrame(target, this, stackframes.get(i));
+                    }
                 }
             }
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
         return frames;
     }
@@ -54,7 +59,7 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public boolean hasStackFrames() throws DebugException
     {
-        return true;
+        return isSuspended();
     }
     
     @Override
@@ -78,14 +83,19 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public IStackFrame getTopStackFrame() throws DebugException
     {
-        return getStackFrames()[0];
+        IStackFrame[] frames = getStackFrames();
+        IStackFrame frame = null;
+        if(frames.length > 0)
+        {
+            frame = frames[0];
+        }
+        return frame;
     }
 
     @Override
     public boolean canResume()
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
-        return target.isSuspended();
+        return isSuspended();
     }
 
     @Override
@@ -111,40 +121,46 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public boolean canStepInto()
     {
-        return false;
+        return isSuspended();
     }
 
     @Override
     public boolean canStepOver()
     {
-        return false;
+        return isSuspended();
     }
 
     @Override
     public boolean canStepReturn()
     {
-        return false;
+        return isSuspended();
     }
 
     @Override
     public boolean isStepping()
     {
-        return false;
+        return true;
     }
 
     @Override
     public void stepInto() throws DebugException
     {
+        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        target.resume(ResumeType.STEP_INTO);
     }
 
     @Override
     public void stepOver() throws DebugException
     {
+        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        target.resume(ResumeType.STEP_OVER);
     }
 
     @Override
     public void stepReturn() throws DebugException
     {
+        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        target.resume(ResumeType.STEP_OUT);
     }
 
     @Override
@@ -171,6 +187,16 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public IStackFrame getIsolateVarsPseudoFrame()
     {
-        return null;
+        return new FirefoxDebugIsolateFrame(this);
+    }
+
+    public void dropStackFrames()
+    {
+        frames = new IStackFrame[0];
+    }
+
+    public void createStackFrames()
+    {
+        frames = null;
     }
 }

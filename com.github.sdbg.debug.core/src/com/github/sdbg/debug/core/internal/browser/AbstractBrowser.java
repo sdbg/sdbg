@@ -1,18 +1,22 @@
-package com.github.sdbg.debug.core.internal.util;
+package com.github.sdbg.debug.core.internal.browser;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.util.HttpUrlConnector;
+import com.github.sdbg.debug.core.internal.util.ListeningStream;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import com.github.sdbg.debug.core.util.Trace;
 import com.github.sdbg.utilities.NetUtils;
+import com.github.sdbg.utilities.OSUtilities;
 import com.github.sdbg.utilities.Streams;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -23,8 +27,13 @@ import org.eclipse.core.runtime.Status;
 
 public abstract class AbstractBrowser implements IBrowser
 {
+    private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location"
+        , CHROME_ENVIRONMENT_VARIABLE = "CHROME_LOCATION"
+        , BROWSER_EXECUTABLE_PROPERTY = "browser.location"
+        , BROWSER_ENVIRONMENT_VARIABLE = "BROWSER_LOCATION";
+
     /** The initial page to navigate to. */
-    private String initial_page;
+    private String initialPage;
     private Process process;
     private File executable;
 
@@ -36,7 +45,12 @@ public abstract class AbstractBrowser implements IBrowser
     protected AbstractBrowser(File executable, String initalPage)
     {
         this.executable = executable;
-        initial_page = initalPage;
+        this.initialPage = initalPage;
+    }
+
+    protected String getInitialPage()
+    {
+        return initialPage;
     }
 
     @Override
@@ -149,7 +163,7 @@ public abstract class AbstractBrowser implements IBrowser
         }
 
         devToolsPortNumberHolder[0] = devToolsPortNumber;
-        List<String> arguments = buildArgumentsList(launchConfig, url != null ? url : initial_page, devToolsPortNumber,
+        List<String> arguments = buildArgumentsList(launchConfig, url != null ? url : getInitialPage(), devToolsPortNumber,
             extraArguments);
         builder.command(arguments);
         builder.redirectErrorStream(true);
@@ -240,7 +254,7 @@ public abstract class AbstractBrowser implements IBrowser
         long endTime = System.currentTimeMillis() + Math.max(maxStartupDelay, 0L);
         while (true)
         {
-            if (isProcessTerminated())
+            if (process != null &&  isProcessTerminated())
             {
                 throw new CoreException(new Status(IStatus.ERROR, SDBGDebugCorePlugin.PLUGIN_ID,
                     "Could not launch browser - process terminated while trying to connect. "
@@ -349,5 +363,91 @@ public abstract class AbstractBrowser implements IBrowser
     public String getName()
     {
         return getExecutableFile().getName();
+    }
+
+    /**
+     * Tries to find the executable by searching the System Properties and Environment setting.
+     * @param executableCandidates possible exe filenames.
+     * @return The executable or null, if it cannot be found.
+     */
+    public static File findBrowserByProperty(List<String> executableCandidates)
+    {
+        File file = null;
+        String[] props = new String[] {System.getProperty(BROWSER_EXECUTABLE_PROPERTY)
+            , System.getenv(BROWSER_ENVIRONMENT_VARIABLE)
+            , System.getProperty(CHROME_EXECUTABLE_PROPERTY)
+            , System.getenv(CHROME_ENVIRONMENT_VARIABLE)
+            };
+        for(int i=0;file == null && i<props.length;i++)
+        {
+            String prop = props[i];
+            if(prop == null)
+            {
+                continue;
+            }
+            File f = new File(prop);
+            if(f.exists())
+            {
+                if(f.isFile())
+                {
+                    file = f;
+                }
+                else
+                {
+                    for(int x=0;file == null && x<executableCandidates.size();x++)
+                    {
+                        String candidate = executableCandidates.get(x);
+                        if(OSUtilities.isWindows())
+                        {
+                            candidate += ".exe";
+                        }
+                        f = new File(prop, candidate);
+                        if(f.exists())
+                        {
+                            file = f;
+                        }
+                    }
+                }
+            }
+        }
+        return file;
+    }
+
+    protected static List<String> getExecutablePathCandidates()
+    {
+        List<String> paths = new ArrayList<>();
+        String path = System.getenv("PATH");
+        if (path != null)
+        {
+            String[] pathArray = path.split(File.pathSeparator);
+            for (String dirStr : pathArray)
+            {
+                paths.add(dirStr);
+            }
+        }
+        return paths;
+    }
+
+    public static File findBrowser(List<String> executablePathCandidates, List<String> executableCandidates)
+    {
+        File file = null;
+        for(int i=0;file == null && i<executablePathCandidates.size();i++)
+        {
+            String path = executablePathCandidates.get(i);
+            for(int x=0;file == null && x<executableCandidates.size();x++)
+            {
+                String candidate = executableCandidates.get(x);
+                if(OSUtilities.isWindows())
+                {
+                    candidate += ".exe";
+                }
+                File f = new File(path, candidate);
+                if(f.exists())
+                {
+                    file = f;
+                }
+            }
+        }
+        return file;
     }
 }

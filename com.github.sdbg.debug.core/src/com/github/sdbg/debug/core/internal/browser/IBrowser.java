@@ -1,6 +1,8 @@
-package com.github.sdbg.debug.core.internal.util;
+package com.github.sdbg.debug.core.internal.browser;
 
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.util.ListeningStream;
+import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;

@@ -1,12 +1,15 @@
-package com.github.sdbg.debug.core.internal.util;
+package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import static com.github.sdbg.debug.core.SDBGDebugCorePlugin.logError;
 import static com.github.sdbg.debug.core.SDBGDebugCorePlugin.logInfo;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
-import com.github.sdbg.debug.core.internal.firefox.BreakpointManager;
-import com.github.sdbg.debug.core.internal.firefox.FirefoxDebugTarget;
+import com.github.sdbg.debug.core.internal.browser.AbstractBrowser;
+import com.github.sdbg.debug.core.internal.browser.BrowserManager;
+import com.github.sdbg.debug.core.internal.browser.IBrowser;
+import com.github.sdbg.debug.core.internal.util.ListeningStream;
+import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
@@ -23,7 +26,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.debug.core.ILaunch;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import de.exware.remotefox.DebugConnector;
 import de.exware.remotefox.TabActor;
@@ -46,14 +48,13 @@ public class FirefoxBrowser extends AbstractBrowser
     
     @Override
     public void connectToBrowserDebug(String browserName, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
-        String string, IProgressMonitor monitor, LogTimer timer, boolean enableBreakpoints, String host, int port,
+        String url, IProgressMonitor monitor, LogTimer timer, boolean enableBreakpoints, String host, int port,
         long maxStartupDelay, ListeningStream browserOutput, String processDescription,
         IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException
     {
         this.resourceResolver = resourceResolver;
         connector = new DebugConnector(host, port);
         connector.setLogWire(true);
-        JSONObject welcome;
         long start = System.currentTimeMillis();
         boolean success = false;
         while(success == false && start + 2000 > System.currentTimeMillis())
@@ -74,27 +75,13 @@ public class FirefoxBrowser extends AbstractBrowser
             logError("Error on Firefox connect");
             throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("Error on connect"));
         }
-        try
-        {
-            welcome = connector.readMessage();
-        }
-        catch (IOException | JSONException e)
-        {
-            logError("No Welcome from Firefox", e);
-            throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("No Welcome from Firefox"));
-        }
-        if(welcome == null)
-        {
-            trace("No Welcome from Firefox");
-            throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("No Welcome from Firefox"));
-        }
         logInfo("Debugger connected");
-        connector.start();
         TabActor tab = null;
         try
         {
+            connector.start();
             sleep(500);
-            tab = getTab();
+            tab = getTab(url);
             WatcherActor watcher = tab.getWatcher();
             watcher.watchResources(WatchableResource.SOURCE
                 , WatchableResource.DOCUMENT_EVENT
@@ -116,7 +103,7 @@ public class FirefoxBrowser extends AbstractBrowser
             logError("Could not attach BreakpointManager", e);
             throw new CoreException(SDBGDebugCorePlugin.createErrorStatus("Could not attach BreakpointManager"));
         }
-        target = new FirefoxDebugTarget(this, launch, getProcess());
+        target = new FirefoxDebugTarget(this, launch, getProcess(), remote);
         BrowserManager.registerProcess(launch, launchConfig, target.getProcess(), processDescription);
         launch.addDebugTarget(target);
     }
@@ -136,14 +123,47 @@ public class FirefoxBrowser extends AbstractBrowser
         return target;
     }
 
-    public synchronized TabActor getTab() throws IOException, CoreException
+    public TabActor getTab()
+    {
+        return tab;
+    }
+    
+    private synchronized TabActor getTab(String url) throws IOException, CoreException
     {
         if(tab == null)
         {
             try
             {
                 List<TabActor> tabs = connector.getRootActor().listTabs();
-                tab = tabs.get(tabs.size()-1);
+                for(int i=0;i<tabs.size();i++)
+                {
+                    TabActor tab = tabs.get(i);
+                    String turl = tab.getURL();
+                    if(turl.equals(url))
+                    {
+                        this.tab = tab;
+                    }
+                }
+                if(tab == null)
+                {
+                    for(int i=0;i<tabs.size();i++)
+                    {
+                        TabActor tab = tabs.get(i);
+                        String turl = tab.getURL();
+                        if(turl.equals(getInitialPage()))
+                        {
+                            this.tab = tab;
+                            tab.navigateTo(url);
+                            sleep(500);
+                        }
+                    }
+                }
+                if(tab == null)
+                {
+                    tab = tabs.get(tabs.size()-1);
+                    tab.navigateTo(url);
+                    sleep(500);
+                }
             }
             catch (JSONException e)
             {
@@ -169,6 +189,13 @@ public class FirefoxBrowser extends AbstractBrowser
         return resourceResolver;
     }
 
+    @Override
+    public void terminateExistingBrowserProcess()
+    {
+        connector.stop();
+        super.terminateExistingBrowserProcess();
+    }
+    
     @Override
     protected List<String> buildArgumentsList(SDBGLaunchConfigWrapper launchConfig, String url, int devToolsPortNumber,
         List<String> extraArguments)
@@ -217,10 +244,40 @@ public class FirefoxBrowser extends AbstractBrowser
         {
             arguments.add(arg);
         }
-        if (url != null)
-        {
-            arguments.add(url);
-        }
+        arguments.add(getInitialPage());
         return arguments;
+    }
+
+    public static IBrowser findBrowserByProperty()
+    {
+        File file = AbstractBrowser.findBrowserByProperty(getExecutableCandidates());
+        if(file != null)
+        {
+            return new FirefoxBrowser(file);
+        }
+        return null;
+    }
+    
+    private static List<String> getExecutableCandidates()
+    {
+        List<String> exes = new ArrayList<>();
+        exes.add("firefox");
+        return exes;
+    }
+
+    protected static List<String> getExecutablePathCandidates()
+    {
+        List<String> exes = AbstractBrowser.getExecutablePathCandidates();
+        return exes;
+    }
+
+    public static IBrowser findBrowser()
+    {
+        File file = AbstractBrowser.findBrowser(getExecutablePathCandidates(), getExecutableCandidates());
+        if(file != null)
+        {
+            return new FirefoxBrowser(file);
+        }
+        return null;
     }
 }

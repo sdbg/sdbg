@@ -1,7 +1,10 @@
-package com.github.sdbg.debug.core.internal.util;
+package com.github.sdbg.debug.core.internal.browser;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.util.HttpUrlConnector;
+import com.github.sdbg.debug.core.internal.util.ListeningStream;
+import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
@@ -27,11 +30,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ChromeBasedBrowser extends AbstractBrowser
+public class WebkitBasedBrowser extends AbstractBrowser
 {
     private String browserDataDirName;
 
-    public ChromeBasedBrowser(File executable, String browserDataDirName)
+    public WebkitBasedBrowser(File executable, String browserDataDirName)
     {
         super(executable);
         this.browserDataDirName = browserDataDirName;

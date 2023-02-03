@@ -1,4 +1,4 @@
-package com.github.sdbg.debug.core.internal.firefox;
+package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.debug.core.DebugEvent;
@@ -12,28 +12,38 @@ import org.eclipse.debug.core.model.IStreamsProxy;
 public class FirefoxDebugProcess extends PlatformObject implements IProcess
 {
     private FirefoxDebugTarget target;
+    private boolean isRemote;
 
-    public FirefoxDebugProcess(FirefoxDebugTarget target, Process process)
+    public FirefoxDebugProcess(FirefoxDebugTarget target, Process process, boolean remote)
     {
+        this.isRemote = remote;
         this.target = target;
         fireCreationEvent();
-        Thread t = new Thread()
+        if(process != null)
         {
-            @Override
-            public void run()
+            Thread t = new Thread()
             {
-                try
+                @Override
+                public void run()
                 {
-                    process.waitFor();
-                    fireTerminateEvent();
-                    target.fireTerminateEvent();
+                    try
+                    {
+                        process.waitFor();
+                        fireTerminateEvent();
+                        target.fireTerminateEvent();
+                    }
+                    catch (InterruptedException e)
+                    {
+                    }
                 }
-                catch (InterruptedException e)
-                {
-                }
-            }
-        };
-        t.start();
+            };
+            t.start();
+        }
+    }
+
+    protected boolean isRemote()
+    {
+        return isRemote;
     }
 
     void fireCreationEvent()

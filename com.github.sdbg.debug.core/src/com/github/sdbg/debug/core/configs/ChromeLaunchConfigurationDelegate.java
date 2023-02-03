@@ -16,7 +16,7 @@ package com.github.sdbg.debug.core.configs;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.browser.BrowserManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
@@ -69,7 +69,7 @@ public class ChromeLaunchConfigurationDelegate extends SDBGLaunchConfigurationDe
 
   }
 
-  private static BrowserManager browserManager = new BrowserManager("chrome");
+  private static BrowserManager browserManager;
 
   public static void dispose() {
     browserManager.dispose();
@@ -94,6 +94,7 @@ public class ChromeLaunchConfigurationDelegate extends SDBGLaunchConfigurationDe
     IResourceResolver resourceResolver = getResourceResolver(new SDBGLaunchConfigWrapper(
         configuration));
 
+    browserManager = new BrowserManager("chrome");
     browserManager.launchBrowser(
         launch,
         configuration,

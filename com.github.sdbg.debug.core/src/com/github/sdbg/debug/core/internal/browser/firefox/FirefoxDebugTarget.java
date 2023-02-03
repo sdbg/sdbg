@@ -1,9 +1,8 @@
-package com.github.sdbg.debug.core.internal.firefox;
+package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import static com.github.sdbg.debug.core.SDBGDebugCorePlugin.logError;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.util.FirefoxBrowser;
 import com.github.sdbg.debug.core.model.ISDBGDebugTarget;
 
 import java.io.IOException;
@@ -32,15 +31,15 @@ public class FirefoxDebugTarget extends DebugElement
 {
     private ILaunch launch;
     private FirefoxBrowser browser;
-    private IProcess process;
+    private FirefoxDebugProcess process;
     private FirefoxDebugThread thread; 
     
-    public FirefoxDebugTarget(FirefoxBrowser browser, ILaunch launch, Process process)
+    public FirefoxDebugTarget(FirefoxBrowser browser, ILaunch launch, Process process, boolean remote)
     {
         super(null);
         this.launch = launch;
         this.browser = browser;
-        this.process = new FirefoxDebugProcess(this, process);
+        this.process = new FirefoxDebugProcess(this, process, remote);
         thread = new FirefoxDebugThread(this);
         TabActor tab;
         try
@@ -115,7 +114,7 @@ public class FirefoxDebugTarget extends DebugElement
     @Override
     public IProcess getProcess()
     {
-        if(browser.isProcessTerminated())
+        if(process != null && process.isRemote() == false && browser.isProcessTerminated())
         {
             process = null;
             return null;
@@ -169,6 +168,10 @@ public class FirefoxDebugTarget extends DebugElement
     @Override
     public boolean isTerminated()
     {
+        if(process.isRemote())
+        {
+            return false;
+        }
         return browser.isProcessTerminated();
     }
 
@@ -266,7 +269,7 @@ public class FirefoxDebugTarget extends DebugElement
     @Override
     public boolean canDisconnect()
     {
-        return true;
+        return process.isRemote();
     }
 
     @Override

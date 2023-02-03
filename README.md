@@ -32,9 +32,13 @@ Running this will open a new instance of Eclipse with the debugger plugin instal
 
 To make a full build and create an update-site use the following command:
 
+```
 on Linux: sh nobuto.sh
+```
 
+```
 on Windows: nobuto.bat
+```
 
 The above command will put the update site into the folder **update-site**.
 

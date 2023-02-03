@@ -8,7 +8,9 @@ The primary target is to support debugging of [GWT](http://gwtproject.org) apps 
  
 For downloads, installation, status updates and other usage information, please visit the SDBG [website](http://sdbg.github.io).   
 
-Any comments, bugs or issues should be directed to the SDBG [Forums](https://groups.google.com/d/forum/sdbg).
+Any comments should be directed to the SDBG [Discussions](https://github.com/sdbg/sdbg/discussions)
+Any bugs or issues should be directed to the SDBG [Issues](https://github.com/sdbg/sdbg/issues).
+
 
 ## Build Instructions
 
@@ -23,25 +25,24 @@ You may use the following parameters to reduce the size drastically:
 git clone --filter=blob:none egit@github.com:sdbg/sdbg.git
 ```
 
-For development, you are recommended to import the root of the source as a Maven (Eclipse M4E) project.  
+For development, you are recommended to import the root of the source as a Maven (Eclipse M4E) project.
 
 Inside the **com.github.sdbg.debug.ui project**, you will see a launch configuration called **SDBG.launch**.
-Running this will open a new instance of Eclipse with the debugger plugin installed.  
+Running this will open a new instance of Eclipse with the debugger plugin installed.
 
-You may also do a full Maven build by running (at the root of the source): 
-```
-mvn install
-```
+To make a full build and create an update-site use the following command:
 
-The above command will also create the SDBG Eclipse P2 repository and ZIP.  
+on Linux: sh nobuto.sh
 
-If you encounter any issues, please post to the SDBG [Forum](https://groups.google.com/d/forum/sdbg)
+on Windows: nobuto.bat
+
+The above command will put the update site into the folder **update-site**.
+
+Using maven to build may still work, but is no longer supported. Any bugs reported because of maven fails will be ignored.
 
 ## Contributions
 
-Any coding or testing you can contribute would be greatly appreciated!  
-However, we do ask that if you want to commit code, please drop us a message on the Google Group;  
-if you want to work on a feature, we may already have a branch under way, or can at help you get caught up quickly.
+Any coding or testing you can contribute would be greatly appreciated!
 
 ## License
 

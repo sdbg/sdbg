@@ -50,6 +50,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
   private Button showOutputButton;
   private Text argumentText;
+  private Text browserSearchOrder;
 
   private LaunchTargetComposite launchTargetGroup;
 
@@ -75,11 +76,20 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
     // Chrome settings group
     Group group = new Group(composite, SWT.NONE);
-    group.setText("Browser settings");
+    group.setText("Browser settings");       
     GridDataFactory.fillDefaults().grab(true, false).applyTo(group);
     GridLayoutFactory.swtDefaults().numColumns(3).applyTo(group);
     ((GridLayout) group.getLayout()).marginBottom = 5;
 
+    // additional browser arguments
+    Label browserSearchLabel = new Label(group, SWT.NONE);
+    browserSearchLabel.setText("Browser search order:");
+
+    browserSearchOrder = new Text(group, SWT.BORDER | SWT.SINGLE);
+    browserSearchOrder.addModifyListener(textModifyListener);
+    GridDataFactory.swtDefaults().align(SWT.FILL, SWT.CENTER).grab(true, false).span(2, 1).applyTo(
+        browserSearchOrder);
+    
     showOutputButton = new Button(group, SWT.CHECK);
     showOutputButton.setText("Show browser stdout and stderr output");
     GridDataFactory.swtDefaults().span(3, 1).applyTo(showOutputButton);
@@ -139,6 +149,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
 
     showOutputButton.setSelection(chromeLauncher.getShowLaunchOutput());
     argumentText.setText(chromeLauncher.getArguments());
+    browserSearchOrder.setText(chromeLauncher.getBrowserSearchOrder());
   }
 
   @Override
@@ -169,6 +180,7 @@ public class ChromeMainTab extends AbstractLaunchConfigurationTab {
     chromeLauncher.setShowLaunchOutput(showOutputButton.getSelection());
 
     chromeLauncher.setArguments(argumentText.getText().trim());
+    chromeLauncher.setBrowserSearchOrder(browserSearchOrder.getText().trim());
   }
 
   @Override

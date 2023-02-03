@@ -12,7 +12,7 @@
  * the License.
  */
 
-package com.github.sdbg.debug.core.internal.firefox;
+package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
 

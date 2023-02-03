@@ -92,7 +92,7 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     });
 
     final Label noteLabel = new Label(composite, SWT.WRAP);
-    noteLabel.setText("Note for beginners: it is much easier to get started with the \"Launch Chrome\" Debug Configuration.\nConsider switching to it.");
+    noteLabel.setText("Note for beginners: it is much easier to get started with the \"Launch Browser\" Debug Configuration.\nConsider switching to it.");
     noteLabel.setFont(Fonts.getFontRegistry().getBold(""));
     GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(noteLabel);
 
@@ -100,9 +100,14 @@ public class ChromeConnMainTab extends AbstractLaunchConfigurationTab {
     label = new Label(composite, SWT.NONE);
 
     final Label instructionsLabel = new Label(composite, SWT.WRAP);
-    instructionsLabel.setText("To start Chrome with remote connections enabled, use the following flag(s):\n--remote-debugging-port=<port> [--user-data-dir=<remote-profile>]");
+    instructionsLabel.setText("To start Chromium, Chrome, Edge with remote connections enabled, use the following flag(s):\n--remote-debugging-port=<port> [--user-data-dir=<remote-profile>]");
     GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(
         instructionsLabel);
+    final Label instructionsLabel2 = new Label(composite, SWT.WRAP);
+    instructionsLabel2.setText("To start Firefox with remote connections enabled, use the following flag(s):\n--start-debugger-server=<port> [--profile=<remote-profile>]"
+        + ". Debugging must be enabled in about:config");
+    GridDataFactory.fillDefaults().grab(true, false).hint(200, SWT.DEFAULT).applyTo(
+        instructionsLabel2);
 
     setControl(composite);
   }

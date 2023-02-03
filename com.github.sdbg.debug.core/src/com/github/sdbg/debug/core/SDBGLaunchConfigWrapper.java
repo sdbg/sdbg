@@ -37,6 +37,7 @@ import org.eclipse.debug.core.ILaunchConfigurationWorkingCopy;
 public class SDBGLaunchConfigWrapper {
   private static final String APPLICATION_ARGUMENTS = "applicationArguments";
   private static final String APPLICATION_NAME = "applicationName";
+  private static final String BROWSER_SEARCH_ORDER = "browserSearchOrder";
   private static final String URL_QUERY_PARAMS = "urlQueryParams";
 
   private static final String SHOW_LAUNCH_OUTPUT = "showLaunchOutput";
@@ -57,6 +58,7 @@ public class SDBGLaunchConfigWrapper {
   private static final String VM_ARGUMENTS = "vmArguments";
 
   private ILaunchConfiguration launchConfig;
+  private List<String> validBrowsers = new ArrayList<>();
 
   /**
    * Create a new DartLaunchConfigWrapper given either a ILaunchConfiguration (for read-only launch
@@ -64,6 +66,10 @@ public class SDBGLaunchConfigWrapper {
    */
   public SDBGLaunchConfigWrapper(ILaunchConfiguration launchConfig) {
     this.launchConfig = launchConfig;
+    validBrowsers.add("firefox");
+    validBrowsers.add("chrome");
+    validBrowsers.add("chromium");
+    validBrowsers.add("edge");
   }
 
   /**
@@ -376,6 +382,56 @@ public class SDBGLaunchConfigWrapper {
   }
 
   /**
+   * @see #getBrowserSearchOrder()
+   */
+  public void setBrowserSearchOrder(String value) 
+  {
+      //Cleanup invalid values.
+      String[] values = value.split(",");
+      StringBuilder sb = new StringBuilder();
+      for(int i=0;i<values.length;i++)
+      {
+          String v = values[i].trim();
+          if(validBrowsers.contains(v))
+          {
+              if(i > 0)
+              {
+                  sb.append(",");
+              }
+              sb.append(v);
+          }
+      }
+      for(int i=0;i<validBrowsers.size();i++)
+      {
+          String browser = validBrowsers.get(i);
+          if(sb.toString().contains(browser) == false)
+          {
+              sb.append(",");
+              sb.append(browser);
+          }
+      }
+      if(sb.indexOf(",") == 0)
+      {
+          sb.replace(0, 1, "");
+      }
+      getWorkingCopy().setAttribute(BROWSER_SEARCH_ORDER, sb.toString());
+  }
+
+  public String getBrowserSearchOrder()
+  {
+      String order = "";
+      try 
+      {
+          order = launchConfig.getAttribute(BROWSER_SEARCH_ORDER, "chromium,chrome,edge,firefox");
+      } 
+      catch (CoreException e) 
+      {
+          SDBGDebugCorePlugin.logError(e);
+      }
+      return order;
+  }
+
+  /**
    * @see #getConnectionHost()
    */
   public void setConnectionHost(String value) {
@@ -457,4 +513,5 @@ public class SDBGLaunchConfigWrapper {
       getWorkingCopy().setMappedResources(null);
     }
   }
+
 }

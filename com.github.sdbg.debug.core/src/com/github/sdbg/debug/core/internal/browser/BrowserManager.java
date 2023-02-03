@@ -11,21 +11,27 @@
  * or implied. See the License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.github.sdbg.debug.core.internal.util;
+package com.github.sdbg.debug.core.internal.browser;
 
 import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.browser.firefox.FirefoxBrowser;
+import com.github.sdbg.debug.core.internal.util.CoreLaunchUtils;
+import com.github.sdbg.debug.core.internal.util.ListeningStream;
+import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
 import com.github.sdbg.debug.core.util.IDeviceChooser;
 import com.github.sdbg.debug.core.util.Trace;
-import com.github.sdbg.utilities.OSUtilities;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -43,11 +49,6 @@ import org.eclipse.debug.core.model.IProcess;
  * A manager that launches and manages configured browsers. 
  */
 public class BrowserManager {
-
-  private static final String CHROME_EXECUTABLE_PROPERTY = "chrome.location"
-      , CHROME_ENVIRONMENT_VARIABLE = "CHROME_LOCATION"
-      , BROWSER_EXECUTABLE_PROPERTY = "browser.location"
-      , BROWSER_ENVIRONMENT_VARIABLE = "BROWSER_LOCATION";
 
   private String browserDataDirName;
 
@@ -74,6 +75,7 @@ public class BrowserManager {
         try {
           launchConfig.markAsLaunched();
 
+          browser = getRemoteBrowser(host, port);
           browser.connectToBrowserDebug(
               "Browser Remote Connection",
               launch,
@@ -100,6 +102,14 @@ public class BrowserManager {
     } catch (CoreException e) {
       DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
       throw e;
+    }
+    catch(Exception ex)
+    {
+        DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
+        throw new CoreException(new Status(
+            IStatus.ERROR,
+            SDBGDebugCorePlugin.PLUGIN_ID,
+            "Could not connect to browser"));
     }
   }
 
@@ -218,6 +228,7 @@ public class BrowserManager {
   public void dispose() {
     if (browser != null) {
       browser.terminateExistingBrowserProcess();
+      browser = null;
     }
   }
 
@@ -260,7 +271,7 @@ public class BrowserManager {
 
           CoreLaunchUtils.removeTerminatedLaunches();
 
-          getBrowser();
+          getBrowser(launchConfig);
 
           if (!restart && url != null && resourceResolver != null) {
             DebugPlugin.getDefault().getLaunchManager().removeLaunch(launch);
@@ -312,7 +323,7 @@ public class BrowserManager {
                   browser.getExecutableName(),
                   launch,
                   launchConfig,
-                  delaySettingUrl ? url : null,
+                  url,
                   monitor,                  
                   timer,
                   true/*enableBreakpoints*/,
@@ -355,245 +366,50 @@ public class BrowserManager {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  private File findBrowserExecutable() {
-    // First, try the system property, as user-specified value is preferred
-    File file = findBrowserExecutable(
-        "system property " + BROWSER_EXECUTABLE_PROPERTY,
-        System.getProperty(BROWSER_EXECUTABLE_PROPERTY),
-        true/*fileOrDir*/);
-    if (file != null) {
-      return file;
-    }
-
-    // For compatibility search the OLD Property
-    file = findBrowserExecutable(
-        "system property " + CHROME_EXECUTABLE_PROPERTY,
-        System.getProperty(CHROME_EXECUTABLE_PROPERTY),
-        true/*fileOrDir*/);
-    if (file != null) {
-      return file;
-    }
-
-    // Second, try the environment variable
-    file = findBrowserExecutable(
-        "environment vairable " + BROWSER_ENVIRONMENT_VARIABLE,
-        System.getenv(BROWSER_ENVIRONMENT_VARIABLE),
-        true/*fileOrDir*/);
-    if (file != null) {
-      return file;
-    }
-
-    // For compatibility search the OLD Property
-    file = findBrowserExecutable(
-        "environment vairable " + CHROME_ENVIRONMENT_VARIABLE,
-        System.getenv(CHROME_ENVIRONMENT_VARIABLE),
-        true/*fileOrDir*/);
-    if (file != null) {
-      return file;
-    }
-
-    // On Windows, try to locate Chrome using the Uninstall windows Registry setting
-    // If unsuccessful, try a heuristics in the user home directory
-    if (OSUtilities.isWindows()) {
-      try {
-        String regKey = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
-        String regValue = "InstallLocation";
-        file = findBrowserExecutable(
-            "registry setting " + regKey + "[" + regValue + "]",
-            WinReg.readRegistry(regKey, regValue),
-            false/*fileOrDir*/);
-        if (file != null) {
-          return file;
-        }
-
-        // Try also two other locations, as described here:
-        // http://stackoverflow.com/questions/24149207/what-windows-registry-key-holds-the-path-to-the-chrome-browser-exe
-
-        // In case Chrome x86 is installed on a x64 machine:
-        regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome";
-        regValue = "InstallLocation";
-        file = findBrowserExecutable(
-            "registry setting " + regKey + "[" + regValue + "]",
-            WinReg.readRegistry(regKey, regValue),
-            false/*fileOrDir*/);
-        if (file != null) {
-          return file;
-        }
-
-        // General fallback
-        regKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe";
-        regValue = "Path";
-        file = findBrowserExecutable(
-            "registry setting " + regKey + "[" + regValue + "]",
-            WinReg.readRegistry(regKey, regValue),
-            false/*fileOrDir*/);
-        if (file != null) {
-          return file;
-        }
-      } catch (IOException e) {
-        // Stay silent
-        SDBGDebugCorePlugin.logError(e);
-      }
-
-      // Heuristically search in user's home directory
-      File userHome = new File(System.getProperty("user.home"));
-
-      // Windows 7
-      file = findBrowserExecutable("heuristics", new File(
-          userHome,
-          "AppData\\Local\\Google\\Chrome\\Application"), false/*fileOrDir*/);
-      if (file != null) {
-        return file;
-      }
-
-      // XP
-      file = findBrowserExecutable("heuristics", new File(
-          userHome,
-          "Local Settings\\Application Data\\Google\\Chrome\\Application"), false/*fileOrDir*/);
-      if (file != null) {
-        return file;
-      }
-
-      //Default PATH. Often installed here.
-      file = findBrowserExecutable("default path", "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", true);
-      if (file != null) {
-        return file;
-      }
-      
-      file = findBrowserExecutable("default path", "C:/Program Files/Microsoft/Edge/Application/msedge.exe", true);
-      if (file != null) {
-        return file;
-      }
-
-    } else if (OSUtilities.isMac()) {
-      file = findBrowserExecutable("heuristics", new File("/Applications"), false/*fileOrDir*/);
-      if (file != null) {
-        return file;
-      }
-    } else {
-      // Search $PATH
-      String path = System.getenv("PATH");
-      if (path != null) {
-        for (String dirStr : path.split(File.pathSeparator)) {
-          file = findBrowserExecutable("$PATH entry", dirStr, false/*fileOrDir*/);
-          if (file != null) {
-            return file;
-          }
-        }
-      }
-    }
-
-    throw new RuntimeException("Uable to locate the Browser executable at the usual locations.\n"
-        + "Please append at the end of your eclipse.ini file the following property:\n" + "-D"
-        + BROWSER_EXECUTABLE_PROPERTY + "=<path-to-browser-executable>");
-  }
-
-  private File findBrowserExecutable(String option, File location, boolean fileOrDir) {
-    trace("Trying to load Browser from " + option + "=" + location.getPath());
-    if (!location.exists()) {
-      trace("=> Failed, location does not exist");
-    } else if (location.isFile()) {
-      if (fileOrDir) {
-        trace("=> Found, location is a file, this is assumed to be the Browser executable");
-        return location;
-      } else {
-        trace("=> Failed, location is a file");
-        return null;
-      }
-    } else if (OSUtilities.isWindows()) {
-      File exe = new File(location, "chrome.exe");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-    } else if (OSUtilities.isWindows()) {
-      //Try Microsoft Edge, as it is now Chrome based, and works flawless.
-      File exe = new File(location, "msedge.exe");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-    } else if (OSUtilities.isMac()) {
-      // In case the directory just points to the parent of Google Chrome.app
-      File exe = new File(location, "Google Chrome.app/Contents/MacOS/Google Chrome");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-
-      // In case the directory just points to Google Chrome.app
-      exe = new File(location, "Contents/MacOS/Google Chrome");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-
-      // User was smart enough to enter inside the Google Chrome.app package
-      exe = new File(location, "Google Chrome");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-    } else {
-      // Linux, Unix...
-
-      File exe = new File(location, "google-chrome");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-
-      exe = new File(location, "chrome");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-
-      exe = new File(location, "chromium");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-
-      exe = new File(location, "firefox");
-      trace("=> Trying " + exe.getPath());
-      if (exe.exists() && exe.isFile()) {
-        trace("=> Found");
-        return exe;
-      }
-    }
-
-    trace("=> Failed");
-    return null;
-  }
-
-  private File findBrowserExecutable(String option, String location, boolean fileOrDir) {
-    if (location != null) {
-      return findBrowserExecutable(option, new File(location), fileOrDir);
-    } else {
-      trace("Skipped loading Chrome from " + option + ": option not specified/null");
-      return null;
-    }
-  }
-
-  private IBrowser getBrowser()
+  private IBrowser getBrowser(SDBGLaunchConfigWrapper launchConfig)
   {
-      File executable = findBrowserExecutable();
-      if (executable.getPath().contains("firefox"))
+      String[] order = launchConfig.getBrowserSearchOrder().split(",");
+      //Search by Properties.
+      for(int i=0;this.browser == null && i<order.length;i++)
       {
-          browser = new FirefoxBrowser(executable);
+          String browser = order[i];
+          if("firefox".equals(browser))
+          {
+              this.browser = FirefoxBrowser.findBrowserByProperty();
+          }
+          else if("chromium".equals(browser))
+          {
+              this.browser = ChromiumBrowser.findBrowserByProperty();
+          }
+          else if("chrome".equals(browser))
+          {
+              this.browser = ChromeBrowser.findBrowserByProperty();
+          }
+          else if("edge".equals(browser))
+          {
+              this.browser = EdgeBrowser.findBrowserByProperty();
+          }
       }
-      else
+      //Search default paths
+      for(int i=0;this.browser == null && i<order.length;i++)
       {
-          browser = new ChromeBasedBrowser(executable, browserDataDirName);
+          String browser = order[i];
+          if("firefox".equals(browser))
+          {
+              this.browser = FirefoxBrowser.findBrowser();
+          }
+          else if("chromium".equals(browser))
+          {
+              this.browser = ChromiumBrowser.findBrowser();
+          }
+          else if("chrome".equals(browser))
+          {
+              this.browser = ChromeBrowser.findBrowser();
+          }
+          else if("edge".equals(browser))
+          {
+              this.browser = EdgeBrowser.findBrowser();
+          }
       }
       return browser;
   }
@@ -614,7 +430,7 @@ public class BrowserManager {
     return msg.toString();
   }
 
-  static void registerProcess(ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
+  public static void registerProcess(ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
       IProcess process, String processDescription) {
     launch.setAttribute(DebugPlugin.ATTR_CONSOLE_ENCODING, "UTF-8");
     launch.addProcess(process);
@@ -629,4 +445,32 @@ public class BrowserManager {
     Trace.trace(Trace.BROWSER_LAUNCHING, message);
   }
 
+  /**
+   * Detect the Remote Browser and returns an Object for that.
+   * Currently only Firefox and Chromium are distinguished. All Chromium based Browsers like Chrome and Edge
+   * will be used like Chromium.
+   * @param host
+   * @param port
+   * @return FirefoxBrowser or ChromiumBrowser, depending on the answer from the debug port.
+   * @throws UnknownHostException
+   * @throws IOException
+   */
+  private IBrowser getRemoteBrowser(String host, int port) throws UnknownHostException, IOException
+  {
+      IBrowser browser = null;
+      try
+      {
+          Socket sock = new Socket(host, port);
+          sock.setSoTimeout(1000);
+          InputStream in = sock.getInputStream();
+          int ret = in.read();
+          //Firefox will send some data right after connecting, while Chromium does not.
+          browser = new FirefoxBrowser(null);
+      }
+      catch(SocketTimeoutException ex)
+      {
+          browser = new ChromiumBrowser(null);
+      }
+      return browser;
+  }
 }

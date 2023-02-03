@@ -18,7 +18,7 @@ package com.github.sdbg.debug.core.internal.util;
  * A class that can process new text input, send messages when new input is received, and maintains
  * a buffer of the last 20,000 chars written.
  */
-class ListeningStream {
+public class ListeningStream {
   public static interface StreamListener {
     public void handleStreamData(String data);
   }

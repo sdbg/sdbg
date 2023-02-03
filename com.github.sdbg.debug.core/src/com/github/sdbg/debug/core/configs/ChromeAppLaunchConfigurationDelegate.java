@@ -17,7 +17,7 @@ package com.github.sdbg.debug.core.configs;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.browser.BrowserManager;
 import com.github.sdbg.debug.core.model.IResourceResolver;
 import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 import com.github.sdbg.debug.core.util.IBrowserTabInfo;
@@ -170,14 +170,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     }
   }
 
-  private static BrowserManager browserManager = new BrowserManager("chrome-app") {
-    @Override
-    protected IResourceResolver createResourceResolver(ILaunch launch,
-        ILaunchConfiguration configuration, IBrowserTabInfo tab) {
-      SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
-      return new ChromeAppResourceResolver(wrapper.getApplicationResource().getParent(), tab);
-    }
-  };
+  private static BrowserManager browserManager;
 
   public static void dispose() {
     browserManager.dispose();
@@ -215,6 +208,14 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     extraCommandLineArgs.add("--load-and-launch-app="
         + jsonResource.getParent().getLocation().toFile().getAbsolutePath());
 
+    browserManager = new BrowserManager("chrome-app") {
+        @Override
+        protected IResourceResolver createResourceResolver(ILaunch launch,
+            ILaunchConfiguration configuration, IBrowserTabInfo tab) {
+          SDBGLaunchConfigWrapper wrapper = new SDBGLaunchConfigWrapper(configuration);
+          return new ChromeAppResourceResolver(wrapper.getApplicationResource().getParent(), tab);
+        }
+    };    
     browserManager.launchBrowser(
         launch,
         configuration,

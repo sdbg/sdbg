@@ -17,7 +17,7 @@ package com.github.sdbg.debug.core.configs;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.SDBGLaunchConfigurationDelegate;
-import com.github.sdbg.debug.core.internal.util.BrowserManager;
+import com.github.sdbg.debug.core.internal.browser.BrowserManager;
 import com.github.sdbg.debug.core.internal.util.LaunchConfigResourceResolver;
 import com.github.sdbg.debug.core.internal.util.UIBrowserTabChooser;
 import com.github.sdbg.debug.core.internal.util.URLFilterTabChooser;

@@ -1,10 +1,9 @@
-package com.github.sdbg.debug.core.internal.firefox;
+package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
 import com.github.sdbg.debug.core.internal.ScriptDescriptor;
-import com.github.sdbg.debug.core.internal.util.FirefoxBrowser;
 import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitScriptStorage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
@@ -94,26 +93,7 @@ public class BreakpointManager implements IBreakpointListener
             @Override
             public void sourceAvailable(ResourceEvent event)
             {
-                List<SourceActor> sources;
-                try
-                {
-                    sources = tab.getSourceActors();
-                    for(int i=0;i<sources.size();i++)
-                    {
-                        SourceActor source = sources.get(i);
-                        String sourceMapURL = source.getSourceMapURL();
-                        if(sourceMapURL != null && sourceMapURL.equals("null") == false)
-                        {
-                            ScriptDescriptor script = new ScriptDescriptor(source.getActorId(), source.getURL(), sourceMapURL, false, 0, 0, 0, 0);
-                            IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
-                            sourceMapManager.handleScriptParsed(storage, script.getUrl(), script.getSourceMapURL());
-                        }
-                    }
-                }
-                catch (Exception e)
-                {
-                    SDBGDebugCorePlugin.logError(e);
-                }
+                updateSourceMap();
                 Thread t = new Thread()
                 {
                     @Override
@@ -152,6 +132,31 @@ public class BreakpointManager implements IBreakpointListener
             {
             }
         });
+        updateSourceMap();
+    }
+    
+    private void updateSourceMap()
+    {
+        List<SourceActor> sources;
+        try
+        {
+            sources = tab.getSourceActors();
+            for(int i=0;i<sources.size();i++)
+            {
+                SourceActor source = sources.get(i);
+                String sourceMapURL = source.getSourceMapURL();
+                if(sourceMapURL != null && sourceMapURL.equals("null") == false)
+                {
+                    ScriptDescriptor script = new ScriptDescriptor(source.getActorId(), source.getURL(), sourceMapURL, false, 0, 0, 0, 0);
+                    IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
+                    sourceMapManager.handleScriptParsed(storage, script.getUrl(), script.getSourceMapURL());
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            SDBGDebugCorePlugin.logError(e);
+        }
     }
     
     synchronized protected void updateBreakpoints()

@@ -192,7 +192,10 @@ public class FirefoxBrowser extends AbstractBrowser
     @Override
     public void terminateExistingBrowserProcess()
     {
-        connector.stop();
+        if(connector != null)
+        {
+            connector.stop();
+        }
         super.terminateExistingBrowserProcess();
     }
     

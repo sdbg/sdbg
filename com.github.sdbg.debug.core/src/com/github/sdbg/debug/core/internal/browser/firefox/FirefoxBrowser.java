@@ -270,8 +270,10 @@ public class FirefoxBrowser extends AbstractBrowser
 
     protected static List<String> getExecutablePathCandidates()
     {
-        List<String> exes = AbstractBrowser.getExecutablePathCandidates();
-        return exes;
+        List<String> paths = AbstractBrowser.getExecutablePathCandidates();
+        //Default Paths
+        paths.add(0, "C:/Program Files/Mozilla Firefox");
+        return paths;
     }
 
     public static IBrowser findBrowser()

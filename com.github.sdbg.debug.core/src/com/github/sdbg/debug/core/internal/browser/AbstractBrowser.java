@@ -166,6 +166,9 @@ public abstract class AbstractBrowser implements IBrowser
         List<String> arguments = buildArgumentsList(launchConfig, url != null ? url : getInitialPage(), devToolsPortNumber,
             extraArguments);
         builder.command(arguments);
+        
+        SDBGDebugCorePlugin.logInfo("Starting browser: " + arguments);
+        
         builder.redirectErrorStream(true);
 
         describe(arguments, argDescription);

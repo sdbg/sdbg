@@ -116,7 +116,6 @@ public class FirefoxDebugTarget extends DebugElement
     {
         if(process != null && process.isRemote() == false && browser.isProcessTerminated())
         {
-            process = null;
             return null;
         }
         return process;

@@ -2,7 +2,7 @@ package subprojects;
 import java.io.File;
 import java.io.IOException;
 
-import de.exware.nobuto.Utilities;
+import de.exware.nobuto.utils.Utilities;
 
 public class SdbgFeatureBuild extends AbstractSdbgBuild
 {

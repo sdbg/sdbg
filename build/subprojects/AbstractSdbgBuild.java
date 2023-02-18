@@ -1,7 +1,7 @@
 package subprojects;
 
 
-import static de.exware.nobuto.Utilities.verbosePrint;
+import static de.exware.nobuto.utils.Utilities.verbosePrint;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -10,8 +10,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 
-import de.exware.nobuto.Utilities;
 import de.exware.nobuto.eclipse.AbstractPluginBuild;
+import de.exware.nobuto.utils.Utilities;
 
 abstract public class AbstractSdbgBuild extends AbstractPluginBuild
 {

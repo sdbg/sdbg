@@ -3,11 +3,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.exware.nobuto.Utilities;
 import de.exware.nobuto.eclipse.EclipseUpdateSite;
 import de.exware.nobuto.eclipse.Repository;
 import de.exware.nobuto.eclipse.Unit;
 import de.exware.nobuto.java.JavaBuilder;
+import de.exware.nobuto.utils.Utilities;
 import subprojects.AbstractSdbgBuild;
 import subprojects.Config;
 import subprojects.SdbgDebugCoreBuild;
@@ -36,6 +36,11 @@ public class Build extends JavaBuilder
         Repository repo = EclipseUpdateSite.createRepository();
         Unit unitGroup = repo.addUnit("com.github.sdbg.feature.feature.group", getVersion());
         unitGroup.addProperty("org.eclipse.equinox.p2.name", "Source Map Editor Feature");
+        unitGroup.addProperty("org.eclipse.equinox.p2.type.group", "true");
+        unitGroup.addCopyright("Copyright 2022, SDBG Developers");
+        unitGroup.addLicense("https://www.eclipse.org/legal/epl-v10.html"
+            , "https://www.eclipse.org/legal/epl-v10.html"
+            , "This project is released under the Eclipse Public License v1.0. For Details look here: https://www.eclipse.org/legal/epl-v10.html");
 
         for (int i = 0; i < subprojects.size(); i++)
         {

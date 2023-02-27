@@ -260,6 +260,7 @@ public class WebkitDebugThread extends WebkitDebugElement implements ISDBGThread
     expectedResumeReason = DebugEvent.UNSPECIFIED;
 
     fireResumeEvent(reason);
+    getTarget().fireResumeEvent(DebugEvent.RESUME);
   }
 
   private IStackFrame[] createFrames(List<WebkitCallFrame> webkitFrames,

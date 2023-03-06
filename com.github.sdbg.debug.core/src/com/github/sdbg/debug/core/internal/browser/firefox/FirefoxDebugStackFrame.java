@@ -5,6 +5,7 @@ import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -184,10 +185,11 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     @Override
     public IVariable[] getVariables() throws DebugException
     {
-        Map<String, Object> args;
+        Map<String, Object> args = new HashMap();
         try
         {
-            args = frame.getVariables();
+            args.put("this", frame.getThis());
+            args.putAll(frame.getVariables());
             args.putAll(frame.getArguments());
         }
         catch (Exception e)

@@ -42,8 +42,6 @@ on Windows: nobuto.bat
 
 The above command will put the update site into the folder **update-site**.
 
-Using maven to build may still work, but is no longer supported. Any bugs reported because of maven fails will be ignored.
-
 ## Contributions
 
 Any coding or testing you can contribute would be greatly appreciated!

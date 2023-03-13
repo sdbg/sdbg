@@ -1,11 +1,13 @@
-package com.github.sdbg.debug.core.internal.browser;
+package com.github.sdbg.debug.core.internal.browser.webkit;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
+import com.github.sdbg.debug.core.internal.browser.AbstractBrowser;
+import com.github.sdbg.debug.core.internal.browser.BrowserManager;
 import com.github.sdbg.debug.core.internal.util.HttpUrlConnector;
 import com.github.sdbg.debug.core.internal.util.ListeningStream;
-import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.internal.util.ListeningStream.StreamListener;
+import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugTarget;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.internal.webkit.protocol.JsonUtils;
@@ -33,6 +35,49 @@ import org.json.JSONObject;
 public class WebkitBasedBrowser extends AbstractBrowser
 {
     private String browserDataDirName;
+
+    private static class WebkitLaunchBrowserTabChooser implements IBrowserTabChooser
+    {
+        /**
+         * A fragment of the initial page, used to search for it in a list of
+         * open tabs.
+         */
+        private static final String CHROMIUM_INITIAL_PAGE_FRAGMENT = "chrome://version";
+
+        public WebkitLaunchBrowserTabChooser()
+        {
+        }
+
+        @Override
+        public IBrowserTabInfo chooseTab(List<? extends IBrowserTabInfo> tabs)
+        {
+            for (IBrowserTabInfo tab : tabs)
+            {
+                if (tab.getTitle() != null && tab.getTitle().contains(CHROMIUM_INITIAL_PAGE_FRAGMENT))
+                {
+                    return tab;
+                }
+
+                if (tab instanceof DefaultTabInfo
+                    && ((DefaultTabInfo) tab).getUrl().contains(CHROMIUM_INITIAL_PAGE_FRAGMENT))
+                {
+                    return tab;
+                }
+            }
+
+            // Return the first visible, non-Chrome extension tab.
+            for (IBrowserTabInfo tab : tabs)
+            {
+                if (!(tab instanceof DefaultTabInfo) || !((DefaultTabInfo) tab).isChromeExtension())
+                {
+                    return tab;
+                }
+            }
+
+            return null;
+        }
+
+    }
 
     public WebkitBasedBrowser(File executable, String browserDataDirName)
     {
@@ -121,7 +166,7 @@ public class WebkitBasedBrowser extends AbstractBrowser
         SDBGLaunchConfigWrapper launchConfig, String url, IProgressMonitor monitor,
         LogTimer timer, boolean enableBreakpoints, String host, int port, long maxStartupDelay,
         ListeningStream browserOutput, String processDescription, IResourceResolver resolver,
-        IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException
+        boolean remote) throws CoreException
     {
         monitor.worked(1);
 
@@ -132,7 +177,7 @@ public class WebkitBasedBrowser extends AbstractBrowser
 
         try
         {
-            tab = getTab(browserTabChooser, host, port, maxStartupDelay, browserOutput);
+            tab = getTab(new WebkitLaunchBrowserTabChooser(), host, port, maxStartupDelay, browserOutput);
         }
         catch (IOException e)
         {

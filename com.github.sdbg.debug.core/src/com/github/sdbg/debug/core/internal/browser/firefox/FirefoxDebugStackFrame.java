@@ -2,7 +2,7 @@ package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
+import com.github.sdbg.debug.core.model.BrowserDebugElement;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 
 import java.util.HashMap;
@@ -19,7 +19,7 @@ import de.exware.remotefox.SourceActor;
 import de.exware.remotefox.SourceLocation;
 import de.exware.remotefox.StackFrameActor;
 
-public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStackFrame
+public class FirefoxDebugStackFrame extends BrowserDebugElement<FirefoxDebugTarget> implements IStackFrame
  , ISDBGStackFrame
 {
     private FirefoxDebugThread thread;
@@ -185,7 +185,7 @@ public class FirefoxDebugStackFrame extends WebkitDebugElement implements IStack
     @Override
     public IVariable[] getVariables() throws DebugException
     {
-        Map<String, Object> args = new HashMap();
+        Map<String, Object> args = new HashMap<>();
         try
         {
             args.put("this", frame.getThis());

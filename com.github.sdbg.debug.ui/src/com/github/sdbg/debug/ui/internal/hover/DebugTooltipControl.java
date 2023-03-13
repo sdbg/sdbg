@@ -372,12 +372,6 @@ public class DebugTooltipControl extends AbstractInformationControl implements
       return variablesView;
     }
 
-//&&&    
-//    AbstractDebugView debuggerView = (AbstractDebugView) page.findView(DebuggerView.ID);
-//    if (debuggerView != null && debuggerView.isVisible()) {
-//      return debuggerView;
-//    }
-//
     if (expressionsView != null) {
       return expressionsView;
     }

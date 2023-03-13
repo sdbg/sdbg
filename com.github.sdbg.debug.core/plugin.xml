@@ -9,8 +9,9 @@
    <extension-point id="domResourceTracker" name="DOM Resource Tracker" schema="schema/domResourceTracker.exsd"/>
 
    <extension point="org.eclipse.debug.core.launchConfigurationTypes">
+            <!-- Can't rename "...chromeLaunchConfig", because that would destroy existing tun configurations-->
       <launchConfigurationType
-            delegate="com.github.sdbg.debug.core.configs.ChromeLaunchConfigurationDelegate"
+            delegate="com.github.sdbg.debug.core.configs.BrowserLaunchConfigurationDelegate"
             id="com.github.sdbg.debug.core.chromeLaunchConfig"
             modes="run,debug"
             name="%launchconfig.browser.name"
@@ -27,8 +28,9 @@
             sourcePathComputerId="com.github.sdbg.debug.core.chromeSourcePathComputer">
       </launchConfigurationType>
       
+            <!-- Can't rename "...chromeConnLaunchConfig", because that would destroy existing tun configurations-->
       <launchConfigurationType
-            delegate="com.github.sdbg.debug.core.configs.ChromeConnLaunchConfigurationDelegate"
+            delegate="com.github.sdbg.debug.core.configs.BrowserConnLaunchConfigurationDelegate"
             id="com.github.sdbg.debug.core.chromeConnLaunchConfig"
             modes="debug"
             name="%launchconfig.chromeConn.name"

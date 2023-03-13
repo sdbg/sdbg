@@ -61,7 +61,7 @@ public class SDBGLaunchConfigWrapper {
   private List<String> validBrowsers = new ArrayList<>();
 
   /**
-   * Create a new DartLaunchConfigWrapper given either a ILaunchConfiguration (for read-only launch
+   * Create a new SDBGLaunchConfigWrapper given either a ILaunchConfiguration (for read-only launch
    * configs) or ILaunchConfigurationWorkingCopy (for writeable launch configs).
    */
   public SDBGLaunchConfigWrapper(ILaunchConfiguration launchConfig) {
@@ -87,7 +87,7 @@ public class SDBGLaunchConfigWrapper {
   }
 
   /**
-   * @return the Dart application file name (e.g. src/HelloWorld.dart)
+   * @return the application file name (e.g. src/HelloWorld.dart)
    */
   public String getApplicationName() {
     try {

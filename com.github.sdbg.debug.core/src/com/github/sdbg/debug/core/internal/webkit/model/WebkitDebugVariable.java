@@ -58,14 +58,6 @@ public class WebkitDebugVariable extends WebkitDebugElement implements ISDBGVari
     this.isSpecialObject = isSpecialObject;
   }
 
-//&&&  
-//  public DartElement coerceToDartElement() {
-//    // TODO(devoncarew): implement this
-//
-//    return null;
-//  }
-//
-
   @Override
   public <T> T getAdapter(Class<T> adapter)
   {

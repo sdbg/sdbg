@@ -13,7 +13,7 @@
  */
 package com.github.sdbg.debug.ui.internal.preferences;
 
-import com.github.sdbg.debug.core.ChromeBrowserConfig;
+import com.github.sdbg.debug.core.BrowserConfig;
 import com.github.sdbg.debug.ui.internal.SDBGDebugUIPlugin;
 
 import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider;
@@ -25,7 +25,7 @@ import org.eclipse.swt.graphics.Image;
 /**
  * A label provider for the ChromeBrowserConfig class.
  * 
- * @see ChromeBrowserConfig
+ * @see BrowserConfig
  */
 class BrowsersLabelProvider extends DelegatingStyledCellLabelProvider implements ILabelProvider {
 
@@ -38,7 +38,7 @@ class BrowsersLabelProvider extends DelegatingStyledCellLabelProvider implements
 
     @Override
     public Image getImage(Object element) {
-      if (element instanceof ChromeBrowserConfig) {
+      if (element instanceof BrowserConfig) {
         return SDBGDebugUIPlugin.getImage("chromium_16.png");
       }
 
@@ -62,8 +62,8 @@ class BrowsersLabelProvider extends DelegatingStyledCellLabelProvider implements
     }
 
     private String getMainText(Object element) {
-      if (element instanceof ChromeBrowserConfig) {
-        ChromeBrowserConfig browser = (ChromeBrowserConfig) element;
+      if (element instanceof BrowserConfig) {
+        BrowserConfig browser = (BrowserConfig) element;
 
         return browser.getName();
       }
@@ -72,8 +72,8 @@ class BrowsersLabelProvider extends DelegatingStyledCellLabelProvider implements
     }
 
     private String getSecondaryText(Object element) {
-      if (element instanceof ChromeBrowserConfig) {
-        ChromeBrowserConfig browser = (ChromeBrowserConfig) element;
+      if (element instanceof BrowserConfig) {
+        BrowserConfig browser = (BrowserConfig) element;
 
         return " - " + browser.getPath();
       }

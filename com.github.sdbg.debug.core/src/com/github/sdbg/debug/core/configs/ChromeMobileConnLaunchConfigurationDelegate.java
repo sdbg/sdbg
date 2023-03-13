@@ -52,7 +52,7 @@ public class ChromeMobileConnLaunchConfigurationDelegate extends SDBGLaunchConfi
 
     SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
 
-    BrowserManager browserManager = new BrowserManager(null);
+    BrowserManager browserManager = new BrowserManager();
     browserManager.connect(
         launch,
         configuration,

@@ -15,7 +15,7 @@
 package com.github.sdbg.debug.core.internal.webkit.protocol;
 
 import com.github.sdbg.debug.core.internal.ScriptDescriptor;
-import com.github.sdbg.debug.core.internal.browser.WebkitBasedBrowser;
+import com.github.sdbg.debug.core.internal.browser.webkit.WebkitBasedBrowser;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConnection.WebkitConnectionListener;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.CallFrame;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitConsole.ConsoleListener;

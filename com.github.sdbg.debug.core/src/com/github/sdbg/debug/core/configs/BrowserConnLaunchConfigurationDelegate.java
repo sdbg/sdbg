@@ -30,13 +30,13 @@ import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.ILaunchManager;
 
 /**
- * A ILaunchConfigurationDelegate implementation that can connect to a running Chrome instance.
+ * A ILaunchConfigurationDelegate implementation that can connect to a running Browser instance.
  */
-public class ChromeConnLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
+public class BrowserConnLaunchConfigurationDelegate extends SDBGLaunchConfigurationDelegate {
   /**
-   * Create a new ChromeConnLaunchConfigurationDelegate.
+   * Create a new BrowserConnLaunchConfigurationDelegate.
    */
-  public ChromeConnLaunchConfigurationDelegate() {
+  public BrowserConnLaunchConfigurationDelegate() {
   }
 
   @Override
@@ -49,7 +49,7 @@ public class ChromeConnLaunchConfigurationDelegate extends SDBGLaunchConfigurati
 
     SDBGLaunchConfigWrapper launchConfig = new SDBGLaunchConfigWrapper(configuration);
 
-    BrowserManager browserManager = new BrowserManager(null);
+    BrowserManager browserManager = new BrowserManager();
     browserManager.connect(
         launch,
         configuration,

@@ -1,12 +1,12 @@
 package com.github.sdbg.debug.core.internal.browser.firefox;
 
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
+import com.github.sdbg.debug.core.model.BrowserDebugElement;
 import com.github.sdbg.debug.core.model.ISDBGVariable;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
 
-public class FirefoxDebugVariable extends WebkitDebugElement implements ISDBGVariable
+public class FirefoxDebugVariable extends BrowserDebugElement<FirefoxDebugTarget> implements ISDBGVariable
 {
     private FirefoxDebugValue value;
     private String name;
@@ -15,7 +15,7 @@ public class FirefoxDebugVariable extends WebkitDebugElement implements ISDBGVar
     {
         super(target);
         this.name = name;
-        this.value = new FirefoxDebugValue((FirefoxDebugTarget) getDebugTarget(), object);
+        this.value = new FirefoxDebugValue(getTarget(), object);
     }
 
     @Override

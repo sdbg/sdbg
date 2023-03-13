@@ -17,6 +17,9 @@ import com.github.sdbg.debug.core.DebugUIHelper;
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.SDBGLaunchConfigWrapper;
 import com.github.sdbg.debug.core.internal.browser.firefox.FirefoxBrowser;
+import com.github.sdbg.debug.core.internal.browser.webkit.ChromeBrowser;
+import com.github.sdbg.debug.core.internal.browser.webkit.ChromiumBrowser;
+import com.github.sdbg.debug.core.internal.browser.webkit.EdgeBrowser;
 import com.github.sdbg.debug.core.internal.util.CoreLaunchUtils;
 import com.github.sdbg.debug.core.internal.util.ListeningStream;
 import com.github.sdbg.debug.core.internal.util.LogTimer;
@@ -50,14 +53,11 @@ import org.eclipse.debug.core.model.IProcess;
  */
 public class BrowserManager {
 
-  private String browserDataDirName;
-
   private Semaphore launchSemaphore;
 
   private IBrowser browser;
 
-  public BrowserManager(String browserDataDirName) {
-    this.browserDataDirName = browserDataDirName;
+  public BrowserManager() {
     this.launchSemaphore = new Semaphore(1);
   }
 
@@ -90,7 +90,6 @@ public class BrowserManager {
               null/*browserOutput*/,
               null/*processDescription*/,
               resourceResolver,
-              browserTabChooser,
               true/*remote*/);
           return;
         } finally {
@@ -233,7 +232,7 @@ public class BrowserManager {
   }
 
   public void launchBrowser(ILaunch launch, ILaunchConfiguration configuration,
-      IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, String url,
+      IResourceResolver resourceResolver, String url,
       IProgressMonitor monitor, boolean enableDebugging, List<String> extraCommandLineArgs)
       throws CoreException {
     try {
@@ -333,7 +332,6 @@ public class BrowserManager {
                   browserOutput,
                   processDescription.toString(),
                   resourceResolver,
-                  browserTabChooser,
                   false/*remote*/);
             } else {
               registerProcess(

@@ -47,7 +47,7 @@ import org.eclipse.debug.core.model.IWatchExpressionListener;
 
 /**
  * The IStackFrame implementation for the Webkit debug elements. This stack frame element represents
- * a Dart frame.
+ * a Browser frame.
  */
 public class WebkitDebugStackFrame extends WebkitDebugElement implements IStackFrame,
     ISDBGStackFrame, IExceptionStackFrame, IVariableResolver, IExpressionEvaluator {

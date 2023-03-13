@@ -14,17 +14,17 @@
 package com.github.sdbg.debug.core;
 
 /**
- * This class represents a Chrome browser name and path tuple.
+ * This class represents a browser name and path tuple.
  */
-public class ChromeBrowserConfig {
-  public static ChromeBrowserConfig fromToken(String token) {
+public class BrowserConfig {
+  public static BrowserConfig fromToken(String token) {
     String[] strs = token.split(" ");
 
     if (strs.length != 2) {
       return null;
     }
 
-    ChromeBrowserConfig browser = new ChromeBrowserConfig();
+    BrowserConfig browser = new BrowserConfig();
 
     browser.setName(decode(strs[0]));
     browser.setPath(decode(strs[1]));
@@ -40,7 +40,7 @@ public class ChromeBrowserConfig {
 
   private String path;
 
-  public ChromeBrowserConfig() {
+  public BrowserConfig() {
 
   }
 

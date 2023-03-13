@@ -31,7 +31,7 @@ public interface IBrowser
     void connectToBrowserDebug(String name, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
         String string, IProgressMonitor monitor, LogTimer timer, boolean enableBreakpoints,
         String host, int port, long maxStartupDelay, ListeningStream browserOutput, String processDescription,
-        IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException;
+        IResourceResolver resourceResolver, boolean remote) throws CoreException;
 
     Process getProcess();
 

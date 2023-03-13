@@ -1,6 +1,6 @@
 package com.github.sdbg.debug.core.internal.browser.firefox;
 
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
+import com.github.sdbg.debug.core.model.BrowserDebugElement;
 import com.github.sdbg.debug.core.model.ISDBGThread;
 
 import java.util.List;
@@ -13,7 +13,7 @@ import de.exware.remotefox.StackFrameActor;
 import de.exware.remotefox.TabActor;
 import de.exware.remotefox.ThreadActor.ResumeType;
 
-public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThread
+public class FirefoxDebugThread extends BrowserDebugElement<FirefoxDebugTarget> implements ISDBGThread
 {
     private IStackFrame[] frames = new IStackFrame[0];
 
@@ -25,7 +25,7 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public boolean isSuspended()
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         return target.isSuspended();
     }
     
@@ -34,7 +34,7 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     {
         if(frames == null)
         {
-            FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+            FirefoxDebugTarget target = getTarget();
             try
             {
                 TabActor tab = target.getTab();
@@ -107,14 +107,14 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public void resume() throws DebugException
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         target.resume();
     }
 
     @Override
     public void suspend() throws DebugException
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         target.suspend();
     }
 
@@ -145,42 +145,42 @@ public class FirefoxDebugThread extends WebkitDebugElement implements ISDBGThrea
     @Override
     public void stepInto() throws DebugException
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         target.resume(ResumeType.STEP_INTO);
     }
 
     @Override
     public void stepOver() throws DebugException
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         target.resume(ResumeType.STEP_OVER);
     }
 
     @Override
     public void stepReturn() throws DebugException
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         target.resume(ResumeType.STEP_OUT);
     }
 
     @Override
     public boolean canTerminate()
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         return target.canTerminate();
     }
 
     @Override
     public boolean isTerminated()
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         return target.isTerminated();
     }
 
     @Override
     public void terminate() throws DebugException
     {
-        FirefoxDebugTarget target = (FirefoxDebugTarget) getDebugTarget();
+        FirefoxDebugTarget target = getTarget();
         target.terminate();
     }
 

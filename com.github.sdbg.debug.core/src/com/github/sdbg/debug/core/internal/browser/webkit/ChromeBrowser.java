@@ -1,6 +1,8 @@
-package com.github.sdbg.debug.core.internal.browser;
+package com.github.sdbg.debug.core.internal.browser.webkit;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.browser.AbstractBrowser;
+import com.github.sdbg.debug.core.internal.browser.IBrowser;
 import com.github.sdbg.debug.core.internal.util.WinReg;
 import com.github.sdbg.utilities.OSUtilities;
 

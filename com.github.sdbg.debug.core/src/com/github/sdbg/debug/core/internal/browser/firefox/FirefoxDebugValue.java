@@ -1,7 +1,7 @@
 package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
-import com.github.sdbg.debug.core.internal.webkit.model.WebkitDebugElement;
+import com.github.sdbg.debug.core.model.BrowserDebugElement;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 
 import java.util.Map;
@@ -13,7 +13,7 @@ import org.eclipse.debug.core.model.IWatchExpressionListener;
 
 import de.exware.remotefox.ObjectActor;
 
-public class FirefoxDebugValue extends WebkitDebugElement implements IValue, ISDBGValue
+public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> implements IValue, ISDBGValue
 {
     private Object value;
     
@@ -60,7 +60,7 @@ public class FirefoxDebugValue extends WebkitDebugElement implements IValue, ISD
             int i = 0;
             for (String name : map.keySet())
             {
-                vars[i++] = new FirefoxDebugVariable((FirefoxDebugTarget) getDebugTarget(), name, map.get(name));
+                vars[i++] = new FirefoxDebugVariable(getTarget(), name, map.get(name));
             }
         }
         return vars;

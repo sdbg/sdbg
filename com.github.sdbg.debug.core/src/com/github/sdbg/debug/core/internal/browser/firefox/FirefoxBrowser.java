@@ -13,7 +13,6 @@ import com.github.sdbg.debug.core.internal.util.LogTimer;
 import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.protocol.DefaultTabInfo;
 import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.debug.core.util.IBrowserTabChooser;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,11 +49,11 @@ public class FirefoxBrowser extends AbstractBrowser
     public void connectToBrowserDebug(String browserName, ILaunch launch, SDBGLaunchConfigWrapper launchConfig,
         String url, IProgressMonitor monitor, LogTimer timer, boolean enableBreakpoints, String host, int port,
         long maxStartupDelay, ListeningStream browserOutput, String processDescription,
-        IResourceResolver resourceResolver, IBrowserTabChooser browserTabChooser, boolean remote) throws CoreException
+        IResourceResolver resourceResolver, boolean remote) throws CoreException
     {
         this.resourceResolver = resourceResolver;
         connector = new DebugConnector(host, port);
-        connector.setLogWire(true);
+        connector.setLogWire(false);
         long start = System.currentTimeMillis();
         boolean success = false;
         while(success == false && start + 2000 > System.currentTimeMillis())

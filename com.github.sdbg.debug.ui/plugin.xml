@@ -816,28 +816,6 @@
       </specification>
    </extension>
 
-<!--
-   <extension
-          point="org.eclipse.ui.views">
-      <view
-            category="com.github.sdbg.ui"
-            class="com.github.sdbg.debug.ui.internal.objectinspector.ObjectInspectorView"
-            icon="icons/obj16/value_show.gif"
-            id="com.github.sdbg.debug.ui.objectInspectorView"
-            name="Inspector"
-            allowMultiple="true">
-      </view>
-      <view
-            category="com.github.sdbg.ui"
-            class="com.github.sdbg.debug.ui.internal.view.DebuggerView"
-            icon="icons/obj16/debug_exc.gif"
-            id="com.github.sdbg.debug.ui.debuggerView"
-            name="Debugger"
-            allowMultiple="false">
-      </view>
-   </extension>
--->
-
    <!-- debugger variables object contributions -->
 <!--   
    <extension point="org.eclipse.ui.popupMenus">

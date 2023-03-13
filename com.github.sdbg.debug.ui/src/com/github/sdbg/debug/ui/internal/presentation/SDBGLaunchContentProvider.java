@@ -23,7 +23,7 @@ import org.eclipse.debug.ui.IDebugUIConstants;
 
 /**
  * This custom ElementContentProvider for ILaunches only returns the DebugTargets, not the child
- * Processes. This makes for a cleaner DebuggerView.
+ * Processes. 
  */
 @SuppressWarnings("restriction")
 public class SDBGLaunchContentProvider extends ElementContentProvider {

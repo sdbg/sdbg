@@ -1,4 +1,7 @@
-package com.github.sdbg.debug.core.internal.browser;
+package com.github.sdbg.debug.core.internal.browser.webkit;
+
+import com.github.sdbg.debug.core.internal.browser.AbstractBrowser;
+import com.github.sdbg.debug.core.internal.browser.IBrowser;
 
 import java.io.File;
 import java.util.ArrayList;

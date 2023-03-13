@@ -76,7 +76,7 @@ public class CoreLaunchUtils {
   }
 
   /**
-   * Goes through all the dart launches registered with the {@link ILaunchManager} and removes the
+   * Goes through all the sdbg launches registered with the {@link ILaunchManager} and removes the
    * terminated launches
    * 
    * @throws CoreException

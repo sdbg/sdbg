@@ -208,7 +208,7 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
     extraCommandLineArgs.add("--load-and-launch-app="
         + jsonResource.getParent().getLocation().toFile().getAbsolutePath());
 
-    browserManager = new BrowserManager("chrome-app") {
+    browserManager = new BrowserManager() {
         @Override
         protected IResourceResolver createResourceResolver(ILaunch launch,
             ILaunchConfiguration configuration, IBrowserTabInfo tab) {
@@ -220,7 +220,6 @@ public class ChromeAppLaunchConfigurationDelegate extends SDBGLaunchConfiguratio
         launch,
         configuration,
         null/*resolver*/,
-        new ChromeAppBrowserTabChooser(),
         null/*url*/,
         monitor,
         ILaunchManager.DEBUG_MODE.equals(mode),

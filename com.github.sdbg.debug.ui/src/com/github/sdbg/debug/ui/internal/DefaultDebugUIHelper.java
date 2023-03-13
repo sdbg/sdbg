@@ -101,7 +101,7 @@ public class DefaultDebugUIHelper extends DebugUIHelper {
 
         IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 
-        IViewPart part = null; //&&&page.findView(DebuggerView.ID);
+        IViewPart part = null; 
 
         if (part != null) {
           IStatusLineManager manager = part.getViewSite().getActionBars().getStatusLineManager();

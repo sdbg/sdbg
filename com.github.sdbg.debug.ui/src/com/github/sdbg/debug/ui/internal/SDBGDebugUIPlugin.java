@@ -138,9 +138,6 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
 
     InspectorActionFilter.registerAdapters();
 
-    // Initialize the DebuggerViewManager.
-//&&&    DebuggerViewManager.getDefault();
-
     // Install our user agent manager.
     SDBGDebugUserAgentManager.install();
   }
@@ -150,7 +147,6 @@ public class SDBGDebugUIPlugin extends AbstractUIPlugin {
    */
   @Override
   public void stop(BundleContext context) throws Exception {
-//&&&    DebuggerViewManager.dispose();
 
     super.stop(context);
 

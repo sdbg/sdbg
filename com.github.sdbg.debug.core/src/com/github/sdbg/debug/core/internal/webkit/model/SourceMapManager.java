@@ -51,7 +51,7 @@ import org.eclipse.core.runtime.URIUtil;
  * A class to help manage parsing and querying source maps. It automatically parses source maps and
  * keeps that info up to date. It also helps retrieve information about map sources and map targets.
  * A source map contains information mapping locations in source files to locations in target files.
- * For instance foo.dart.js ==> [foo.dart, bar.dart, baz.dart]. The reverse direction is from
+ * For instance foo.js ==> [foo.java, bar.java, baz.java]. The reverse direction is from
  * targets ==> sources.
  * 
  * @see SourceMap
@@ -201,8 +201,8 @@ public class SourceMapManager {
   }
 
   /**
-   * Given a source (foo.dart.js) file and a location, return the corresponding target location (in
-   * foo.dart).
+   * Given a source (foo.js) file and a location, return the corresponding target location (in
+   * foo.java).
    * 
    * @param storage
    * @param line
@@ -265,8 +265,8 @@ public class SourceMapManager {
   }
   
   /**
-   * Given a target location (in foo.dart), return the corresponding source location (in
-   * foo.dart.js).
+   * Given a target location (in foo.java), return the corresponding source location (in
+   * foo.js).
    * 
    * @param storage
    * @param line

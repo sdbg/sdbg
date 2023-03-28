@@ -1,8 +1,10 @@
 package com.github.sdbg.debug.core.internal.browser.firefox;
 
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
+import com.github.sdbg.debug.core.internal.expr.WatchExpressionResult;
 import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.model.BrowserDebugElement;
+import com.github.sdbg.debug.core.model.IExpressionEvaluator;
 import com.github.sdbg.debug.core.model.ISDBGStackFrame;
 
 import java.util.HashMap;
@@ -14,13 +16,14 @@ import org.eclipse.debug.core.model.IRegisterGroup;
 import org.eclipse.debug.core.model.IStackFrame;
 import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.debug.core.model.IWatchExpressionListener;
 
 import de.exware.remotefox.SourceActor;
 import de.exware.remotefox.SourceLocation;
 import de.exware.remotefox.StackFrameActor;
 
 public class FirefoxDebugStackFrame extends BrowserDebugElement<FirefoxDebugTarget> implements IStackFrame
- , ISDBGStackFrame
+ , ISDBGStackFrame, IExpressionEvaluator
 {
     private FirefoxDebugThread thread;
     private StackFrameActor frame;
@@ -200,7 +203,7 @@ public class FirefoxDebugStackFrame extends BrowserDebugElement<FirefoxDebugTarg
         int i = 0;
         for (String name : args.keySet())
         {
-            vars[i++] = new FirefoxDebugVariable((FirefoxDebugTarget) getDebugTarget(), name, args.get(name));
+            vars[i++] = new FirefoxDebugVariable((FirefoxDebugTarget) getDebugTarget(), null, name, args.get(name));
         }
         return vars;
     }
@@ -283,5 +286,20 @@ public class FirefoxDebugStackFrame extends BrowserDebugElement<FirefoxDebugTarg
     public int hashCode()
     {
         return super.hashCode();
+    }
+
+    @Override
+    public void evaluateExpression(String expression, IWatchExpressionListener listener)
+    {
+        try
+        {
+            Object result = getTarget().getTab().evaluate(expression);
+            FirefoxDebugValue value = new FirefoxDebugValue(null, null, result);
+            listener.watchEvaluationFinished(WatchExpressionResult.value(expression, value));
+        }
+        catch (Exception e)
+        {
+            WatchExpressionResult.error(expression, e.getMessage());
+        }
     }
 }

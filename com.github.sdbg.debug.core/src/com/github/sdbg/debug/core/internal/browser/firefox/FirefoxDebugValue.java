@@ -4,6 +4,7 @@ import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.model.BrowserDebugElement;
 import com.github.sdbg.debug.core.model.ISDBGValue;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import org.eclipse.debug.core.DebugException;
@@ -15,12 +16,14 @@ import de.exware.remotefox.ObjectActor;
 
 public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> implements IValue, ISDBGValue
 {
+    private FirefoxDebugVariable variable;
     private Object value;
     
-    public FirefoxDebugValue(FirefoxDebugTarget target, Object value)
+    public FirefoxDebugValue(FirefoxDebugTarget target, FirefoxDebugVariable variable, Object value)
     {
         super(target);
         this.value = value;
+        this.variable = variable;
     }
 
     @Override
@@ -60,7 +63,7 @@ public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> i
             int i = 0;
             for (String name : map.keySet())
             {
-                vars[i++] = new FirefoxDebugVariable(getTarget(), name, map.get(name));
+                vars[i++] = new FirefoxDebugVariable(getTarget(), variable, name, map.get(name));
             }
         }
         return vars;
@@ -86,8 +89,51 @@ public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> i
     @Override
     public void computeDetail(IValueCallback callback)
     {
+        Object detail = null;
+        try
+        {
+            String eval = getVariableExpressionPath() + ".toString()";
+            detail = getTarget().getTab().evaluate(eval);
+        }
+        catch (Exception e)
+        {
+            detail = e.getMessage();
+            String eval;
+            try
+            {
+                eval = getVariableExpressionPath() + " == null";
+                detail = getTarget().getTab().evaluate(eval);
+                if((Boolean)detail)
+                {
+                    detail = null;
+                }
+            }
+            catch (Exception e1)
+            {
+            }
+        }
+        if(detail == null)
+        {
+            callback.detailComputed(null);
+        }
+        else
+        {
+            callback.detailComputed("" + detail);
+        }
     }
 
+    String getVariableExpressionPath() throws DebugException
+    {
+        String path = variable.getName();
+        FirefoxDebugVariable var = variable.getParent();
+        while(var != null)
+        {
+            path = var.getName() + "." + path;
+            var = var.getParent();
+        }
+        return path;
+    }
+    
     @Override
     public String getId()
     {
@@ -109,7 +155,7 @@ public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> i
     @Override
     public boolean isBoolean()
     {
-        return false;
+        return value instanceof Boolean;
     }
 
     @Override
@@ -127,25 +173,26 @@ public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> i
     @Override
     public boolean isNull()
     {
-        return false;
+        return value == null;
     }
 
     @Override
     public boolean isNumber()
     {
-        return false;
+        return value instanceof Number;
     }
 
     @Override
     public boolean isObject()
     {
-        return false;
+        return value instanceof ObjectActor;
     }
 
     @Override
     public boolean isPrimitive()
     {
-        return false;
+        return value instanceof Number
+            || value instanceof Boolean;
     }
 
     @Override
@@ -157,7 +204,7 @@ public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> i
     @Override
     public boolean isString()
     {
-        return false;
+        return value instanceof String;
     }
 
     @Override
@@ -165,4 +212,48 @@ public class FirefoxDebugValue extends BrowserDebugElement<FirefoxDebugTarget> i
     {
     }
 
+    public void setStringValue(String value)
+    {
+        value = "'" + value + "'";
+        setValue(value);
+    }
+
+    public void setBooleanValue(Boolean value)
+    {
+        setValue(value.toString());
+    }
+    
+    private void setValue(String value)
+    {
+        try
+        {
+            String eval = getVariableExpressionPath() + "=" + value;
+            getTarget().getTab().evaluate(eval);
+            this.value = value;
+            getTarget().fakeResumePause();
+        }
+        catch (Exception e)
+        {
+        }
+    }
+
+    public void setNumberValue(String value)
+    {
+        if(this.value instanceof Integer)
+        {
+            setValue("" + Integer.parseInt(value));
+        }
+        else if(this.value instanceof Long)
+        {
+            setValue("" + Long.parseLong(value));
+        }
+        else if(this.value instanceof Double)
+        {
+            setValue("" + Double.parseDouble(value));
+        }
+        else if(this.value instanceof BigDecimal)
+        {
+            setValue("" + Double.parseDouble(value));
+        }
+    }
 }

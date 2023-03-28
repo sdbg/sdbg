@@ -8,14 +8,22 @@ import org.eclipse.debug.core.model.IValue;
 
 public class FirefoxDebugVariable extends BrowserDebugElement<FirefoxDebugTarget> implements ISDBGVariable
 {
+    private FirefoxDebugVariable parent;
     private FirefoxDebugValue value;
     private String name;
+    private boolean hasChanged;
     
-    public FirefoxDebugVariable(FirefoxDebugTarget target, String name, Object object)
+    public FirefoxDebugVariable(FirefoxDebugTarget target, FirefoxDebugVariable parent, String name, Object object)
     {
         super(target);
         this.name = name;
-        this.value = new FirefoxDebugValue(getTarget(), object);
+        this.parent = parent;
+        this.value = new FirefoxDebugValue(getTarget(), this, object);
+    }
+
+    protected FirefoxDebugVariable getParent()
+    {
+        return parent;
     }
 
     @Override
@@ -26,8 +34,20 @@ public class FirefoxDebugVariable extends BrowserDebugElement<FirefoxDebugTarget
     }
     
     @Override
-    public void setValue(String arg0) throws DebugException
+    public void setValue(String value) throws DebugException
     {
+        if(this.value.isString())
+        {
+            this.value.setStringValue(value);
+        }
+        else if(this.value.isBoolean())
+        {
+            this.value.setBooleanValue(Boolean.parseBoolean(value));
+        }
+        else if(this.value.isNumber())
+        {
+            this.value.setNumberValue(value);
+        }
     }
 
     @Override
@@ -38,13 +58,31 @@ public class FirefoxDebugVariable extends BrowserDebugElement<FirefoxDebugTarget
     @Override
     public boolean supportsValueModification()
     {
-        return false;
+        return value != null && 
+            (value.isBoolean() 
+             || value.isString()
+             || value.isNumber()
+            );
     }
 
     @Override
-    public boolean verifyValue(String arg0) throws DebugException
+    public boolean verifyValue(String value) throws DebugException
     {
-        return false;
+        boolean valid = false; 
+        if(this.value.isString())
+        {
+            valid = true;
+        }
+        else if(this.value.isBoolean())
+        {
+            valid = value != null && (value.toLowerCase().equals("true") || value.toLowerCase().equals("false"));
+        }
+        else if(this.value.isNumber())
+        {
+            double d = Double.parseDouble(value);
+            valid = true;
+        }
+        return valid;
     }
 
     @Override
@@ -68,13 +106,13 @@ public class FirefoxDebugVariable extends BrowserDebugElement<FirefoxDebugTarget
     @Override
     public IValue getValue() throws DebugException
     {
-        return value;
+        return value;        
     }
 
     @Override
     public boolean hasValueChanged() throws DebugException
     {
-        return false;
+        return hasChanged;
     }
 
     @Override

@@ -24,7 +24,6 @@ import de.exware.remotefox.PauseActor.PauseType;
 import de.exware.remotefox.TabActor;
 import de.exware.remotefox.ThreadActor.ResumeType;
 import de.exware.remotefox.event.PauseEvent;
-import de.exware.remotefox.event.PauseListener;
 
 public class FirefoxDebugTarget extends DebugElement
     implements ISDBGDebugTarget
@@ -45,34 +44,7 @@ public class FirefoxDebugTarget extends DebugElement
         try
         {
             tab = browser.getTab();
-            tab.addPauseListener(new PauseListener()
-            {
-                @Override
-                public void resumed(PauseEvent event)
-                {
-                    int reason = DebugEvent.RESUME;
-                    thread.dropStackFrames();
-                    thread.fireResumeEvent(reason);
-                    fireResumeEvent(reason);
-                }
-                
-                @Override
-                public void paused(PauseEvent event)
-                {
-                    if(event.getPauseType() == PauseType.BREAKPOINT
-                        || event.getPauseType() == PauseType.RESUMELIMIT)
-                    {
-                        int reason = DebugEvent.BREAKPOINT;
-                        thread.createStackFrames();
-                        thread.fireSuspendEvent(reason);
-                    }
-                    else
-                    {
-                        int reason = DebugEvent.UNSPECIFIED;
-                        thread.fireSuspendEvent(reason);
-                    }
-                }
-            });
+            tab.addPauseListener(new PauseListener());
         }
         catch (Exception e)
         {
@@ -81,6 +53,52 @@ public class FirefoxDebugTarget extends DebugElement
         fireCreationEvent();
     }
 
+    class PauseListener implements de.exware.remotefox.event.PauseListener
+    {
+        @Override
+        public void resumed(PauseEvent event)
+        {
+            int reason = DebugEvent.RESUME;
+            thread.dropStackFrames();
+            thread.fireResumeEvent(reason);
+            fireResumeEvent(reason);
+        }
+        
+        @Override
+        public void paused(PauseEvent event)
+        {
+            if(event.getPauseType() == PauseType.BREAKPOINT
+                || event.getPauseType() == PauseType.RESUMELIMIT)
+            {
+                int reason = DebugEvent.BREAKPOINT;
+                thread.createStackFrames();
+                thread.fireSuspendEvent(reason);
+            }
+            else
+            {
+                int reason = DebugEvent.UNSPECIFIED;
+                thread.fireSuspendEvent(reason);
+            }
+        }
+    }
+    
+    /**
+     * Allows refresh of variables.
+     */
+    void fakeResumePause()
+    {
+        //Fake resume
+        int reason = DebugEvent.RESUME;
+        thread.dropStackFrames();
+        thread.fireResumeEvent(reason);
+        fireResumeEvent(reason);
+        
+        //Fake pause
+        reason = DebugEvent.BREAKPOINT;
+        thread.createStackFrames();
+        thread.fireSuspendEvent(reason);
+    }
+    
     @Override
     public void fireTerminateEvent()
     {

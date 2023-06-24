@@ -30,6 +30,7 @@ public class Build extends JavaBuilder
     @Override
     public void dist() throws Exception
     {
+        clean();
         new File(Config.UPDATE_SITE, "plugins").mkdirs();
         new File(Config.UPDATE_SITE, "features").mkdirs();
 

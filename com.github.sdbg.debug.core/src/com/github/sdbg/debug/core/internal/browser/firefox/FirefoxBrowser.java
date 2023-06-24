@@ -153,7 +153,7 @@ public class FirefoxBrowser extends AbstractBrowser
                         {
                             this.tab = tab;
                             tab.navigateTo(url);
-                            sleep(500);
+                            sleep(1000);
                         }
                     }
                 }
@@ -161,7 +161,7 @@ public class FirefoxBrowser extends AbstractBrowser
                 {
                     tab = tabs.get(tabs.size()-1);
                     tab.navigateTo(url);
-                    sleep(500);
+                    sleep(1000);
                 }
             }
             catch (JSONException e)

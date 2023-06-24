@@ -388,6 +388,10 @@ public class BrowserManager {
               this.browser = EdgeBrowser.findBrowserByProperty();
           }
       }
+      if(this.browser == null)
+      {
+          SDBGDebugCorePlugin.logInfo("Browser not found by properties or environment.");
+      }
       //Search default paths
       for(int i=0;this.browser == null && i<order.length;i++)
       {
@@ -408,6 +412,10 @@ public class BrowserManager {
           {
               this.browser = EdgeBrowser.findBrowser();
           }
+      }
+      if(browser != null)
+      {
+          SDBGDebugCorePlugin.logInfo("Found " + browser.getClass().getSimpleName() + ": " + browser.getExecutableFile().getAbsolutePath());
       }
       return browser;
   }

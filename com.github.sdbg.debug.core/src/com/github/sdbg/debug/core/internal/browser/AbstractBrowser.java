@@ -429,6 +429,10 @@ public abstract class AbstractBrowser implements IBrowser
                 paths.add(dirStr);
             }
         }
+        if (OSUtilities.isMac() ) 
+        {
+            paths.add("/Applications");
+        }
         return paths;
     }
 

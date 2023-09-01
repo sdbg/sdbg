@@ -1,5 +1,7 @@
 package com.github.sdbg.debug.core.internal.browser.firefox;
 
+import static com.github.sdbg.debug.core.SDBGDebugCorePlugin.logInfo;
+
 import com.github.sdbg.debug.core.SDBGDebugCorePlugin;
 import com.github.sdbg.debug.core.breakpoints.IBreakpointPathResolver;
 import com.github.sdbg.debug.core.breakpoints.SDBGBreakpoint;
@@ -8,7 +10,6 @@ import com.github.sdbg.debug.core.internal.webkit.model.SourceMapManager;
 import com.github.sdbg.debug.core.internal.webkit.model.WebkitScriptStorage;
 import com.github.sdbg.debug.core.internal.webkit.protocol.WebkitLocation;
 import com.github.sdbg.debug.core.model.IResourceResolver;
-import com.github.sdbg.debug.core.util.Trace;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import org.json.JSONException;
 
 import de.exware.remotefox.DebugConnector;
 import de.exware.remotefox.SourceActor;
+import de.exware.remotefox.SourceLocation;
 import de.exware.remotefox.TabActor;
 import de.exware.remotefox.event.ResourceEvent;
 import de.exware.remotefox.event.ResourceListener;
@@ -148,6 +150,7 @@ public class BreakpointManager implements IBreakpointListener
                 if(sourceMapURL != null && sourceMapURL.equals("null") == false)
                 {
                     ScriptDescriptor script = new ScriptDescriptor(source.getActorId(), source.getURL(), sourceMapURL, false, 0, 0, 0, 0);
+//                    script.setScriptLines(readScript(source.getURL()));
                     IStorage storage = new WebkitScriptStorage(script, script.getScriptSource());
                     sourceMapManager.handleScriptParsed(storage, script.getUrl(), script.getSourceMapURL());
                 }
@@ -159,6 +162,20 @@ public class BreakpointManager implements IBreakpointListener
         }
     }
     
+//    private List<String> readScript(String url) throws MalformedURLException, IOException
+//    {
+//        List<String> lines = new ArrayList<>();
+//        InputStream in = new URL(url).openStream();
+//        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+//        String line = reader.readLine();
+//        while(line != null)
+//        {
+//            lines.add(line);
+//            line = reader.readLine();
+//        }
+//        return lines;
+//    }
+//    
     synchronized protected void updateBreakpoints()
     {
         for(IBreakpoint bp : breakpointToIdMap.keySet())
@@ -391,7 +408,7 @@ public class BreakpointManager implements IBreakpointListener
                     if (isJSBreakpoint(breakpoint))
                     {
                         // Handle pure JavaScript breakpoints
-                        trace("Set breakpoint [" + path + "," + line + "]");
+                        logInfo("Set breakpoint [" + path + "," + line + "]");
 
 //                        debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(null, path, line, -1,
 //                            new WebkitCallback<String>()
@@ -440,14 +457,23 @@ public class BreakpointManager implements IBreakpointListener
                                         WebkitScriptStorage ws = (WebkitScriptStorage) location.getStorage();
                                         url = ws.getURL();
                                     }
-                                    trace("Breakpoint [" + path + ","
+                                    SourceActor sactor = tab.getSourceActor(url);
+                                    SourceLocation sl = sactor.getBreakpointPosition(location.getLine()+1);
+                                    int column = 2;
+                                    if(sl != null)
+                                    {
+                                        column = sl.getColumn();
+                                        logInfo("Breakpoint column: " + column); 
+                                    }
+                                    
+                                    logInfo("Breakpoint [" + path + ","
                                         + (breakpoint instanceof ILineBreakpoint ? (""+breakpoint.getLineNumber()) : "")
-                                        + ",-1] ==> mapped to [" + mappedPath + "," + location.getLine() + ","
-                                        + location.getColumn() + "]");
-                                    trace("Set breakpoint [" + mappedPath + "," + location.getLine() + "]");
+                                        + ",-1] ==> mapped to [" + mappedPath + "," + (location.getLine()+1) + ","
+                                        + column+ "]");
+                                    logInfo("Set breakpoint [" + mappedPath + "," + (location.getLine()+1) + "]");
 
                                     tab.setBreakpoint(url,
-                                        location.getLine()+1, 2);
+                                        location.getLine()+1, column);
                                         addToBreakpointMap(breakpoint, breakpoint.toString(), false);
                                 }
                             }
@@ -482,7 +508,7 @@ public class BreakpointManager implements IBreakpointListener
                     if (isJSBreakpoint(breakpoint))
                     {
                         // Handle pure JavaScript breakpoints
-                        trace("Set breakpoint [" + path + "," + line + "]");
+                        logInfo("Remove breakpoint [" + path + "," + line + "]");
 
 //                        debugTarget.getWebkitConnection().getDebugger().setBreakpointByUrl(null, path, line, -1,
 //                            new WebkitCallback<String>()
@@ -531,11 +557,11 @@ public class BreakpointManager implements IBreakpointListener
                                         WebkitScriptStorage ws = (WebkitScriptStorage) location.getStorage();
                                         url = ws.getURL();
                                     }
-                                    trace("Breakpoint [" + path + ","
+                                    logInfo("Breakpoint [" + path + ","
                                         + (breakpoint instanceof ILineBreakpoint ? (""+breakpoint.getLineNumber()) : "")
                                         + ",-1] ==> mapped to [" + mappedPath + "," + location.getLine() + ","
                                         + location.getColumn() + "]");
-                                    trace("Remove breakpoint [" + mappedPath + "," + location.getLine() + "]");
+                                    logInfo("Remove breakpoint [" + mappedPath + "," + location.getLine() + "]");
 
                                     tab.removeBreakpoint(url, location.getLine()+1, 2);
                                 }
@@ -637,10 +663,5 @@ public class BreakpointManager implements IBreakpointListener
                                                      // IBreakpointPathResolver
                                                      // so that it has a say on
                                                      // that as well
-    }
-
-    private void trace(String message)
-    {
-        Trace.trace(Trace.BREAKPOINTS, message);
     }
 }

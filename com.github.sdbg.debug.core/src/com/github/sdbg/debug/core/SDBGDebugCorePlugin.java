@@ -13,8 +13,8 @@
  */
 package com.github.sdbg.debug.core;
 
-import com.github.sdbg.debug.core.configs.ChromeAppLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.configs.BrowserLaunchConfigurationDelegate;
+import com.github.sdbg.debug.core.configs.ChromeAppLaunchConfigurationDelegate;
 import com.github.sdbg.debug.core.internal.android.ADBManager;
 import com.github.sdbg.debug.core.internal.util.ResourceChangeManager;
 import com.github.sdbg.debug.core.util.ResourceServerManager;
@@ -51,12 +51,12 @@ public class SDBGDebugCorePlugin extends Plugin implements DebugOptionsListener 
   }
 
   /**
-   * The Dart Debug Core plug-in ID.
+   * The SDBG Debug Core plug-in ID.
    */
   public static final String PLUGIN_ID = "com.github.sdbg.debug.core"; //$NON-NLS-1$
 
   /**
-   * The Dart debug marker ID.
+   * The SDBG debug marker ID.
    */
   public static final String DEBUG_MARKER_ID = "com.github.sdbg.debug.core.breakpointMarker"; //$NON-NLS-1$
 

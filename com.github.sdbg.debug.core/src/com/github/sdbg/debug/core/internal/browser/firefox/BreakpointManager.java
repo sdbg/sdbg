@@ -32,10 +32,10 @@ import org.eclipse.debug.core.model.IBreakpoint;
 import org.eclipse.debug.core.model.ILineBreakpoint;
 import org.json.JSONException;
 
-import de.exware.remotefox.DebugConnector;
 import de.exware.remotefox.SourceActor;
 import de.exware.remotefox.SourceLocation;
 import de.exware.remotefox.TabActor;
+import de.exware.remotefox.WatcherActor.WatchableResource;
 import de.exware.remotefox.event.ResourceEvent;
 import de.exware.remotefox.event.ResourceListener;
 
@@ -47,12 +47,9 @@ public class BreakpointManager implements IBreakpointListener
 {
     private static Collection<IBreakpointPathResolver> breakpointPathResolvers;
 
-    private DebugConnector debugTarget;
     private FirefoxBrowser browser;
 
-    private Map<IBreakpoint, List<String>> breakpointToIdMap = new HashMap<IBreakpoint, List<String>>();
-
-    private Map<String, IBreakpoint> breakpointsToUpdateMap = new HashMap<String, IBreakpoint>();
+    private Map<IBreakpoint, String> breakpointToURLMap = new HashMap<IBreakpoint, String>();
 
     private List<IBreakpoint> ignoredBreakpoints = new ArrayList<IBreakpoint>();
     private SourceMapManager sourceMapManager;
@@ -83,9 +80,8 @@ public class BreakpointManager implements IBreakpointListener
         return breakpointPathResolvers;
     }
 
-    public BreakpointManager(DebugConnector debugTarget, FirefoxBrowser browser, TabActor tab, SourceMapManager sourceMapManager)
+    public BreakpointManager(FirefoxBrowser browser, TabActor tab, SourceMapManager sourceMapManager)
     {
-        this.debugTarget = debugTarget;
         this.browser = browser;
         this.sourceMapManager = sourceMapManager;
         this.tab = tab;
@@ -95,23 +91,27 @@ public class BreakpointManager implements IBreakpointListener
             @Override
             public void sourceAvailable(ResourceEvent event)
             {
-                updateSourceMap();
-                Thread t = new Thread()
+                if(event.getType().equals(WatchableResource.SOURCE))
                 {
-                    @Override
-                    public void run()
+                    updateSourceMap();
+                    Thread t = new Thread()
                     {
-                        try
+                        @Override
+                        public void run()
                         {
-                            sleep(30);
+                            setName("updateBreakpoints");
+                            try
+                            {
+                                sleep(30);
+                            }
+                            catch (InterruptedException e)
+                            {
+                            }
+                            updateBreakpoints(event.getSourceActor().getURL());
                         }
-                        catch (InterruptedException e)
-                        {
-                        }
-                        updateBreakpoints();
-                    }
-                };
-                t.start();
+                    };
+                    t.start();
+                }
             }
             
             @Override
@@ -176,11 +176,33 @@ public class BreakpointManager implements IBreakpointListener
 //        return lines;
 //    }
 //    
-    synchronized protected void updateBreakpoints()
+    synchronized protected void updateBreakpoints(String url)
     {
-        for(IBreakpoint bp : breakpointToIdMap.keySet())
+        try
         {
-            breakpointAdded(bp);
+            List<IBreakpoint> toUpdate = new ArrayList<>();
+            IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
+            for(IBreakpoint bp : breakpoints)
+            {
+                String u = breakpointToURLMap.get(bp);
+                if(u == null || url.equals(u))
+                {
+                    toUpdate.add(bp);
+                }
+            }
+            if(toUpdate.size() > 0)
+            {
+                tab.interrupt();
+                for(IBreakpoint bp : toUpdate)
+                {
+                    addBreakpoint(bp);
+                }
+                tab.resume();
+            }
+        }
+        catch (Exception exception)
+        {
+            SDBGDebugCorePlugin.logError(exception);
         }
     }
 
@@ -235,159 +257,31 @@ public class BreakpointManager implements IBreakpointListener
     @Override
     public void breakpointRemoved(IBreakpoint breakpoint, IMarkerDelta delta)
     {
-        List<String> breakpointIds = breakpointToIdMap.remove(breakpoint);
-
-        if (breakpointIds != null)
+        breakpointToURLMap.remove(breakpoint);
+        try
         {
-            for (String breakpointId : breakpointIds)
-            {
-                breakpointsToUpdateMap.remove(breakpointId);
-                try
-                {
-                    removeBreakpoint(breakpoint);
-                }
-                catch (IOException exception)
-                {
-                    SDBGDebugCorePlugin.logError(exception);
-                }
-            }
+            removeBreakpoint(breakpoint);
+        }
+        catch (IOException exception)
+        {
+            SDBGDebugCorePlugin.logError(exception);
         }
     }
 
     public void connect() throws IOException, JSONException
     {
-        tab.interrupt();
         IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager().getBreakpoints();
-        for (IBreakpoint breakpoint : breakpoints)
+        if(breakpoints.length > 0)
         {
-            addBreakpoint(breakpoint);
+            tab.interrupt();
+            for (IBreakpoint breakpoint : breakpoints)
+            {
+                addBreakpoint(breakpoint);
+            }
+            DebugPlugin.getDefault().getBreakpointManager().addBreakpointListener(this);
+            tab.resume();
         }
-        DebugPlugin.getDefault().getBreakpointManager().addBreakpointListener(this);
-        tab.resume();
     }
-
-//    @Override
-//    public IBreakpoint getBreakpointFor(WebkitLocation location)
-//    {
-//        try
-//        {
-//            IBreakpoint[] breakpoints = DebugPlugin.getDefault().getBreakpointManager()
-//                .getBreakpoints(SDBGDebugCorePlugin.DEBUG_MODEL_ID);
-//
-//            ScriptDescriptor script = debugTarget.getWebkitConnection().getDebugger().getScript(location.getScriptId());
-//
-//            if (script == null)
-//            {
-//                return null;
-//            }
-//
-//            String url = script.getUrl();
-//            int line = WebkitLocation.webkitToElipseLine(location.getLineNumber());
-//
-//            for (IBreakpoint bp : breakpoints)
-//            {
-//                if (bp instanceof ILineBreakpoint)
-//                {
-//                    ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
-//
-//                    if (breakpoint.getLineNumber() == line)
-//                    {
-//                        String bpUrl = null;
-//                        if (breakpoint instanceof SDBGBreakpoint)
-//                        {
-//                            SDBGBreakpoint sdbgBreakpoint = (SDBGBreakpoint) breakpoint;
-//                            IFile file = sdbgBreakpoint.getFile();
-//                            if (file != null)
-//                            {
-//                                bpUrl = getResourceResolver().getUrlForResource(file);
-//                            }
-//                            else
-//                            {
-//                                bpUrl = sdbgBreakpoint.getFilePath();
-//                            }
-//                        }
-//                        else
-//                        {
-//                            bpUrl = getResourceResolver().getUrlForResource(breakpoint.getMarker().getResource());
-//                        }
-//
-//                        if (bpUrl != null && bpUrl.equals(url))
-//                        {
-//                            return breakpoint;
-//                        }
-//                    }
-//                }
-//            }
-//
-//            return null;
-//        }
-//        catch (CoreException e)
-//        {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
-//    @Override
-//    public void handleBreakpointResolved(WebkitBreakpoint webkitBreakpoint)
-//    {
-//        try
-//        {
-//            IBreakpoint bp = breakpointsToUpdateMap.get(webkitBreakpoint.getBreakpointId());
-//
-//            if (bp != null && bp instanceof ILineBreakpoint)
-//            {
-//                ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
-//
-//                int eclipseLine = WebkitLocation.webkitToElipseLine(webkitBreakpoint.getLocation().getLineNumber());
-//
-//                if (breakpoint.getLineNumber() != eclipseLine)
-//                {
-//                    ignoredBreakpoints.add(breakpoint);
-//
-//                    String message = "[breakpoint in "
-//                        + (breakpoint instanceof SDBGBreakpoint ? ((SDBGBreakpoint) breakpoint).getName()
-//                            : breakpoint.getMarker().getResource().getName())
-//                        + " moved from line " + breakpoint.getLineNumber() + " to " + eclipseLine + "]";
-////                    debugTarget.writeToStdout(message);
-//
-//                    breakpoint.getMarker().setAttribute(IMarker.LINE_NUMBER, eclipseLine);
-//                }
-//            }
-//        }
-//        catch (CoreException e)
-//        {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
-//    @Override
-//    public void handleGlobalObjectCleared()
-//    {
-//        for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet()))
-//        {
-//            if (!isJSBreakpoint(breakpoint))
-//            {
-//                // This excercise is necessary so that the V8 breakpoints are
-//                // removed
-//                // and re-added later when the sourcemaps are re-parsed
-//                breakpointRemoved(breakpoint, null/* delta */);
-//                breakpointAdded(breakpoint);
-//            }
-//        }
-//    }
-
-//    @Override
-//    public void removeBreakpointsConcerningScript(IStorage script)
-//    {
-//        SourceMapManager sourceMapManager = debugTarget.getSourceMapManager();
-//        for (IBreakpoint breakpoint : new ArrayList<IBreakpoint>(breakpointToIdMap.keySet()))
-//        {
-//            if (!isJSBreakpoint(breakpoint) && sourceMapManager.isMapTarget(script, getBreakpointPath(breakpoint)))
-//            {
-//                breakpointRemoved(breakpoint, null/* delta */);
-//            }
-//        }
-//    }
 
     private void addBreakpoint(final IBreakpoint bp) throws IOException
     {
@@ -396,9 +290,6 @@ public class BreakpointManager implements IBreakpointListener
             if (bp.isEnabled() && bp instanceof ILineBreakpoint)
             {
                 final ILineBreakpoint breakpoint = (ILineBreakpoint) bp;
-
-                addToBreakpointMap(breakpoint, null/* id */,
-                    true/* trackChanges */);
 
                 String path = getBreakpointPath(breakpoint);
                 if (path != null)
@@ -463,18 +354,16 @@ public class BreakpointManager implements IBreakpointListener
                                     if(sl != null)
                                     {
                                         column = sl.getColumn();
-                                        logInfo("Breakpoint column: " + column); 
                                     }
                                     
-                                    logInfo("Breakpoint [" + path + ","
+                                    logInfo("Add Breakpoint [" + path + ","
                                         + (breakpoint instanceof ILineBreakpoint ? (""+breakpoint.getLineNumber()) : "")
                                         + ",-1] ==> mapped to [" + mappedPath + "," + (location.getLine()+1) + ","
                                         + column+ "]");
-                                    logInfo("Set breakpoint [" + mappedPath + "," + (location.getLine()+1) + "]");
 
                                     tab.setBreakpoint(url,
                                         location.getLine()+1, column);
-                                        addToBreakpointMap(breakpoint, breakpoint.toString(), false);
+                                        addToBreakpointMap(breakpoint, url);
                                 }
                             }
                         }
@@ -557,13 +446,20 @@ public class BreakpointManager implements IBreakpointListener
                                         WebkitScriptStorage ws = (WebkitScriptStorage) location.getStorage();
                                         url = ws.getURL();
                                     }
-                                    logInfo("Breakpoint [" + path + ","
-                                        + (breakpoint instanceof ILineBreakpoint ? (""+breakpoint.getLineNumber()) : "")
-                                        + ",-1] ==> mapped to [" + mappedPath + "," + location.getLine() + ","
-                                        + location.getColumn() + "]");
-                                    logInfo("Remove breakpoint [" + mappedPath + "," + location.getLine() + "]");
+                                    SourceActor sactor = tab.getSourceActor(url);
+                                    SourceLocation sl = sactor.getBreakpointPosition(location.getLine()+1);
+                                    int column = 2;
+                                    if(sl != null)
+                                    {
+                                        column = sl.getColumn();
+                                    }
 
-                                    tab.removeBreakpoint(url, location.getLine()+1, 2);
+                                    logInfo("Remove Breakpoint [" + path + ","
+                                        + (breakpoint instanceof ILineBreakpoint ? (""+breakpoint.getLineNumber()) : "")
+                                        + ",-1] ==> mapped to [" + mappedPath + "," + (location.getLine()+1) + ","
+                                        + column + "]");
+
+                                    tab.removeBreakpoint(url, location.getLine()+1, column);
                                 }
                             }
                         }
@@ -586,23 +482,18 @@ public class BreakpointManager implements IBreakpointListener
         return sourceMapManager;
     }
 
-    private void addToBreakpointMap(IBreakpoint breakpoint, String id, boolean trackChanges)
+    /**
+     * Map the Breakpoint to an URL, to be able to update only if the url is reloaded.
+     * @param breakpoint
+     * @param url
+     */
+    private void addToBreakpointMap(IBreakpoint breakpoint, String url)
     {
-        synchronized (breakpointToIdMap)
+        synchronized (breakpointToURLMap)
         {
-            if (breakpointToIdMap.get(breakpoint) == null)
+            if (url != null)
             {
-                breakpointToIdMap.put(breakpoint, new ArrayList<String>());
-            }
-
-            if (id != null)
-            {
-                breakpointToIdMap.get(breakpoint).add(id);
-
-                if (trackChanges)
-                {
-                    breakpointsToUpdateMap.put(id, breakpoint);
-                }
+                breakpointToURLMap.put(breakpoint, url);
             }
         }
     }

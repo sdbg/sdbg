@@ -90,9 +90,10 @@ public class FirefoxBrowser extends AbstractBrowser
         }
         catch (Exception e1)
         {
+            logError("Error on start of firefox communication", e1);
         }
         sourceMapManager = new SourceMapManager(resourceResolver);
-        breakpointManager = new BreakpointManager(connector, this, tab, sourceMapManager);
+        breakpointManager = new BreakpointManager(this, tab, sourceMapManager);
         try
         {
             breakpointManager.connect();

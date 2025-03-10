@@ -383,22 +383,25 @@ public class SourceMapManager {
     }
   }
 
-  public void handleScriptParsed(IStorage script, String scriptUrl, String sourceMapUrl) {
-    synchronized (sourceMaps) {
-      IStorage mapStorage = sourceMapsStorages.remove(script);
-      if (mapStorage != null) {
-        sourceMaps.remove(script);
-      }
-      trace("Checking script for sourcemaps: " + script);
+  public void handleScriptParsed(IStorage script, String scriptUrl, String sourceMapUrl)
+  {
+      synchronized (sourceMaps)
+      {
+          sourceMapsStorages.remove(script);
+          trace("Checking script for sourcemaps: " + script);
 
-      try {
-        processScript(script, scriptUrl, sourceMapUrl);
-      } catch (CoreException e) {
-        // Processing a source map is always a best effort, because the sourcemap could be missing or broken
-        SDBGDebugCorePlugin.logError(e);
-        trace("Processing script " + script + " failed: " + e.getMessage());
+          try
+          {
+              processScript(script, scriptUrl, sourceMapUrl);
+          }
+          catch (CoreException e)
+          {
+              // Processing a source map is always a best effort, because the
+              // sourcemap could be missing or broken
+              SDBGDebugCorePlugin.logError(e);
+              trace("Processing script " + script + " failed: " + e.getMessage());
+          }
       }
-    }
   }
 
   private boolean isDownloadable(URI uri) {

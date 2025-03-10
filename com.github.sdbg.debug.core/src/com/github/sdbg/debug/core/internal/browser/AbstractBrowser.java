@@ -238,7 +238,7 @@ public abstract class AbstractBrowser implements IBrowser
         return output;
     }
 
-    protected void trace(String message)
+    protected static void trace(String message)
     {
         Trace.trace(Trace.BROWSER_LAUNCHING, message);
     }
@@ -389,6 +389,7 @@ public abstract class AbstractBrowser implements IBrowser
                 continue;
             }
             File f = new File(prop);
+            SDBGDebugCorePlugin.logInfo("Trying to find Browser by using '" + prop + "'");
             if(f.exists())
             {
                 if(f.isFile())
@@ -428,6 +429,10 @@ public abstract class AbstractBrowser implements IBrowser
                 paths.add(dirStr);
             }
         }
+        if (OSUtilities.isMac() ) 
+        {
+            paths.add("/Applications");
+        }
         return paths;
     }
 
@@ -445,6 +450,7 @@ public abstract class AbstractBrowser implements IBrowser
                     candidate += ".exe";
                 }
                 File f = new File(path, candidate);
+                SDBGDebugCorePlugin.logInfo("Trying to find Browser by using '" + f + "'");
                 if(f.exists())
                 {
                     file = f;

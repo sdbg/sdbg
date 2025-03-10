@@ -53,12 +53,12 @@ public class FirefoxBrowser extends AbstractBrowser
     {
         this.resourceResolver = resourceResolver;
         connector = new DebugConnector(host, port);
-        connector.setLogWire(false);
+        connector.setLogWire(Boolean.parseBoolean(System.getenv("logWireProtocol")));
         long start = System.currentTimeMillis();
         boolean success = false;
         while(success == false && start + 2000 > System.currentTimeMillis())
         {  //Try to connect or until timeout.
-            sleep(100);
+            sleep(200);
             try
             {
                 connector.connect();
@@ -79,7 +79,7 @@ public class FirefoxBrowser extends AbstractBrowser
         try
         {
             connector.start();
-            sleep(500);
+            sleep(1000);
             tab = getTab(url);
             WatcherActor watcher = tab.getWatcher();
             watcher.watchResources(WatchableResource.SOURCE
@@ -90,9 +90,10 @@ public class FirefoxBrowser extends AbstractBrowser
         }
         catch (Exception e1)
         {
+            logError("Error on start of firefox communication", e1);
         }
         sourceMapManager = new SourceMapManager(resourceResolver);
-        breakpointManager = new BreakpointManager(connector, this, tab, sourceMapManager);
+        breakpointManager = new BreakpointManager(this, tab, sourceMapManager);
         try
         {
             breakpointManager.connect();
@@ -153,7 +154,7 @@ public class FirefoxBrowser extends AbstractBrowser
                         {
                             this.tab = tab;
                             tab.navigateTo(url);
-                            sleep(500);
+                            sleep(1000);
                         }
                     }
                 }
@@ -161,7 +162,7 @@ public class FirefoxBrowser extends AbstractBrowser
                 {
                     tab = tabs.get(tabs.size()-1);
                     tab.navigateTo(url);
-                    sleep(500);
+                    sleep(1000);
                 }
             }
             catch (JSONException e)

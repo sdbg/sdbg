@@ -110,7 +110,7 @@ abstract public class AbstractSdbgBuild extends AbstractPluginBuild
         
         unjar(Config.TMP + "/eclipse/plugins/org.eclipse.jdt.debug_3.19.0.v20211112-1303.jar", new File(Config.TMP + "/eclipse/plugins"));
         addClasspathItem(Config.TMP + "/eclipse/plugins/jdimodel.jar");
-        
+        addSources("src");
         super.compile();
     }
     
